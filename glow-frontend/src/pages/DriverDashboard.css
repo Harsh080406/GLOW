@@ -1,0 +1,951 @@
+/* ============================================================
+   DRIVER DASHBOARD — Modern White, Blue, Black Theme
+   ============================================================ */
+
+.dd-root {
+  display: flex;
+  min-height: 100vh;
+  background: #f8fafc;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  color: #0f172a;
+  position: relative;
+}
+
+/* ── SIDEBAR ─────────────────────────────────────────────── */
+.dd-sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 16px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 80;
+  scrollbar-width: none;
+  transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dd-sidebar::-webkit-scrollbar { display: none; }
+
+.dd-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 16px;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  background: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.15s ease;
+  user-select: none;
+}
+.dd-brand:hover {
+  background: #f8fafc;
+}
+
+.dd-brand-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dd-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.dd-brand-name {
+  font-size: 15px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+.dd-brand-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0066ff;
+  margin-top: 1px;
+}
+
+.dd-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 10px;
+}
+
+.dd-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #334155;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+  position: relative;
+}
+
+.dd-nav-item:hover {
+  background: #f8fafc;
+  color: #0066ff;
+}
+
+.dd-nav-item--active {
+  background: #eff6ff;
+  color: #0066ff;
+  font-weight: 800;
+}
+
+.dd-nav-badge {
+  margin-left: auto;
+  background: #0066ff;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 20px;
+  padding: 2px 8px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.dd-driver-info {
+  margin: 10px 12px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dd-driver-avatar {
+  width: 36px;
+  height: 36px;
+  background: #0066ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.dd-driver-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.dd-driver-id {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.dd-duty-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #0066ff;
+  display: block;
+  margin-top: 2px;
+}
+
+.dd-logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 12px 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  transition: all 0.15s ease;
+  width: calc(100% - 24px);
+}
+
+.dd-logout:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/* ════════════════════════════════════════════════════════════
+   COLLAPSED DRIVER SIDEBAR (Icon-Only Mode)
+════════════════════════════════════════════════════════════ */
+.dd-sidebar--collapsed {
+  width: 76px;
+  min-width: 76px;
+}
+
+.dd-sidebar--collapsed .dd-brand {
+  justify-content: center;
+  padding: 18px 8px;
+}
+
+.dd-sidebar--collapsed .dd-nav {
+  padding: 10px 6px;
+  align-items: center;
+}
+
+.dd-sidebar--collapsed .dd-nav-item {
+  justify-content: center;
+  padding: 11px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  margin: 2px auto;
+}
+
+.dd-sidebar--collapsed .dd-driver-info {
+  justify-content: center;
+  padding: 8px 4px;
+  margin: 8px auto;
+  width: 48px;
+  border: none;
+  background: none;
+}
+
+.dd-sidebar--collapsed .dd-logout {
+  justify-content: center;
+  padding: 11px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  margin: 4px auto;
+}
+
+/* ── MAIN ─────────────────────────────────────────────────── */
+.dd-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.dd-topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 28px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.dd-hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #5a6070;
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.dd-topbar-info {
+  flex-shrink: 0;
+}
+
+.dd-topbar-greeting {
+  display: block;
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.dd-topbar-name {
+  font-size: 18px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.dd-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.dd-trip-status {
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+
+.dd-trip-status--active {
+  background: #eff6ff;
+  color: #0066ff;
+  border: 1px solid #bfdbfe;
+}
+
+.dd-trip-status--idle {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.dd-notif-btn {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dd-avatar {
+  width: 36px;
+  height: 36px;
+  background: #0066ff;
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.dd-content {
+  flex: 1;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ── HERO BANNER ────────────────────────────────────────────── */
+.dd-hero-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: linear-gradient(135deg, #1d6fe9 0%, #0d52c7 100%);
+  border-radius: 20px;
+  padding: 22px 28px;
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(29, 111, 233, 0.22);
+}
+
+.dd-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.dd-hero-icon-box {
+  width: 52px;
+  height: 52px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.dd-hero-badge {
+  font-size: 10.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 800;
+}
+
+.dd-hero-title {
+  font-size: 22px;
+  font-weight: 900;
+  margin-top: 2px;
+  color: #ffffff;
+}
+
+.dd-hero-sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 2px;
+}
+
+.dd-hero-status-pill {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 800;
+}
+
+.dd-hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dd-btn-start {
+  padding: 12px 24px;
+  background: #ffffff;
+  color: #0066ff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  transition: transform 0.15s ease;
+}
+
+.dd-btn-start:hover {
+  transform: translateY(-2px);
+}
+
+.dd-btn-pause {
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dd-btn-next-stop {
+  padding: 10px 18px;
+  background: #ffffff;
+  color: #0066ff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dd-btn-end {
+  padding: 10px 18px;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ── STATS ──────────────────────────────────────────────────── */
+.dd-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.dd-stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.dd-stat-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.dd-stat-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 800;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dd-stat-value {
+  font-size: 22px;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.1;
+  margin-bottom: 3px;
+}
+
+.dd-stat-sub {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.dd-stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── ACTION GRID ────────────────────────────────────────────── */
+.dd-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.dd-action-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.dd-action-card:hover {
+  border-color: #0066ff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 102, 255, 0.08);
+}
+
+.dd-action-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dd-action-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.dd-action-sub {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+/* ── CARD ───────────────────────────────────────────────────── */
+.dd-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+}
+
+.dd-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dd-card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.dd-btn-primary {
+  padding: 9px 18px;
+  background: #0066ff;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dd-board-btn {
+  padding: 5px 12px;
+  background: #eff6ff;
+  color: #0066ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dd-board-btn:hover {
+  background: #0066ff;
+  color: #ffffff;
+}
+
+/* ── INSPECTION GRID ────────────────────────────────────────── */
+.dd-inspection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.dd-inspection-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.dd-check {
+  width: 18px;
+  height: 18px;
+  accent-color: #0066ff;
+}
+
+.dd-check-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+/* ── MODALS ─────────────────────────────────────────────────── */
+.dd-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: glowModalFade 0.2s ease-out;
+}
+
+.dd-modal-card {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 520px;
+  padding: 28px 32px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(226, 232, 240, 0.8);
+  animation: glowModalSlide 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.dd-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dd-modal-title {
+  font-size: 19px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dd-modal-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+.dd-modal-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+  transform: scale(1.05);
+}
+
+.dd-modal-alert {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dd-modal-alert--success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+.dd-modal-alert--warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.dd-modal-alert--error   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+.dd-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.dd-form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 8px;
+  letter-spacing: 0.1px;
+}
+
+.dd-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.dd-modal-submit-btn {
+  width: 100%;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #0066ff;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.3);
+  margin-top: 4px;
+}
+.dd-modal-submit-btn:hover {
+  background: #0052cc;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 102, 255, 0.4);
+}
+.dd-modal-submit-btn:active {
+  transform: translateY(1px);
+}
+
+/* ── VIEW CONTAINER & CHECKPOINTS ─────────────────────────── */
+.dd-view-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.dd-btn-secondary {
+  padding: 9px 16px;
+  background: #f1f5f9;
+  color: #334155;
+  border: none;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dd-btn-secondary:hover {
+  background: #e2e8f0;
+}
+
+.dd-checkpoints-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: 10px;
+}
+
+.dd-checkpoint-row {
+  display: flex;
+  gap: 16px;
+  min-height: 56px;
+}
+
+.dd-checkpoint-row--current {
+  background: #eff6ff;
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin: 0 -12px;
+}
+
+.dd-checkpoint-dot-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.dd-checkpoint-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 3px solid #e2e8f0;
+  background: #ffffff;
+  margin-top: 3px;
+  transition: all 0.15s ease;
+}
+
+.dd-checkpoint-dot--done {
+  background: #0f172a;
+  border-color: #0f172a;
+}
+
+.dd-checkpoint-dot--active {
+  background: #0066ff;
+  border-color: #0066ff;
+  box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.2);
+}
+
+.dd-checkpoint-line {
+  width: 2px;
+  flex: 1;
+  background: #e2e8f0;
+  margin: 4px 0;
+}
+
+.dd-checkpoint-line--done {
+  background: #0f172a;
+}
+
+.dd-checkpoint-details {
+  flex: 1;
+  padding-bottom: 12px;
+}
+
+.dd-checkpoint-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dd-checkpoint-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.dd-checkpoint-meta {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* ── ROUTE MAP WRAP & HUD ─────────────────────────────────── */
+.dd-map-wrap {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.dd-map-telemetry-hud {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+  gap: 8px;
+}
+
+.dd-hud-pill {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dd-hud-pill--blue {
+  background: #eff6ff;
+  color: #0066ff;
+  border-color: #bfdbfe;
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────── */
+@media (max-width: 992px) {
+  .dd-sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    height: 100%;
+    transition: left 0.25s ease;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+  }
+  .dd-sidebar--open { left: 0; }
+  .dd-hamburger { display: flex; }
+  .dd-content { padding: 16px; }
+  .dd-topbar { padding: 12px 16px; }
+}

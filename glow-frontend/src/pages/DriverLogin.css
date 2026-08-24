@@ -1,0 +1,139 @@
+/* ============================================================
+   DRIVER LOGIN — overrides & additions on top of AuthLogin.css
+   ============================================================ */
+
+/* Flip the layout: card LEFT, hero RIGHT */
+.driver-root {
+  flex-direction: row;
+}
+
+/* Left panel sizing */
+.driver-panel {
+  order: 1;
+}
+
+/* Hero on the right */
+.auth-hero--driver {
+  order: 2;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(30, 15, 5, 0.85) 0%,
+      rgba(90, 45, 10, 0.70) 50%,
+      rgba(160, 90, 20, 0.40) 100%
+    ),
+    url("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1400&q=80")
+    center / cover no-repeat;
+}
+
+/* Fade-blend left edge toward the card panel */
+.auth-hero--driver::after {
+  right: unset;
+  left: 0;
+  background: linear-gradient(to left, transparent, rgba(240, 244, 255, 0.5));
+}
+
+/* Darker bottom-up gradient for driver hero */
+.auth-hero--driver .hero-overlay {
+  background: linear-gradient(
+    to top,
+    rgba(20, 8, 2, 0.93) 0%,
+    rgba(20, 8, 2, 0.48) 50%,
+    transparent 100%
+  );
+}
+
+/* Amber tagline */
+.driver-tagline {
+  color: rgba(251, 191, 36, 0.88) !important;
+}
+
+/* Amber hero sub text */
+.driver-sub {
+  color: rgba(253, 210, 140, 0.72) !important;
+}
+
+/* Amber feature tags */
+.hero-feature-tag--amber {
+  background: rgba(217, 119, 6, 0.20);
+  border: 1px solid rgba(217, 119, 6, 0.38);
+  color: rgba(252, 211, 77, 0.92);
+}
+
+/* Driver-specific form input focus — amber ring */
+.form-input--driver:focus {
+  border-color: #d97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.13);
+}
+
+/* Forgot password — amber */
+.forgot-link--driver {
+  color: #d97706;
+}
+.forgot-link--driver:hover {
+  color: #b45309;
+}
+
+/* Checkbox — amber fill */
+.checkbox-input:checked + .checkbox-custom--driver {
+  background: #d97706;
+  border-color: #d97706;
+}
+
+/* Login button — amber/orange */
+.auth-btn--driver {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  color: #fff;
+  box-shadow: 0 2px 14px rgba(180, 83, 9, 0.32);
+}
+
+.auth-btn--driver:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(180, 83, 9, 0.38);
+}
+
+/* Logo label — amber */
+.auth-logo-label--driver {
+  color: #d97706;
+}
+
+/* Switch portal button — amber hover */
+.switch-portal-btn--driver:hover {
+  border-color: #d97706;
+  color: #d97706;
+  background: rgba(217, 119, 6, 0.05);
+}
+
+/* Support link — amber */
+.support-link--driver {
+  color: #d97706;
+}
+.support-link--driver:hover {
+  color: #b45309;
+}
+
+/* ── RESPONSIVE: stack card above hero on mobile ─────────────── */
+@media (max-width: 900px) {
+  .driver-root {
+    flex-direction: column;
+  }
+
+  .driver-panel {
+    order: 1;
+    width: 100%;
+    min-width: unset;
+  }
+
+  .auth-hero--driver {
+    order: 2;
+    min-height: 300px;
+  }
+
+  .auth-hero--driver::after {
+    /* revert back to right-side fade for mobile stacked layout */
+    right: 0;
+    left: unset;
+    background: linear-gradient(to right, transparent, rgba(240, 244, 255, 0.5));
+  }
+}

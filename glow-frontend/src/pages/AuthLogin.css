@@ -1,0 +1,591 @@
+/* ============================================================
+   SHARED AUTH LOGIN — Admin & Student  |  GLOW BDS
+   ============================================================ */
+
+.auth-root {
+  display: flex;
+  min-height: 100vh;
+  background: #f0f4ff;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+}
+
+/* ── LEFT HERO ─────────────────────────────────────────────── */
+.auth-hero {
+  position: relative;
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+/* Admin — dark blue bus image */
+.auth-hero--admin {
+  background:
+    linear-gradient(135deg, rgba(8, 14, 50, 0.80) 0%, rgba(20, 40, 110, 0.60) 60%, rgba(80, 120, 200, 0.30) 100%),
+    url("https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=1400&q=80")
+    center / cover no-repeat;
+}
+
+/* Student — green/teal campus image */
+.auth-hero--student {
+  background:
+    linear-gradient(135deg, rgba(5, 30, 20, 0.82) 0%, rgba(10, 70, 50, 0.65) 55%, rgba(20, 120, 80, 0.35) 100%),
+    url("https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1400&q=80")
+    center / cover no-repeat;
+}
+
+/* Fade-blend right edge into the panel */
+.auth-hero::after {
+  content: "";
+  position: absolute;
+  top: 0; right: 0;
+  width: 160px; height: 100%;
+  background: linear-gradient(to right, transparent, rgba(240, 244, 255, 0.5));
+  pointer-events: none;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(5, 10, 30, 0.90) 0%,
+    rgba(5, 10, 30, 0.45) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.auth-hero--student .hero-overlay {
+  background: linear-gradient(
+    to top,
+    rgba(3, 20, 15, 0.92) 0%,
+    rgba(3, 20, 15, 0.45) 50%,
+    transparent 100%
+  );
+}
+
+/* Hero inner content */
+.hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  padding: 36px 48px 56px;
+}
+
+/* Back button */
+.hero-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(220, 230, 255, 0.85);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 24px;
+  cursor: pointer;
+  font-family: inherit;
+  align-self: flex-start;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.hero-back-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Hero body bottom text */
+.hero-body {
+  padding-top: 24px;
+}
+
+.hero-tagline {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: rgba(190, 210, 255, 0.8);
+  text-transform: uppercase;
+  margin: 0 0 16px;
+}
+
+.auth-hero--student .hero-tagline {
+  color: rgba(130, 220, 170, 0.85);
+}
+
+.hero-headline {
+  font-size: clamp(30px, 3.2vw, 48px);
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.15;
+  margin: 0 0 16px;
+  letter-spacing: -1px;
+}
+
+.hero-sub {
+  font-size: 14.5px;
+  color: rgba(190, 210, 255, 0.7);
+  line-height: 1.65;
+  margin: 0 0 24px;
+  max-width: 380px;
+}
+
+.auth-hero--student .hero-sub {
+  color: rgba(150, 220, 180, 0.7);
+}
+
+/* Feature tags */
+.hero-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hero-feature-tag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  background: rgba(37, 99, 235, 0.2);
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  color: rgba(150, 190, 255, 0.9);
+  border-radius: 20px;
+  padding: 5px 12px;
+}
+
+.hero-feature-tag--green {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.32);
+  color: rgba(110, 231, 183, 0.9);
+}
+
+/* ── RIGHT AUTH PANEL ───────────────────────────────────────── */
+.auth-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 500px;
+  min-width: 440px;
+  padding: 40px 36px;
+  background: rgba(240, 244, 255, 0.55);
+}
+
+.auth-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 44px 42px;
+  width: 100%;
+  max-width: 430px;
+  box-shadow:
+    0 4px 28px rgba(30, 50, 120, 0.09),
+    0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* Logo area */
+.auth-logo-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 26px;
+}
+
+.auth-logo-label {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-top: 4px;
+}
+
+.auth-logo-label--admin {
+  color: #2563eb;
+}
+
+.auth-logo-label--student {
+  color: #059669;
+}
+
+/* Titles */
+.auth-titles {
+  margin-bottom: 26px;
+}
+
+.auth-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 6px;
+  letter-spacing: -0.3px;
+}
+
+.auth-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* ── FORM ELEMENTS ──────────────────────────────────────────── */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #374151;
+  margin-bottom: 7px;
+  text-transform: uppercase;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+
+.label-row .form-label {
+  margin-bottom: 0;
+}
+
+.forgot-link {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #2563eb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-transform: uppercase;
+  font-family: inherit;
+  transition: color 0.2s;
+}
+
+.forgot-link--student {
+  color: #059669;
+}
+
+.forgot-link:hover { text-decoration: underline; }
+.forgot-link--student:hover { color: #047857; }
+
+/* Input wrapper */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 13px;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.form-input {
+  width: 100%;
+  padding: 11px 42px 11px 42px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #111827;
+  background: #f9fafb;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.form-input::placeholder { color: #9ca3af; }
+
+.form-input:focus {
+  border-color: #2563eb;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.form-input--student:focus {
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
+}
+
+.eye-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.2s;
+}
+
+.eye-btn:hover { color: #374151; }
+
+/* Checkbox */
+.remember-row { margin-bottom: 20px; }
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 0; height: 0;
+}
+
+.checkbox-custom {
+  width: 16px; height: 16px;
+  min-width: 16px;
+  border: 1.5px solid #9ca3af;
+  border-radius: 4px;
+  background: #fff;
+  display: inline-block;
+  position: relative;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.checkbox-input:checked + .checkbox-custom {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.checkbox-input:checked + .checkbox-custom--student {
+  background: #059669;
+  border-color: #059669;
+}
+
+.checkbox-custom::after,
+.checkbox-custom--student::after {
+  display: none;
+}
+
+.checkbox-input:checked + .checkbox-custom::after,
+.checkbox-input:checked + .checkbox-custom--student::after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 1px; left: 4px;
+  width: 5px; height: 9px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+/* Error */
+.error-msg {
+  font-size: 13px;
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+/* Auth buttons */
+.auth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 24px;
+  font-size: 14.5px;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  font-family: inherit;
+  transition: background 0.2s, transform 0.12s, box-shadow 0.2s;
+  margin-bottom: 16px;
+}
+
+.auth-btn--admin {
+  background: #111827;
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(17, 24, 39, 0.22);
+}
+
+.auth-btn--admin:hover:not(:disabled) {
+  background: #1e293b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(17, 24, 39, 0.28);
+}
+
+.auth-btn--student {
+  background: #059669;
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(5, 150, 105, 0.28);
+}
+
+.auth-btn--student:hover:not(:disabled) {
+  background: #047857;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(5, 150, 105, 0.34);
+}
+
+.auth-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.auth-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Spinner */
+.spinner {
+  width: 20px; height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Auth divider with "or" */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+/* Switch portal button */
+.switch-portal-btn {
+  width: 100%;
+  padding: 11px;
+  background: transparent;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  margin-bottom: 20px;
+  letter-spacing: 0.1px;
+}
+
+.switch-portal-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.switch-portal-btn--student:hover {
+  border-color: #059669;
+  color: #059669;
+  background: rgba(5, 150, 105, 0.04);
+}
+
+/* Divider line */
+.divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin-bottom: 18px;
+}
+
+/* Support */
+.support-text {
+  text-align: center;
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.support-link {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: color 0.2s;
+}
+
+.support-link--student { color: #059669; }
+
+.support-link:hover { text-decoration: underline; }
+.support-link--student:hover { color: #047857; }
+
+/* ── RESPONSIVE ─────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .auth-root { flex-direction: column; }
+
+  .auth-hero {
+    min-height: 300px;
+  }
+
+  .auth-hero::after { display: none; }
+
+  .hero-content {
+    padding: 28px 28px 40px;
+  }
+
+  .auth-panel {
+    width: 100%;
+    min-width: unset;
+    padding: 24px 16px;
+  }
+
+  .auth-card {
+    padding: 36px 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 28px 20px;
+    border-radius: 16px;
+  }
+
+  .hero-headline { font-size: 28px; }
+
+  .hero-features { gap: 6px; }
+}
