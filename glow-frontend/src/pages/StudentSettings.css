@@ -1,0 +1,72 @@
+/* ============================================================
+   STUDENT SETTINGS
+   ============================================================ */
+
+.st-root  { display: flex; min-height: 100vh; background: #f4f6f9; font-family: 'Inter','Segoe UI',Arial,sans-serif; color: #1a1d23; }
+.st-main  { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.st-content { flex: 1; padding: 24px 28px; display: flex; flex-direction: column; gap: 22px; }
+
+.st-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+.st-card { background: #fff; border: 1px solid #e8eaf0; border-radius: 14px; padding: 22px; }
+
+.st-section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+.st-section-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.st-section-title { font-size: 15px; font-weight: 700; color: #1a1d23; }
+
+.st-setting-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 14px 0; border-bottom: 1px solid #f0f2f5;
+}
+.st-setting-row:last-of-type { border-bottom: none; }
+.st-row-label { font-size: 13.5px; font-weight: 600; color: #1a1d23; }
+.st-row-sub   { font-size: 12px; color: #7c8494; margin-top: 2px; }
+
+/* Toggle */
+.st-toggle-label { cursor: pointer; flex-shrink: 0; }
+.st-toggle-input { position: absolute; opacity: 0; width: 0; height: 0; }
+.st-toggle-track {
+  display: inline-block; width: 42px; height: 24px; border-radius: 12px;
+  background: #d1d5db; position: relative; transition: background 0.2s;
+}
+.st-toggle-track--on { background: #22c55e; }
+.st-toggle-thumb {
+  position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+  background: #fff; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  transition: transform 0.2s;
+}
+.st-toggle-thumb--on { transform: translateX(18px); }
+
+/* Select */
+.st-select {
+  padding: 7px 12px; border: 1.5px solid #d1d5db; border-radius: 8px;
+  font-family: inherit; font-size: 13px; color: #1a1d23; background: #f9fafb;
+  outline: none; cursor: pointer;
+}
+.st-select:focus { border-color: #22c55e; }
+
+/* Action rows */
+.st-action-row {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 13px 0; border: none; background: none; cursor: pointer;
+  font-family: inherit; text-align: left; border-bottom: 1px solid #f0f2f5;
+  transition: background 0.1s; border-radius: 8px;
+}
+.st-action-row:last-child { border-bottom: none; }
+.st-action-row:hover { background: #f8faf9; }
+.st-action-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.st-action-label { flex: 1; font-size: 13.5px; font-weight: 500; color: #1a1d23; }
+
+/* Save bar */
+.st-save-bar { display: flex; justify-content: flex-end; }
+.st-save-btn {
+  padding: 12px 32px; background: #22c55e; border: none; border-radius: 10px;
+  font-family: inherit; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer;
+  box-shadow: 0 2px 12px rgba(34,197,94,0.28); transition: background 0.15s;
+}
+.st-save-btn:hover { background: #16a34a; }
+
+@media (max-width: 768px) {
+  .st-content { padding: 16px; }
+  .st-grid { grid-template-columns: 1fr; }
+}

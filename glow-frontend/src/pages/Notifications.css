@@ -1,0 +1,241 @@
+/* ============================================================
+   NOTIFICATIONS & ALERTS — Modern White, Blue, Black Theme
+   ============================================================ */
+
+.nf-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1000px;
+  width: 100%;
+}
+
+/* ── HEADER CARD & FILTER TABS ──────────────────────────────── */
+.nf-header-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.nf-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.nf-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.nf-tab-btn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.nf-tab-btn--active {
+  background: #eff6ff;
+  color: #0066ff;
+  font-weight: 800;
+  border-color: #bfdbfe;
+}
+
+.nf-tab-pill {
+  font-size: 11px;
+  font-weight: 800;
+  background: #f1f5f9;
+  color: #64748b;
+  border-radius: 20px;
+  padding: 1px 7px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.nf-tab-pill--active {
+  background: #0066ff;
+  color: #ffffff;
+}
+
+.nf-mark-read-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #ffffff;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0066ff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.nf-mark-read-btn:hover {
+  background: #eff6ff;
+}
+
+/* ── LIST ───────────────────────────────────────────────────── */
+.nf-list-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nf-card-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.nf-card-item:hover {
+  transform: translateY(-2px);
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.nf-card-item--unread {
+  border-left: 4px solid #0066ff;
+  background: #ffffff;
+}
+
+.nf-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.nf-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.nf-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.nf-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nf-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+.nf-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0066ff;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.nf-meta-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.nf-time {
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.nf-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0066ff;
+}
+
+.nf-desc {
+  font-size: 13.5px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+/* ── EMPTY STATE ────────────────────────────────────────────── */
+.nf-empty-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 60px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.nf-empty-icon {
+  font-size: 36px;
+  margin-bottom: 6px;
+}
+
+.nf-empty-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.nf-empty-sub {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .nf-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}

@@ -1,0 +1,339 @@
+/* Import Inter font — must be first */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* Global Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #f0f4ff;
+  color: #111827;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
+/* ════════════════════════════════════════════════════════════
+   UNIVERSAL TACTILE CLICK FEEDBACK (Haptic Feel On Click)
+════════════════════════════════════════════════════════════ */
+button,
+[role="button"],
+.btn,
+.ad-btn-primary,
+.ad-btn-secondary,
+.ad-nav-item,
+.ss-nav-item,
+.dd-nav-item,
+.ss-brand,
+.ad-brand,
+.dd-brand,
+.ad-card,
+.dd-card,
+.sp-card,
+.lt-card,
+.adb-stat-card,
+.dd-stat-card,
+.adb-quick-btn,
+.dd-action-card,
+.sp-action-card-btn,
+.lt-map-action-btn,
+.nf-card-item,
+.nf-tab-btn,
+.sd-action-card,
+.sd-stat-card,
+.sl-notif-btn,
+.sl-sos-btn,
+.sl-avatar,
+.sp-edit-btn,
+.sp-save-btn,
+.sp-cancel-btn,
+.sdb-sos-btn,
+.sdb-view-all,
+.sdb-action-btn,
+.dd-trip-btn,
+.dd-board-btn,
+.dd-scan-btn,
+.dd-report-btn,
+.home-role-card,
+.home-login-btn,
+.login-submit-btn,
+.login-role-tab {
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.12s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background 0.15s ease,
+              border-color 0.15s ease,
+              filter 0.1s ease !important;
+  -webkit-tap-highlight-color: rgba(0, 102, 255, 0.15);
+  user-select: none;
+}
+
+/* Tactile Active Pressed State */
+button:active,
+[role="button"]:active,
+.btn:active,
+.ad-btn-primary:active,
+.ad-btn-secondary:active,
+.ad-nav-item:active,
+.ss-nav-item:active,
+.dd-nav-item:active,
+.ss-brand:active,
+.ad-brand:active,
+.dd-brand:active,
+.adb-stat-card:active,
+.dd-stat-card:active,
+.adb-quick-btn:active,
+.dd-action-card:active,
+.sp-action-card-btn:active,
+.lt-map-action-btn:active,
+.nf-card-item:active,
+.nf-tab-btn:active,
+.sd-action-card:active,
+.sd-stat-card:active,
+.sl-notif-btn:active,
+.sl-sos-btn:active,
+.sl-avatar:active,
+.sp-edit-btn:active,
+.sp-save-btn:active,
+.sp-cancel-btn:active,
+.sdb-sos-btn:active,
+.sdb-view-all:active,
+.sdb-action-btn:active,
+.dd-trip-btn:active,
+.dd-board-btn:active,
+.dd-scan-btn:active,
+.dd-report-btn:active,
+.home-role-card:active,
+.home-login-btn:active,
+.login-submit-btn:active,
+.login-role-tab:active {
+  transform: scale(0.95) translateY(1.5px) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.16) !important;
+  filter: brightness(0.92) contrast(1.05);
+}
+
+/* ============================================================
+   UNIVERSAL EDIT PROFILE MODAL CONTAINER
+   Centered Popup Window — No Scrolling Required
+   ============================================================ */
+.glow-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 24px 16px;
+  animation: glowModalFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glow-modal-container {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 680px;
+  box-shadow: 0 25px 60px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(0, 102, 255, 0.06);
+  animation: glowModalSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.glow-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 28px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.glow-modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.glow-modal-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0066ff;
+  font-size: 20px;
+  flex-shrink: 0;
+  border: 1px solid #dbeafe;
+}
+
+.glow-modal-title {
+  font-size: 19px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.glow-modal-sub {
+  font-size: 13px;
+  color: #64748b;
+  margin: 3px 0 0;
+  line-height: 1.4;
+}
+
+.glow-modal-close {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+.glow-modal-close:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+.glow-modal-body {
+  padding: 26px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: calc(85vh - 160px);
+  overflow-y: auto;
+}
+
+.glow-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 22px;
+}
+
+@media (max-width: 620px) {
+  .glow-modal-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.glow-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.glow-modal-field--full {
+  grid-column: 1 / -1;
+}
+
+.glow-modal-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #334155;
+  letter-spacing: 0;
+}
+
+.glow-modal-input,
+.glow-modal-select,
+.ad-input,
+select.ad-input,
+input.ad-input {
+  height: 46px;
+  padding: 0 16px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.glow-modal-textarea,
+textarea.ad-input {
+  padding: 12px 16px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.glow-modal-input:focus,
+.glow-modal-select:focus,
+.glow-modal-textarea:focus,
+.ad-input:focus,
+select.ad-input:focus,
+textarea.ad-input:focus,
+input.ad-input:focus {
+  border-color: #0066ff;
+  box-shadow: 0 0 0 3.5px rgba(0, 102, 255, 0.14);
+}
+
+.glow-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 18px 28px;
+  border-top: 1px solid #f1f5f9;
+  background: #f8fafc;
+}
+
+@keyframes glowModalFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes glowModalSlide {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
