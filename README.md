@@ -19,7 +19,7 @@ You can log in to any of the role dashboards directly from the `/login` portal u
 
 # Core System Portals
 
-# 1. Student Mobility Portal (`/student/dashboard`)
+### 1. Student Mobility Portal (`/student/dashboard`)
 - *Live 3-Second GPS Telemetry*: Real-time interactive map with bus location, upcoming stop ETAs, speed indicator and traffic warnings.
 - *Encrypted Digital QR Pass*: Encrypted anti-counterfeit QR pass with student ID, route allocation, and 1-click PDF download.
 - *Fees & Payment Receipts*: Online UPI/Card gateway, downloadable tax invoices, and payment history.
