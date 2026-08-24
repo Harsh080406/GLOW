@@ -1,5 +1,8 @@
 # GLOW — Campus Transit & Fleet Management System
+
 GLOW is an enterprise-grade university transit and smart fleet mobility platform designed for high-precision real-time bus tracking, encrypted RFID/QR digital passes, automated fee reconciliations, and instant safety command.
+
+---
 
 # Default Login Credentials
 
@@ -7,16 +10,17 @@ You can log in to any of the role dashboards directly from the `/login` portal u
 
 | Role | Portal / Dashboard | Default Email ID | Default Password | Features & Scope |
 |---|---|---|---|---|
-|*Super Admin*| `/admin/dashboard` | `admin@glowbus.edu` | `glow2026` | Fleet-wide analytics, 8 core KPI cards, user access control, vehicle rosters & master audits. |
+|*Super Admin* | `/admin/dashboard` | `admin@glowbus.edu` | `glow2026` | Fleet-wide analytics, 8 core KPI cards, user access control, vehicle rosters & master audits. |
 | *Finance Admin* | `/finance/dashboard` | `finance@glowbus.edu` | `glow2026` | Fee collections, offline bank challan verification, certified tax receipts, and Excel exports. |
-| *Bus Driver* | `/driver/dashboard` | `driver@glowbus.edu` | `glow2026` | Mobile cockpit tablet, route sequencer, passenger check-in scanner, and live GPS broadcast. |
+| *Bus Driver*| `/driver/dashboard` | `driver@glowbus.edu` | `glow2026` | Mobile cockpit tablet, route sequencer, passenger check-in scanner, and live GPS broadcast. |
 | *Transport Manager* | `/transport/dashboard` | `transport@glowbus.edu` | `glow2026` | Route allocation, student transfers, daily timetable dispatch, and vehicle maintenance logs. |
 | *Student* | `/student/dashboard` | `student@glowbus.edu` | `glow2026` | Live 3-sec GPS tracker, encrypted digital QR transport pass, timetable, and 24/7 SOS alert. |
+
 
 # Core System Portals
 
 # 1. Student Mobility Portal (`/student/dashboard`)
-- *Live 3-Second GPS Telemetry*: Real-time interactive map with bus location, upcoming stop ETAs, speed indicator, and traffic warnings.
+- *Live 3-Second GPS Telemetry*: Real-time interactive map with bus location, upcoming stop ETAs, speed indicator and traffic warnings.
 - *Encrypted Digital QR Pass*: Encrypted anti-counterfeit QR pass with student ID, route allocation, and 1-click PDF download.
 - *Fees & Payment Receipts*: Online UPI/Card gateway, downloadable tax invoices, and payment history.
 - *Emergency & SOS Dispatch*: One-tap emergency broadcast alerting campus security and dispatch with live GPS coordinates.
@@ -36,10 +40,8 @@ You can log in to any of the role dashboards directly from the `/login` portal u
 - *Offline Challan Verification*: Verify bank slips within 4 hours with certified audit stamps.
 - *Ledger Export*: 1-click Excel (`.xlsx`) and PDF revenue reports.
 
-# 5. 🚦 Transport Operations Hub (`/transport/dashboard`)
+# 5. Transport Operations Hub (`/transport/dashboard`)
 - *Route Optimization*: Real-time capacity balancing to prevent overcrowding.
 - *Schedule Management*: Regular semester and exam special staggered shifts (09:00 AM & 02:00 PM).
-
-
 ---
 © 2026 GLOW Campus Transit & Fleet Management System. All rights reserved.
