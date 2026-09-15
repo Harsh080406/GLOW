@@ -19,28 +19,28 @@ You can log in to any of the role dashboards directly from the `/login` portal u
 
 # Core System Portals
 
-# 1. Student Mobility Portal (`/student/dashboard`)
+### 1. Student Mobility Portal (`/student/dashboard`)
 - *Live 3-Second GPS Telemetry*: Real-time interactive map with bus location, upcoming stop ETAs, speed indicator and traffic warnings.
 - *Encrypted Digital QR Pass*: Encrypted anti-counterfeit QR pass with student ID, route allocation, and 1-click PDF download.
 - *Fees & Payment Receipts*: Online UPI/Card gateway, downloadable tax invoices, and payment history.
 - *Emergency & SOS Dispatch*: One-tap emergency broadcast alerting campus security and dispatch with live GPS coordinates.
 
-# 2. Driver Mobile Cockpit (`/driver/dashboard`)
+### 2. Driver Mobile Cockpit (`/driver/dashboard`)
 - *Trip Telemetry Control*: Start, pause, and complete trips with automated speed logging and GPS broadcast.
 - *Passenger Check-In*: High-speed camera QR scanner for sub-2-second student pass validation.
 - *Route Navigator & Delays*: Step-by-step turn sequence and 1-click delay broadcast to students.
 
-# 3. Super Admin Command Center (`/admin/dashboard`)
+### 3. Super Admin Command Center (`/admin/dashboard`)
 - *Fleet Governance*: Real-time status across 85 campus shuttles and 32 transit corridors.
 - *User & Roster Management*: RBAC roles, driver assignments, and student route transfers.
 - *Maintenance & Incidents*: Vehicle fitness certificates, fuel consumption metrics, and SOS logs.
 
-# 4. Finance & Billing Division (`/finance/dashboard`)
+### 4. Finance & Billing Division (`/finance/dashboard`)
 - *Revenue Reconciliation*: Track fee realizations, pending dues, and automated payment receipts.
 - *Offline Challan Verification*: Verify bank slips within 4 hours with certified audit stamps.
 - *Ledger Export*: 1-click Excel (`.xlsx`) and PDF revenue reports.
 
-# 5. Transport Operations Hub (`/transport/dashboard`)
+### 5. Transport Operations Hub (`/transport/dashboard`)
 - *Route Optimization*: Real-time capacity balancing to prevent overcrowding.
 - *Schedule Management*: Regular semester and exam special staggered shifts (09:00 AM & 02:00 PM).
 ---
