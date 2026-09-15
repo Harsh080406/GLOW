@@ -1,67 +1,83 @@
 import { useState, useCallback } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { TransitProvider } from "./context/TransitContext";
+import { TransitProvider } from "./shared/context/TransitContext";
 
-// Core
-import SplashScreen from "./components/SplashScreen";
-import ErrorBoundary from "./components/ErrorBoundary";
+// Shared Core Components
+import SplashScreen from "./shared/components/SplashScreen";
+import ErrorBoundary from "./shared/components/ErrorBoundary";
 
-// Landing & Universal Login
-import LandingPage from "./pages/LandingPage";
-import Home from "./pages/Home";
-import LoginPage from "./pages/LoginPage";
+// ── 1. Public & Auth Module ────────────────────────────────
+import {
+  LandingPageView,
+  LoginPageView,
+} from "./modules/public";
 
-// ── Student pages ──────────────────────────────────────────
-import StudentDashboard from "./pages/StudentDashboard";
-import StudentMyBus from "./pages/StudentMyBus";
-import StudentMyRoute from "./pages/StudentMyRoute";
-import StudentSchedule from "./pages/StudentSchedule";
-import StudentTransportPass from "./pages/StudentTransportPass";
-import StudentFees from "./pages/StudentFees";
-import StudentComplaints from "./pages/StudentComplaints";
-import StudentEmergency from "./pages/StudentEmergency";
-import StudentProfile from "./pages/StudentProfile";
-import Notifications from "./pages/Notifications";
-import LiveTracking from "./pages/LiveTracking";
+// ── 2. Student Mobility Module ─────────────────────────────
+import {
+  StudentLayout,
+  StudentDashboardView,
+  StudentMyBusView,
+  StudentMyRouteView,
+  StudentScheduleView,
+  LiveTrackingView,
+  StudentTransportPassView,
+  StudentFeesView,
+  NotificationsView,
+  StudentComplaintsView,
+  StudentEmergencyView,
+  StudentProfileView,
+} from "./modules/student";
 
-// ── Driver pages ───────────────────────────────────────────
-import DriverDashboard from "./pages/DriverDashboard";
+// ── 3. Driver Mobile Cockpit Module ────────────────────────
+import {
+  DriverLayout,
+  DriverDashboardView,
+} from "./modules/driver";
 
-// ── Super Admin pages ──────────────────────────────────────
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminUserManagement from "./pages/AdminUserManagement";
-import ManageFleet from "./pages/ManageFleet";
-import ManageRoutes from "./pages/ManageRoutes";
-import ManageDrivers from "./pages/ManageDrivers";
-import ManageStudents from "./pages/ManageStudents";
-import AdminSchedules from "./pages/AdminSchedules";
-import AdminTracking from "./pages/AdminTracking";
-import AdminFinanceOverview from "./pages/AdminFinanceOverview";
-import AdminMaintenance from "./pages/AdminMaintenance";
-import AdminComplaints from "./pages/AdminComplaints";
-import AdminEmergencies from "./pages/AdminEmergencies";
-import AdminReports from "./pages/AdminReports";
-import AdminSettings from "./pages/AdminSettings";
-import AdminProfile from "./pages/AdminProfile";
+// ── 4. Super Admin Module ──────────────────────────────────
+import {
+  AdminLayout,
+  AdminDashboardView,
+  AdminUserManagementView,
+  ManageStudentsView,
+  ManageFleetView,
+  ManageDriversView,
+  ManageRoutesView,
+  AdminSchedulesView,
+  AdminTrackingView,
+  AdminFinanceOverviewView,
+  AdminMaintenanceView,
+  AdminComplaintsView,
+  AdminEmergenciesView,
+  AdminReportsView,
+  AdminSettingsView,
+  AdminProfileView,
+} from "./modules/admin";
 
-// ── Transport Manager pages ────────────────────────────────
-import TransportDashboard from "./pages/TransportDashboard";
-import StudentTransport from "./pages/StudentTransport";
-import TransportReports from "./pages/TransportReports";
+// ── 5. Transport Operations Module ─────────────────────────
+import {
+  TransportLayout,
+  TransportDashboardView,
+  StudentTransportView,
+  TransportReportsView,
+} from "./modules/transport";
 
-// ── Finance Admin pages ────────────────────────────────────
-import FinanceDashboard from "./pages/FinanceDashboard";
-import FinanceStudentsFees from "./pages/FinanceStudentsFees";
-import FeeStructure from "./pages/FeeStructure";
-import FinancePayments from "./pages/FinancePayments";
-import PendingFees from "./pages/PendingFees";
-import PaymentVerification from "./pages/PaymentVerification";
-import FinanceRefunds from "./pages/FinanceRefunds";
-import DiscountsScholarships from "./pages/DiscountsScholarships";
-import ReceiptsInvoices from "./pages/ReceiptsInvoices";
-import FinancialReports from "./pages/FinancialReports";
-import FinanceAuditLogs from "./pages/FinanceAuditLogs";
-import FinanceProfile from "./pages/FinanceProfile";
+// ── 6. Finance & Billing Module ────────────────────────────
+import {
+  FinanceLayout,
+  FinanceDashboardView,
+  FinanceStudentsFeesView,
+  FeeStructureView,
+  FinancePaymentsView,
+  PendingFeesView,
+  PaymentVerificationView,
+  FinanceRefundsView,
+  DiscountsScholarshipsView,
+  ReceiptsInvoicesView,
+  FinancialReportsView,
+  FinanceAuditLogsView,
+  FinanceProfileView,
+} from "./modules/finance";
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -77,75 +93,90 @@ function App() {
       <BrowserRouter>
         <ErrorBoundary>
           <Routes>
-            {/* ── Public Landing Page & Login ─────────────── */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/landing" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/login/admin" element={<LoginPage />} />
-            <Route path="/login/student" element={<LoginPage />} />
-            <Route path="/login/driver" element={<LoginPage />} />
+            {/* ── Public & Authentication ──────────────────── */}
+            <Route path="/" element={<LandingPageView />} />
+            <Route path="/landing" element={<LandingPageView />} />
+            <Route path="/login" element={<LoginPageView />} />
+            <Route path="/login/admin" element={<LoginPageView />} />
+            <Route path="/login/student" element={<LoginPageView />} />
+            <Route path="/login/driver" element={<LoginPageView />} />
 
-            {/* ── 1. Student Portal Routes ─────────────────── */}
-            <Route path="/student/dashboard" element={<StudentDashboard />} />
-            <Route path="/student/my-bus" element={<StudentMyBus />} />
-            <Route path="/student/my-route" element={<StudentMyRoute />} />
-            <Route path="/student/schedule" element={<StudentSchedule />} />
-            <Route path="/student/timetable" element={<StudentSchedule />} />
-            <Route path="/student/tracking" element={<LiveTracking />} />
-            <Route path="/student/pass" element={<StudentTransportPass />} />
-            <Route path="/student/fees" element={<StudentFees />} />
-            <Route path="/student/notifications" element={<Notifications />} />
-            <Route path="/student/complaints" element={<StudentComplaints />} />
-            <Route path="/student/emergency" element={<StudentEmergency />} />
-            <Route path="/student/profile" element={<StudentProfile />} />
+            {/* ── 1. Student Mobility Portal ───────────────── */}
+            <Route path="/student" element={<StudentLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<StudentDashboardView />} />
+              <Route path="my-bus" element={<StudentMyBusView />} />
+              <Route path="my-route" element={<StudentMyRouteView />} />
+              <Route path="schedule" element={<StudentScheduleView />} />
+              <Route path="timetable" element={<StudentScheduleView />} />
+              <Route path="tracking" element={<LiveTrackingView />} />
+              <Route path="pass" element={<StudentTransportPassView />} />
+              <Route path="fees" element={<StudentFeesView />} />
+              <Route path="notifications" element={<NotificationsView />} />
+              <Route path="complaints" element={<StudentComplaintsView />} />
+              <Route path="emergency" element={<StudentEmergencyView />} />
+              <Route path="profile" element={<StudentProfileView />} />
+            </Route>
 
-            {/* ── 2. Driver Portal Routes ──────────────────── */}
-            <Route path="/driver/dashboard" element={<DriverDashboard />} />
+            {/* ── 2. Driver Mobile Cockpit ─────────────────── */}
+            <Route path="/driver" element={<DriverLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<DriverDashboardView />} />
+            </Route>
 
-            {/* ── 3. Super Admin Routes ────────────────────── */}
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<AdminUserManagement />} />
-            <Route path="/admin/students" element={<ManageStudents />} />
-            <Route path="/admin/fleet" element={<ManageFleet />} />
-            <Route path="/admin/drivers" element={<ManageDrivers />} />
-            <Route path="/admin/routes" element={<ManageRoutes />} />
-            <Route path="/admin/schedules" element={<AdminSchedules />} />
-            <Route path="/admin/tracking" element={<AdminTracking />} />
-            <Route path="/admin/finance" element={<AdminFinanceOverview />} />
-            <Route path="/admin/maintenance" element={<AdminMaintenance />} />
-            <Route path="/admin/complaints" element={<AdminComplaints />} />
-            <Route path="/admin/emergencies" element={<AdminEmergencies />} />
-            <Route path="/admin/reports" element={<AdminReports />} />
-            <Route path="/admin/settings" element={<AdminSettings />} />
-            <Route path="/admin/profile" element={<AdminProfile />} />
-            <Route path="/dashboard" element={<AdminDashboard />} />
+            {/* ── 3. Super Admin Command Center ────────────── */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboardView />} />
+              <Route path="users" element={<AdminUserManagementView />} />
+              <Route path="students" element={<ManageStudentsView />} />
+              <Route path="fleet" element={<ManageFleetView />} />
+              <Route path="drivers" element={<ManageDriversView />} />
+              <Route path="routes" element={<ManageRoutesView />} />
+              <Route path="schedules" element={<AdminSchedulesView />} />
+              <Route path="tracking" element={<AdminTrackingView />} />
+              <Route path="finance" element={<AdminFinanceOverviewView />} />
+              <Route path="maintenance" element={<AdminMaintenanceView />} />
+              <Route path="complaints" element={<AdminComplaintsView />} />
+              <Route path="emergencies" element={<AdminEmergenciesView />} />
+              <Route path="reports" element={<AdminReportsView />} />
+              <Route path="settings" element={<AdminSettingsView />} />
+              <Route path="profile" element={<AdminProfileView />} />
+            </Route>
+            <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
 
-            {/* ── 4. Transport Manager Routes ──────────────── */}
-            <Route path="/transport/dashboard" element={<TransportDashboard />} />
-            <Route path="/transport/fleet" element={<ManageFleet />} />
-            <Route path="/transport/drivers" element={<ManageDrivers />} />
-            <Route path="/transport/routes" element={<ManageRoutes />} />
-            <Route path="/transport/schedules" element={<AdminSchedules />} />
-            <Route path="/transport/tracking" element={<AdminTracking />} />
-            <Route path="/transport/students" element={<StudentTransport />} />
-            <Route path="/transport/maintenance" element={<AdminMaintenance />} />
-            <Route path="/transport/complaints" element={<AdminComplaints />} />
-            <Route path="/transport/emergencies" element={<AdminEmergencies />} />
-            <Route path="/transport/reports" element={<TransportReports />} />
+            {/* ── 4. Transport Operations Hub ──────────────── */}
+            <Route path="/transport" element={<TransportLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<TransportDashboardView />} />
+              <Route path="fleet" element={<ManageFleetView />} />
+              <Route path="drivers" element={<ManageDriversView />} />
+              <Route path="routes" element={<ManageRoutesView />} />
+              <Route path="schedules" element={<AdminSchedulesView />} />
+              <Route path="tracking" element={<AdminTrackingView />} />
+              <Route path="students" element={<StudentTransportView />} />
+              <Route path="maintenance" element={<AdminMaintenanceView />} />
+              <Route path="complaints" element={<AdminComplaintsView />} />
+              <Route path="emergencies" element={<AdminEmergenciesView />} />
+              <Route path="reports" element={<TransportReportsView />} />
+            </Route>
 
-            {/* ── 5. Finance Admin Routes ──────────────────── */}
-            <Route path="/finance/dashboard" element={<FinanceDashboard />} />
-            <Route path="/finance/students" element={<FinanceStudentsFees />} />
-            <Route path="/finance/fee-structure" element={<FeeStructure />} />
-            <Route path="/finance/payments" element={<FinancePayments />} />
-            <Route path="/finance/pending" element={<PendingFees />} />
-            <Route path="/finance/verification" element={<PaymentVerification />} />
-            <Route path="/finance/refunds" element={<FinanceRefunds />} />
-            <Route path="/finance/discounts" element={<DiscountsScholarships />} />
-            <Route path="/finance/receipts" element={<ReceiptsInvoices />} />
-            <Route path="/finance/reports" element={<FinancialReports />} />
-            <Route path="/finance/audit" element={<FinanceAuditLogs />} />
-            <Route path="/finance/profile" element={<FinanceProfile />} />
+            {/* ── 5. Finance & Billing Division ────────────── */}
+            <Route path="/finance" element={<FinanceLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<FinanceDashboardView />} />
+              <Route path="students" element={<FinanceStudentsFeesView />} />
+              <Route path="fee-structure" element={<FeeStructureView />} />
+              <Route path="payments" element={<FinancePaymentsView />} />
+              <Route path="pending" element={<PendingFeesView />} />
+              <Route path="verification" element={<PaymentVerificationView />} />
+              <Route path="refunds" element={<FinanceRefundsView />} />
+              <Route path="discounts" element={<DiscountsScholarshipsView />} />
+              <Route path="receipts" element={<ReceiptsInvoicesView />} />
+              <Route path="reports" element={<FinancialReportsView />} />
+              <Route path="audit" element={<FinanceAuditLogsView />} />
+              <Route path="profile" element={<FinanceProfileView />} />
+            </Route>
 
             {/* ── Catch-all ────────────────────────────────── */}
             <Route path="*" element={<Navigate to="/" replace />} />

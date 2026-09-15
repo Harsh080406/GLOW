@@ -1,0 +1,262 @@
+/* ============================================================
+   STUDENT SIDEBAR — Modern White, Blue, Black Theme
+   Interactive Collapsible: Full Text ↔ Logo & Icons Only
+   ============================================================ */
+.ss-sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 16px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 80;
+  scrollbar-width: none;
+  transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ss-sidebar::-webkit-scrollbar { display: none; }
+
+/* ── Brand Header (Clickable Collapse Toggle) ─────────────── */
+.ss-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 16px;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  background: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.15s ease;
+  user-select: none;
+}
+.ss-brand:hover {
+  background: #f8fafc;
+}
+
+.ss-brand-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ss-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.ss-brand-name {
+  font-size: 15px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+.ss-brand-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0066ff;
+  margin-top: 1px;
+}
+
+/* ── Nav Items ────────────────────────────────────────────── */
+.ss-nav {
+  flex: 1;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ss-nav-section-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ss-nav-section {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  padding: 12px 10px 4px;
+}
+
+.ss-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #334155;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+  position: relative;
+}
+
+.ss-nav-item:hover {
+  background: #f8fafc;
+  color: #0066ff;
+}
+
+.ss-nav-item--active {
+  background: #eff6ff;
+  color: #0066ff;
+  font-weight: 800;
+}
+
+.ss-nav-badge {
+  margin-left: auto;
+  background: #0066ff;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 20px;
+  padding: 2px 8px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* ── User Card ────────────────────────────────────────────── */
+.ss-user-card {
+  margin: 10px 12px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ss-user-avatar {
+  width: 36px;
+  height: 36px;
+  background: #0066ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.ss-user-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.ss-user-id {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ── Logout ───────────────────────────────────────────────── */
+.ss-logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 12px 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  transition: all 0.15s ease;
+  width: calc(100% - 24px);
+}
+
+.ss-logout:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/* ════════════════════════════════════════════════════════════
+   COLLAPSED STATE (Icon-Only Mode)
+════════════════════════════════════════════════════════════ */
+.ss-sidebar--collapsed {
+  width: 76px;
+  min-width: 76px;
+}
+
+.ss-sidebar--collapsed .ss-brand {
+  justify-content: center;
+  padding: 18px 8px;
+}
+
+.ss-sidebar--collapsed .ss-nav {
+  padding: 10px 6px;
+  align-items: center;
+}
+
+.ss-sidebar--collapsed .ss-nav-item {
+  justify-content: center;
+  padding: 11px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  margin: 2px auto;
+}
+
+.ss-sidebar--collapsed .ss-user-card {
+  justify-content: center;
+  padding: 8px 4px;
+  margin: 8px auto;
+  width: 48px;
+  border: none;
+  background: none;
+}
+
+.ss-sidebar--collapsed .ss-logout {
+  justify-content: center;
+  padding: 11px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  margin: 4px auto;
+}
+
+/* ── Mobile Overlay ───────────────────────────────────────── */
+.ss-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 90;
+}
+
+@media (max-width: 768px) {
+  .ss-sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    height: 100%;
+    transition: left 0.25s ease;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+  }
+  .ss-sidebar--open { left: 0; }
+  .ss-overlay { display: block; }
+}

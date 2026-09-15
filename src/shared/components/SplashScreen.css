@@ -1,0 +1,103 @@
+/* ============================================================
+   SPLASH SCREEN — GLOW Bus Development System
+   Video logo intro with fade-in → hold → fade-out
+   Background: White with high-contrast Blue & Slate
+   ============================================================ */
+
+.splash-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+/* ── Logo wrapper ─────────────────────────────────────────── */
+.splash-logo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+/* ── Video logo ───────────────────────────────────────────── */
+.splash-logo-video {
+  width: clamp(220px, 32vw, 360px);
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  /* blend video background into white canvas */
+  mix-blend-mode: multiply;
+  display: block;
+  transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+/* ── Tagline ──────────────────────────────────────────────── */
+.splash-tagline {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 3.5px;
+  text-transform: uppercase;
+  color: #0f172a;
+  opacity: 0.9;
+  transform: translateY(0);
+}
+
+/* ── Progress bar ─────────────────────────────────────────── */
+.splash-bar-track {
+  width: clamp(180px, 24vw, 280px);
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.splash-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #0066ff, #38bdf8, #0066ff);
+  background-size: 200% 100%;
+  border-radius: 99px;
+  animation: barFill 2.0s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ── Animation Keyframes ──────────────────────────────────── */
+@keyframes barFill {
+  0% {
+    width: 0%;
+  }
+  60% {
+    width: 75%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+/* ── Phases ───────────────────────────────────────────────── */
+.splash-enter .splash-logo-video {
+  opacity: 1;
+  transform: scale(0.95);
+}
+
+.splash-hold .splash-logo-video {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.splash-exit {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(1.02);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
