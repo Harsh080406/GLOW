@@ -8,7 +8,7 @@ const busSchema = new mongoose.Schema(
     fuelLevel: { type: Number, default: 100 },
     status: {
       type: String,
-      enum: ["On Route", "Maintenance", "Idle"],
+      enum: ["On Route", "Maintenance", "Idle", "Delayed"],
       default: "Idle",
     },
     fitnessCertExpiry: { type: Date },
