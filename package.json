@@ -7,7 +7,11 @@
     "dev": "npm --prefix frontend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:backend": "npm --prefix backend run dev",
+    "db:seed": "npm --prefix backend run db:seed",
     "build": "npm --prefix frontend run build",
     "lint": "npm --prefix frontend run lint"
+  },
+  "dependencies": {
+    "mongodb": "^7.6.0"
   }
 }

@@ -1,26 +1,20 @@
 import mongoose from "mongoose";
 
 const stopSchema = new mongoose.Schema({
-  id: { type: Number },
   name: { type: String, required: true },
-  time: { type: String },
-  returnTime: { type: String },
-  dist: { type: String },
-  isPickup: { type: Boolean, default: false },
+  lat: { type: Number },
+  lng: { type: Number },
+  orderIndex: { type: Number, required: true },
+  etaOffsetMin: { type: Number, default: 0 },
 });
 
 const routeSchema = new mongoose.Schema(
   {
-    id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
-    startPoint: { type: String, required: true },
-    endPoint: { type: String, required: true },
-    distance: { type: String },
-    duration: { type: String },
-    assignedBus: { type: String },
-    assignedDriver: { type: String },
-    totalStudents: { type: Number, default: 0 },
-    status: { type: String, default: "Active" },
+    origin: { type: String, required: true },
+    destination: { type: String, required: true },
+    distanceKm: { type: Number, required: true },
+    durationMin: { type: Number, required: true },
     stops: [stopSchema],
   },
   { timestamps: true }
