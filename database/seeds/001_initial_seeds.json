@@ -1,0 +1,77 @@
+{
+  "users": [
+    {
+      "id": "UNI20260125",
+      "name": "Rahul Sharma",
+      "email": "student@glowbus.edu",
+      "role": "student",
+      "department": "Computer Science",
+      "phone": "+91 98765 43210",
+      "busId": "BUS-104",
+      "routeId": "R-04",
+      "pickupStop": "Chandkheda Bus Stop",
+      "passStatus": "ACTIVE",
+      "totalFee": 15000,
+      "paidFee": 10000,
+      "pendingFee": 5000,
+      "feeStatus": "PARTIAL"
+    },
+    {
+      "id": "DRV-2024-001",
+      "name": "Mahesh Patel",
+      "email": "driver@glowbus.edu",
+      "role": "driver",
+      "department": "Fleet Operations",
+      "phone": "+91 98765 11111",
+      "assignedBus": "BUS-104",
+      "assignedRoute": "R-04",
+      "licenseNo": "GJ-01-2015-008921"
+    },
+    {
+      "id": "ADM-2026-001",
+      "name": "Dr. Arvind Patel",
+      "email": "admin@glowbus.edu",
+      "role": "super_admin",
+      "department": "University Transportation Cell",
+      "phone": "+91 98250 99999"
+    },
+    {
+      "id": "FIN-2026-001",
+      "name": "CMA Rajesh Dave",
+      "email": "finance@glowbus.edu",
+      "role": "finance_admin",
+      "department": "Finance & Accounts Division",
+      "phone": "+91 98765 22334"
+    }
+  ],
+  "buses": [
+    {
+      "id": "BUS-101",
+      "regNo": "GJ-05-AB-1001",
+      "model": "Tata Starbus Ultra AC",
+      "capacity": 52,
+      "occupied": 44,
+      "driver": "Suresh Joshi",
+      "route": "R-01 — SG Highway Express",
+      "status": "On Route",
+      "speed": "48 km/h",
+      "eta": "12 min",
+      "fuelPercent": 84,
+      "isEV": false
+    },
+    {
+      "id": "BUS-104",
+      "regNo": "GJ-05-AB-1234",
+      "model": "Volvo B11R AC Luxury",
+      "capacity": 52,
+      "occupied": 38,
+      "driver": "Mahesh Patel",
+      "route": "R-04 — University → Chandkheda",
+      "status": "On Route",
+      "speed": "42 km/h",
+      "eta": "7 min",
+      "fuelPercent": 72,
+      "isEV": false
+    }
+  ]
+}
