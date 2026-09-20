@@ -79,6 +79,9 @@ import {
   FinanceProfileView,
 } from "./modules/finance";
 
+import ProtectedRoute from "./shared/components/ProtectedRoute";
+import ForbiddenView from "./shared/components/ForbiddenView";
+
 function App() {
   const [showSplash, setShowSplash] = useState(true);
 
@@ -100,82 +103,93 @@ function App() {
             <Route path="/login/admin" element={<LoginPageView />} />
             <Route path="/login/student" element={<LoginPageView />} />
             <Route path="/login/driver" element={<LoginPageView />} />
+            <Route path="/403" element={<ForbiddenView />} />
 
-            {/* ── 1. Student Mobility Portal ───────────────── */}
-            <Route path="/student" element={<StudentLayout />}>
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<StudentDashboardView />} />
-              <Route path="my-bus" element={<StudentMyBusView />} />
-              <Route path="my-route" element={<StudentMyRouteView />} />
-              <Route path="schedule" element={<StudentScheduleView />} />
-              <Route path="timetable" element={<StudentScheduleView />} />
-              <Route path="tracking" element={<LiveTrackingView />} />
-              <Route path="pass" element={<StudentTransportPassView />} />
-              <Route path="fees" element={<StudentFeesView />} />
-              <Route path="notifications" element={<NotificationsView />} />
-              <Route path="complaints" element={<StudentComplaintsView />} />
-              <Route path="emergency" element={<StudentEmergencyView />} />
-              <Route path="profile" element={<StudentProfileView />} />
+            {/* ── 1. Student Mobility Portal (Protected) ───── */}
+            <Route element={<ProtectedRoute allowedRoles={["student", "super_admin"]} />}>
+              <Route path="/student" element={<StudentLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<StudentDashboardView />} />
+                <Route path="my-bus" element={<StudentMyBusView />} />
+                <Route path="my-route" element={<StudentMyRouteView />} />
+                <Route path="schedule" element={<StudentScheduleView />} />
+                <Route path="timetable" element={<StudentScheduleView />} />
+                <Route path="tracking" element={<LiveTrackingView />} />
+                <Route path="pass" element={<StudentTransportPassView />} />
+                <Route path="fees" element={<StudentFeesView />} />
+                <Route path="notifications" element={<NotificationsView />} />
+                <Route path="complaints" element={<StudentComplaintsView />} />
+                <Route path="emergency" element={<StudentEmergencyView />} />
+                <Route path="profile" element={<StudentProfileView />} />
+              </Route>
             </Route>
 
-            {/* ── 2. Driver Mobile Cockpit ─────────────────── */}
-            <Route path="/driver" element={<DriverLayout />}>
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<DriverDashboardView />} />
+            {/* ── 2. Driver Mobile Cockpit (Protected) ─────── */}
+            <Route element={<ProtectedRoute allowedRoles={["driver", "super_admin"]} />}>
+              <Route path="/driver" element={<DriverLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<DriverDashboardView />} />
+              </Route>
             </Route>
 
-            {/* ── 3. Super Admin Command Center ────────────── */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<AdminDashboardView />} />
-              <Route path="users" element={<AdminUserManagementView />} />
-              <Route path="students" element={<ManageStudentsView />} />
-              <Route path="fleet" element={<ManageFleetView />} />
-              <Route path="drivers" element={<ManageDriversView />} />
-              <Route path="routes" element={<ManageRoutesView />} />
-              <Route path="schedules" element={<AdminSchedulesView />} />
-              <Route path="tracking" element={<AdminTrackingView />} />
-              <Route path="finance" element={<AdminFinanceOverviewView />} />
-              <Route path="maintenance" element={<AdminMaintenanceView />} />
-              <Route path="complaints" element={<AdminComplaintsView />} />
-              <Route path="emergencies" element={<AdminEmergenciesView />} />
-              <Route path="reports" element={<AdminReportsView />} />
-              <Route path="settings" element={<AdminSettingsView />} />
-              <Route path="profile" element={<AdminProfileView />} />
+            {/* ── 3. Super Admin Command Center (Protected) ── */}
+            <Route element={<ProtectedRoute allowedRoles={["super_admin"]} />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<AdminDashboardView />} />
+                <Route path="users" element={<AdminUserManagementView />} />
+                <Route path="students" element={<ManageStudentsView />} />
+                <Route path="fleet" element={<ManageFleetView />} />
+                <Route path="drivers" element={<ManageDriversView />} />
+                <Route path="routes" element={<ManageRoutesView />} />
+                <Route path="schedules" element={<AdminSchedulesView />} />
+                <Route path="tracking" element={<AdminTrackingView />} />
+                <Route path="finance" element={<AdminFinanceOverviewView />} />
+                <Route path="maintenance" element={<AdminMaintenanceView />} />
+                <Route path="complaints" element={<AdminComplaintsView />} />
+                <Route path="emergencies" element={<AdminEmergenciesView />} />
+                <Route path="reports" element={<AdminReportsView />} />
+                <Route path="settings" element={<AdminSettingsView />} />
+                <Route path="profile" element={<AdminProfileView />} />
+              </Route>
             </Route>
             <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
 
-            {/* ── 4. Transport Operations Hub ──────────────── */}
-            <Route path="/transport" element={<TransportLayout />}>
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<TransportDashboardView />} />
-              <Route path="fleet" element={<ManageFleetView />} />
-              <Route path="drivers" element={<ManageDriversView />} />
-              <Route path="routes" element={<ManageRoutesView />} />
-              <Route path="schedules" element={<AdminSchedulesView />} />
-              <Route path="tracking" element={<AdminTrackingView />} />
-              <Route path="students" element={<StudentTransportView />} />
-              <Route path="maintenance" element={<AdminMaintenanceView />} />
-              <Route path="complaints" element={<AdminComplaintsView />} />
-              <Route path="emergencies" element={<AdminEmergenciesView />} />
-              <Route path="reports" element={<TransportReportsView />} />
+            {/* ── 4. Transport Operations Hub (Protected) ──── */}
+            <Route element={<ProtectedRoute allowedRoles={["transport_manager", "super_admin"]} />}>
+              <Route path="/transport" element={<TransportLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<TransportDashboardView />} />
+                <Route path="fleet" element={<ManageFleetView />} />
+                <Route path="drivers" element={<ManageDriversView />} />
+                <Route path="routes" element={<ManageRoutesView />} />
+                <Route path="schedules" element={<AdminSchedulesView />} />
+                <Route path="tracking" element={<AdminTrackingView />} />
+                <Route path="students" element={<StudentTransportView />} />
+                <Route path="maintenance" element={<AdminMaintenanceView />} />
+                <Route path="complaints" element={<AdminComplaintsView />} />
+                <Route path="emergencies" element={<AdminEmergenciesView />} />
+                <Route path="reports" element={<TransportReportsView />} />
+              </Route>
             </Route>
 
-            {/* ── 5. Finance & Billing Division ────────────── */}
-            <Route path="/finance" element={<FinanceLayout />}>
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<FinanceDashboardView />} />
-              <Route path="students" element={<FinanceStudentsFeesView />} />
-              <Route path="fee-structure" element={<FeeStructureView />} />
-              <Route path="payments" element={<FinancePaymentsView />} />
-              <Route path="pending" element={<PendingFeesView />} />
-              <Route path="verification" element={<PaymentVerificationView />} />
-              <Route path="refunds" element={<FinanceRefundsView />} />
-              <Route path="discounts" element={<DiscountsScholarshipsView />} />
-              <Route path="receipts" element={<ReceiptsInvoicesView />} />
-              <Route path="reports" element={<FinancialReportsView />} />
-              <Route path="audit" element={<FinanceAuditLogsView />} />
-              <Route path="profile" element={<FinanceProfileView />} />
+            {/* ── 5. Finance & Billing Division (Protected) ── */}
+            <Route element={<ProtectedRoute allowedRoles={["finance_admin", "super_admin"]} />}>
+              <Route path="/finance" element={<FinanceLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<FinanceDashboardView />} />
+                <Route path="students" element={<FinanceStudentsFeesView />} />
+                <Route path="fee-structure" element={<FeeStructureView />} />
+                <Route path="payments" element={<FinancePaymentsView />} />
+                <Route path="pending" element={<PendingFeesView />} />
+                <Route path="verification" element={<PaymentVerificationView />} />
+                <Route path="refunds" element={<FinanceRefundsView />} />
+                <Route path="discounts" element={<DiscountsScholarshipsView />} />
+                <Route path="receipts" element={<ReceiptsInvoicesView />} />
+                <Route path="reports" element={<FinancialReportsView />} />
+                <Route path="audit" element={<FinanceAuditLogsView />} />
+                <Route path="profile" element={<FinanceProfileView />} />
+              </Route>
             </Route>
 
             {/* ── Catch-all ────────────────────────────────── */}
