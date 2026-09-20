@@ -81,6 +81,13 @@ import {
 
 import ProtectedRoute from "./shared/components/ProtectedRoute";
 import ForbiddenView from "./shared/components/ForbiddenView";
+import OfflineBanner from "./shared/components/OfflineBanner";
+import { useTransit } from "./shared/context/TransitContext";
+
+function OfflineBannerContainer() {
+  const { isWsConnected, reconnectWs } = useTransit();
+  return <OfflineBanner isWsConnected={isWsConnected} onReconnect={reconnectWs} />;
+}
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -91,6 +98,7 @@ function App() {
 
   return (
     <TransitProvider>
+      <OfflineBannerContainer />
       {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
 
       <BrowserRouter>

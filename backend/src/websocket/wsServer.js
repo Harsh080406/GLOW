@@ -1,77 +1,87 @@
 import { WebSocketServer, WebSocket } from "ws";
+import jwt from "jsonwebtoken";
+import { telemetrySimulator } from "../services/telemetrySimulator.js";
+
+const JWT_SECRET = process.env.JWT_SECRET || "glow_super_secret_jwt_access_key_2026";
 
 export function setupWebSocketServer(server) {
   const wss = new WebSocketServer({ server });
 
-  console.log("📡 GLOW WebSocket Real-Time Event Gateway Initialized.");
+  console.log("📡 GLOW Channel-Based WebSocket Gateway Initialized.");
 
-  const clients = new Set();
+  // Map of client sockets to set of subscribed channels
+  const clientSubscriptions = new Map();
 
   wss.on("connection", (ws, req) => {
-    clients.add(ws);
-    console.log(`🔌 New client connected to WebSocket gateway: ${req.url}`);
+    // Extract query parameters for JWT token
+    const urlParams = new URLSearchParams(req.url.split("?")[1] || "");
+    const token = urlParams.get("token");
 
-    ws.on("message", (data) => {
+    let authenticatedUser = null;
+
+    if (token) {
       try {
-        const message = JSON.parse(data.toString());
-        console.log("📩 Received WS Message:", message);
+        authenticatedUser = jwt.verify(token, JWT_SECRET);
+        ws.user = authenticatedUser;
+        console.log(`🔒 Authenticated WS client: ${authenticatedUser.email} (${authenticatedUser.role})`);
+      } catch (err) {
+        console.warn("⚠️ WS connection provided invalid token. Connecting as guest read-only.");
+      }
+    }
 
-        // Handle incoming client messages (e.g. SOS trigger via WS)
-        if (message.type === "TRIGGER_SOS") {
-          broadcast({
+    clientSubscriptions.set(ws, new Set(["bus:*:telemetry", "sos:alerts"]));
+
+    ws.on("message", (rawMessage) => {
+      try {
+        const message = JSON.parse(rawMessage.toString());
+        const { action, channel, payload } = message;
+
+        if (action === "SUBSCRIBE" && channel) {
+          clientSubscriptions.get(ws)?.add(channel);
+          ws.send(JSON.stringify({ event: "SUBSCRIBED", channel }));
+        } else if (action === "UNSUBSCRIBE" && channel) {
+          clientSubscriptions.get(ws)?.delete(channel);
+          ws.send(JSON.stringify({ event: "UNSUBSCRIBED", channel }));
+        } else if (action === "TRIGGER_SOS") {
+          // Broadcast high-priority SOS emergency event
+          broadcastToChannel("sos:alerts", {
             event: "SOS_ALERT",
             payload: {
               id: `EMG-${Date.now().toString().slice(-4)}`,
-              busId: message.busId || "BUS-104",
-              location: message.location || "Motera Crossroads",
+              busId: payload?.busId || "BUS-104",
+              location: payload?.location || "Motera Crossroads",
+              reportedBy: ws.user?.email || "Student Commuter",
               timestamp: new Date().toISOString(),
               severity: "CRITICAL",
             },
           });
         }
-      } catch (e) {
-        console.error("Invalid WebSocket payload received.");
+      } catch (err) {
+        console.error("Invalid WS message format:", err.message);
       }
     });
 
     ws.on("close", () => {
-      clients.delete(ws);
-      console.log("❌ Client disconnected from WebSocket gateway.");
+      clientSubscriptions.delete(ws);
+      console.log("🔌 WS Client disconnected.");
     });
   });
 
-  const broadcast = (data) => {
-    const payload = JSON.stringify(data);
-    for (const client of clients) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(payload);
+  // Channel-targeted broadcast function
+  const broadcastToChannel = (channel, data) => {
+    const messagePayload = JSON.stringify({ channel, data });
+
+    for (const [ws, channels] of clientSubscriptions.entries()) {
+      if (ws.readyState === WebSocket.OPEN && (channels.has(channel) || channels.has("*"))) {
+        ws.send(messagePayload);
       }
     }
   };
 
-  // Live GPS Telemetry Broadcast Interval (Every 3 seconds per ARCHITECTURE.md)
-  let angle = 0;
-  setInterval(() => {
-    if (clients.size > 0) {
-      angle = (angle + 0.05) % (2 * Math.PI);
-      const latOffset = Math.sin(angle) * 0.005;
-      const lngOffset = Math.cos(angle) * 0.005;
+  // Initialize the 85-bus real-time telemetry simulator
+  telemetrySimulator.init((channel, frame) => {
+    broadcastToChannel(channel, frame);
+  });
 
-      broadcast({
-        event: "TELEMETRY_UPDATE",
-        timestamp: new Date().toISOString(),
-        busId: "BUS-104",
-        coordinates: {
-          lat: 23.0982 + latOffset,
-          lng: 72.5784 + lngOffset,
-        },
-        speed: Math.floor(35 + Math.random() * 15),
-        heading: Math.floor(Math.random() * 360),
-        occupancy: 32,
-        etaMinutes: Math.max(1, Math.floor(6 + Math.sin(angle) * 3)),
-      });
-    }
-  }, 3000);
-
-  return { broadcast };
+  return { broadcastToChannel };
 }
