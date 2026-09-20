@@ -13,6 +13,10 @@ export const useTransit = () => {
 };
 
 export const TransitProvider = ({ children }) => {
+  // Authentication State & Memory Tokens
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [accessToken, setAccessToken] = useState(null);
+
   // Current active role: "student" | "driver" | "super_admin" | "transport_manager" | "finance_admin"
   const [activeRole, setActiveRole] = useState("student");
 
@@ -1079,6 +1083,10 @@ export const TransitProvider = ({ children }) => {
   return (
     <TransitContext.Provider
       value={{
+        isAuthenticated,
+        setIsAuthenticated,
+        accessToken,
+        setAccessToken,
         activeRole,
         setActiveRole,
         currentStudent,

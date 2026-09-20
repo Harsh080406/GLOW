@@ -29,7 +29,7 @@ const GoogleIcon = () => (
 const GOOGLE_ACCOUNTS = [
   {
     name: "Rahul Sharma",
-    email: "rahul.sharma@university.edu",
+    email: "student@glowbus.edu",
     role: "Student (B.Tech CSE)",
     roleId: "student",
     path: "/student/dashboard",
@@ -65,9 +65,11 @@ const GOOGLE_ACCOUNTS = [
   },
 ];
 
+const API_BASE_URL = "http://localhost:5000/api/v1";
+
 const LoginPageView = () => {
   const navigate = useNavigate();
-  const { setActiveRole } = useTransit();
+  const { setActiveRole, setIsAuthenticated, setAccessToken } = useTransit();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -76,7 +78,24 @@ const LoginPageView = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showGoogleModal, setShowGoogleModal] = useState(false);
 
-  const handleLogin = (e) => {
+  // Map server role to dashboard path
+  const getRoleDashboardPath = (role) => {
+    switch (role) {
+      case "super_admin":
+        return "/admin/dashboard";
+      case "finance_admin":
+        return "/finance/dashboard";
+      case "transport_manager":
+        return "/transport/dashboard";
+      case "driver":
+        return "/driver/dashboard";
+      case "student":
+      default:
+        return "/student/dashboard";
+    }
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -91,43 +110,90 @@ const LoginPageView = () => {
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
-      const lower = username.toLowerCase().trim();
+    try {
+      // 1. Send Login Request to Real Backend API
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: username.trim(), password }),
+      });
 
-      let targetRole = "student";
-      let targetPath = "/student/dashboard";
+      const data = await res.json();
 
-      if (lower.includes("driver") || lower.includes("mahesh") || lower.includes("drv")) {
-        targetRole = "driver";
-        targetPath = "/driver/dashboard";
-      } else if (lower.includes("transport") || lower.includes("manager") || lower.includes("mgr") || lower.includes("ops")) {
-        targetRole = "transport_manager";
-        targetPath = "/transport/dashboard";
-      } else if (lower.includes("finance") || lower.includes("account") || lower.includes("fee") || lower.includes("bill") || lower.includes("rajesh")) {
-        targetRole = "finance_admin";
-        targetPath = "/finance/dashboard";
-      } else if (lower.includes("admin") || lower.includes("super") || lower.includes("arvind") || lower.includes("root")) {
-        targetRole = "super_admin";
-        targetPath = "/admin/dashboard";
-      } else {
-        targetRole = "student";
-        targetPath = "/student/dashboard";
+      if (!res.ok || !data.success) {
+        throw new Error(data?.error?.message || "Invalid email or password.");
       }
 
-      setActiveRole(targetRole);
-      navigate(targetPath);
-    }, 400);
+      // Successful Backend Auth
+      setIsAuthenticated(true);
+      setAccessToken(data.accessToken);
+      setActiveRole(data.user.role);
+      navigate(getRoleDashboardPath(data.user.role));
+    } catch (err) {
+      // 2. DEV Mode Fallback (If Backend API is unreachable or offline during local dev)
+      if (import.meta.env.DEV) {
+        console.warn("[Auth] API connection offline. Active local-dev fallback mode:", err.message);
+        const lower = username.toLowerCase().trim();
+        let targetRole = "student";
+
+        if (lower.includes("driver") || lower.includes("mahesh") || lower.includes("drv")) {
+          targetRole = "driver";
+        } else if (lower.includes("transport") || lower.includes("manager") || lower.includes("mgr") || lower.includes("ops")) {
+          targetRole = "transport_manager";
+        } else if (lower.includes("finance") || lower.includes("account") || lower.includes("fee") || lower.includes("bill") || lower.includes("rajesh")) {
+          targetRole = "finance_admin";
+        } else if (lower.includes("admin") || lower.includes("super") || lower.includes("arvind") || lower.includes("root")) {
+          targetRole = "super_admin";
+        } else {
+          targetRole = "student";
+        }
+
+        setIsAuthenticated(true);
+        setActiveRole(targetRole);
+        navigate(getRoleDashboardPath(targetRole));
+      } else {
+        // Production Mode Error
+        setError(err.message || "Failed to authenticate with campus login server.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGoogleSelect = (account) => {
+  const handleGoogleSelect = async (account) => {
     setIsLoading(true);
     setShowGoogleModal(false);
-    setTimeout(() => {
+
+    try {
+      // Call Real Google OAuth / Demo Endpoint
+      const res = await fetch(`${API_BASE_URL}/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: account.email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data?.error?.message || "Google authentication failed.");
+      }
+
+      setIsAuthenticated(true);
+      setAccessToken(data.accessToken);
+      setActiveRole(data.user.role);
+      navigate(getRoleDashboardPath(data.user.role));
+    } catch (err) {
+      // Dev Fallback
+      if (import.meta.env.DEV) {
+        setIsAuthenticated(true);
+        setActiveRole(account.roleId);
+        navigate(account.path);
+      } else {
+        setError(err.message || "Could not authenticate Google account.");
+      }
+    } finally {
       setIsLoading(false);
-      setActiveRole(account.roleId);
-      navigate(account.path);
-    }, 450);
+    }
   };
 
   return (
@@ -267,7 +333,7 @@ const LoginPageView = () => {
               <GoogleIcon />
               <div>
                 <h3 className="google-modal-title">Sign in with Google</h3>
-                <p className="google-modal-sub">Choose an account to continue to GLOW Transit</p>
+                <p className="google-modal-sub">Choose a registered campus account to continue</p>
               </div>
             </div>
 
