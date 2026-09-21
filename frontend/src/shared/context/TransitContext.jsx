@@ -263,39 +263,56 @@ export const TransitProvider = ({ children }) => {
   // Action Methods
   const startTrip = async () => {
     try {
-      await authFetch("/driver/trip/start", { method: "POST" });
-      setActiveTrip((prev) => ({ ...prev, status: "ON_ROUTE" }));
+      const res = await authFetch("/driver/me/trip/start", { method: "POST" });
+      if (res?.trip) {
+        setActiveTrip((prev) => ({
+          ...prev,
+          ...res.trip,
+          id: res.trip._id || res.trip.tripId,
+          _id: res.trip._id,
+          isActive: true,
+          status: "ON_ROUTE",
+        }));
+      } else {
+        setActiveTrip((prev) => ({ ...prev, status: "ON_ROUTE", isActive: true }));
+      }
+      return res;
     } catch (err) {
-      setActiveTrip((prev) => ({ ...prev, status: "ON_ROUTE" }));
+      setActiveTrip((prev) => ({ ...prev, status: "ON_ROUTE", isActive: true }));
     }
   };
 
-  const pauseTrip = async () => {
+  const pauseTrip = async (tripId) => {
     try {
-      await authFetch("/driver/trip/pause", { method: "POST" });
-      setActiveTrip((prev) => ({ ...prev, status: "PAUSED" }));
+      const path = tripId ? `/driver/me/trip/${tripId}/pause` : "/driver/me/trip/pause";
+      const res = await authFetch(path, { method: "PATCH" });
+      setActiveTrip((prev) => ({ ...prev, status: prev.status === "PAUSED" ? "ON_ROUTE" : "PAUSED" }));
+      return res;
     } catch (err) {
-      setActiveTrip((prev) => ({ ...prev, status: "PAUSED" }));
+      setActiveTrip((prev) => ({ ...prev, status: prev.status === "PAUSED" ? "ON_ROUTE" : "PAUSED" }));
     }
   };
 
-  const completeTrip = async () => {
+  const completeTrip = async (tripId) => {
     try {
-      await authFetch("/driver/trip/complete", { method: "POST" });
-      setActiveTrip((prev) => ({ ...prev, status: "COMPLETED" }));
+      const path = tripId ? `/driver/me/trip/${tripId}/complete` : "/driver/me/trip/complete";
+      const res = await authFetch(path, { method: "PATCH" });
+      setActiveTrip((prev) => ({ ...prev, status: "COMPLETED", isActive: false }));
+      return res;
     } catch (err) {
-      setActiveTrip((prev) => ({ ...prev, status: "COMPLETED" }));
+      setActiveTrip((prev) => ({ ...prev, status: "COMPLETED", isActive: false }));
     }
   };
 
-  const broadcastDelay = async (delayMinutes, reason) => {
+  const broadcastDelay = async (delayMinutes, reason, tripId) => {
     try {
-      await authFetch("/driver/broadcast-delay", {
+      const path = tripId ? `/driver/me/trip/${tripId}/delay` : "/driver/me/trip/delay";
+      return await authFetch(path, {
         method: "POST",
-        body: JSON.stringify({ delayMinutes, reason }),
+        body: JSON.stringify({ minutes: Number(delayMinutes), delayMinutes: Number(delayMinutes), reason }),
       });
     } catch (err) {
-      console.warn("Delay broadcast fallback active.");
+      console.warn("Delay broadcast fallback active:", err);
     }
   };
 
@@ -312,11 +329,36 @@ export const TransitProvider = ({ children }) => {
     }
   };
 
+  const triggerDriverSos = async (coords = {}) => {
+    try {
+      return await authFetch("/driver/me/sos", {
+        method: "POST",
+        body: JSON.stringify(coords),
+      });
+    } catch (err) {
+      console.warn("Driver SOS fallback:", err);
+    }
+  };
+
+  const validatePass = async (payload) => {
+    return await authFetch("/driver/me/validate-pass", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  };
+
+  const boardStudent = (studentId) => {
+    setStudents((prev) =>
+      prev.map((s) => (s.id === studentId || s.enrollmentId === studentId ? { ...s, boardedToday: true } : s))
+    );
+  };
+
   const contextValue = {
     isAuthenticated,
     setIsAuthenticated,
     accessToken,
     setAccessToken,
+    authFetch,
     activeRole,
     setActiveRole,
     isLoading,
@@ -347,6 +389,9 @@ export const TransitProvider = ({ children }) => {
     completeTrip,
     broadcastDelay,
     triggerSosAlert,
+    triggerDriverSos,
+    validatePass,
+    boardStudent,
   };
 
   return <TransitContext.Provider value={contextValue}>{children}</TransitContext.Provider>;

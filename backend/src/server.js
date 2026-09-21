@@ -52,6 +52,7 @@ app.use("/api/v1/auth", authRoutes);
 
 app.use("/api/student", studentRoutes);
 app.use("/api/v1/student", studentRoutes);
+app.use("/api/driver", driverRoutes);
 app.use("/api/v1/driver", driverRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/transport", transportRoutes);

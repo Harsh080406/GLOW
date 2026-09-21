@@ -4,6 +4,14 @@ import { telemetrySimulator } from "../services/telemetrySimulator.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "glow_super_secret_jwt_access_key_2026";
 
+let activeBroadcast = null;
+
+export const broadcastToWsChannel = (channel, data) => {
+  if (activeBroadcast) {
+    activeBroadcast(channel, data);
+  }
+};
+
 export function setupWebSocketServer(server) {
   const wss = new WebSocketServer({ server });
 
@@ -30,6 +38,12 @@ export function setupWebSocketServer(server) {
     }
 
     clientSubscriptions.set(ws, new Set(["bus:*:telemetry", "sos:alerts"]));
+
+    // If authenticated, automatically subscribe to their private notification channel
+    if (authenticatedUser?.id || authenticatedUser?._id) {
+      const uid = authenticatedUser.id || authenticatedUser._id;
+      clientSubscriptions.get(ws)?.add(`notifications:${uid}`);
+    }
 
     ws.on("message", (rawMessage) => {
       try {
@@ -77,6 +91,8 @@ export function setupWebSocketServer(server) {
       }
     }
   };
+
+  activeBroadcast = broadcastToChannel;
 
   // Initialize the 85-bus real-time telemetry simulator
   telemetrySimulator.init((channel, frame) => {
