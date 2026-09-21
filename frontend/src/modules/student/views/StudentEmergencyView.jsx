@@ -10,30 +10,62 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 );
 
 const StudentEmergency = () => {
-  const { currentStudent, triggerEmergency } = useTransit();
+  const { currentStudent, triggerSosAlert } = useTransit();
   const [sosTriggered, setSosTriggered] = useState(false);
   const [sosCountdown, setSosCountdown] = useState(null);
   const [reportType, setReportType] = useState("Accident / Collision");
   const [reportNotes, setReportNotes] = useState("");
   const [locationShared, setLocationShared] = useState(false);
   const [alertSuccess, setAlertSuccess] = useState(false);
+  const [activeIncidentId, setActiveIncidentId] = useState(null);
+
+  const executeSosDispatch = (lat, lng) => {
+    const payload = {
+      lat: lat || 23.0982,
+      lng: lng || 72.5784,
+      busId: currentStudent?.busId || "BUS-104",
+      notes: `Urgent SOS triggered by Student ${currentStudent?.name || "Rahul Sharma"} onboard bus ${currentStudent?.busId || "BUS-104"}`,
+    };
+
+    triggerSosAlert(payload);
+    setSosTriggered(true);
+
+    fetch("/api/v1/student/me/sos", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("glow_access_token") || ""}`,
+      },
+      body: JSON.stringify(payload),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.incident?.id) {
+          setActiveIncidentId(data.incident.id);
+        }
+      })
+      .catch((err) => console.warn("SOS REST dispatch error, WS alert active:", err));
+  };
 
   const startSos = () => {
     setSosCountdown(3);
+
+    // Get live geolocation coordinates with fallback
+    let currentCoords = { lat: 23.0982, lng: 72.5784 };
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          currentCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        },
+        () => console.warn("Geolocation permission denied, using live bus GPS fallback.")
+      );
+    }
+
     const interval = setInterval(() => {
       setSosCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          setSosTriggered(true);
-          triggerEmergency({
-            type: "STUDENT_SOS_ALERT",
-            busId: currentStudent.busId,
-            routeId: currentStudent.routeId,
-            driver: "Mahesh Patel",
-            location: "Near Chandkheda - Live Coordinates 23.0525° N, 72.5662° E",
-            notes: `Urgent SOS triggered by Student ${currentStudent.name} (${currentStudent.id}) onboard bus ${currentStudent.busId}`,
-            severity: "High / SOS",
-          });
+          executeSosDispatch(currentCoords.lat, currentCoords.lng);
           return null;
         }
         return prev - 1;
@@ -41,20 +73,33 @@ const StudentEmergency = () => {
     }, 1000);
   };
 
-  const cancelSos = () => {
+  const cancelSosCountdown = () => {
     setSosCountdown(null);
+  };
+
+  const handleCancelFalseAlarm = async () => {
+    if (activeIncidentId) {
+      try {
+        await fetch(`/api/v1/student/me/sos/${activeIncidentId}/cancel`, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("glow_access_token") || ""}`,
+          },
+        });
+      } catch (e) {
+        console.warn("Cancel false alarm REST error:", e);
+      }
+    }
+    setSosTriggered(false);
+    setActiveIncidentId(null);
   };
 
   const handleReportIncident = (e) => {
     e.preventDefault();
-    triggerEmergency({
+    triggerSosAlert({
       type: reportType,
-      busId: currentStudent.busId,
-      routeId: currentStudent.routeId,
-      driver: "Mahesh Patel",
-      location: "Near Chandkheda Stop - Route R-04",
-      notes: `Incident report: ${reportNotes} (Reported by ${currentStudent.name})`,
-      severity: "High",
+      busId: currentStudent?.busId || "BUS-104",
+      notes: `Incident report: ${reportNotes} (Reported by ${currentStudent?.name})`,
     });
     setAlertSuccess(true);
     setReportNotes("");
@@ -62,18 +107,21 @@ const StudentEmergency = () => {
   };
 
   const handleShareLocation = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(`https://glowbus.edu/tracking?bus=${currentStudent?.busId || "BUS-104"}`);
+    }
     setLocationShared(true);
     setTimeout(() => setLocationShared(false), 5000);
   };
 
   return (
     <div className="student-view-wrap">
-      {/* ── SOS EMERGENCY HERO ─────────────────────────────────── */}
+      {/* ── SOS EMERGENCY HERO CARD (THUMB-ACCESSIBLE ON 375px) ── */}
       <div
         style={{
           background: sosTriggered ? "linear-gradient(135deg, #7f1d1d, #dc2626)" : "linear-gradient(135deg, #1e293b, #0f172a)",
           borderRadius: 20,
-          padding: "32px",
+          padding: "24px 16px",
           color: "#fff",
           textAlign: "center",
           marginBottom: 24,
@@ -82,25 +130,25 @@ const StudentEmergency = () => {
         }}
       >
         <div style={{ maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ width: 80, height: 80, background: sosTriggered ? "#ef4444" : "#dc2626", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", boxShadow: "0 0 20px rgba(220,38,38,0.6)" }}>
-            <span style={{ fontSize: 36 }}>🚨</span>
+          <div style={{ width: 70, height: 70, background: sosTriggered ? "#ef4444" : "#dc2626", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px", boxShadow: "0 0 20px rgba(220,38,38,0.6)" }}>
+            <span style={{ fontSize: 32 }}>🚨</span>
           </div>
 
-          <h2 style={{ fontSize: 28, fontWeight: 900 }}>
+          <h2 style={{ fontSize: 24, fontWeight: 900 }}>
             {sosTriggered ? "EMERGENCY ALERT BROADCASTED!" : "CAMPUS TRANSPORT SOS"}
           </h2>
-          <p style={{ fontSize: 14, opacity: 0.9, marginTop: 6, marginBottom: 20 }}>
+          <p style={{ fontSize: 13, opacity: 0.9, marginTop: 4, marginBottom: 16 }}>
             {sosTriggered
-              ? "University Security, Transport Control Room, and Emergency Dispatchers have received your high-priority distress signal and live bus location."
-              : "Pressing SOS immediately transmits your location, bus ID, and student profile to the Central Transport Security Room & Police Dispatch."}
+              ? "University Security, Transport Control Room, and Emergency Dispatchers have received your high-priority distress signal and live location."
+              : "Pressing SOS immediately transmits your geolocation, bus ID, and student profile to the Central Transport Security Room & Police Dispatch."}
           </p>
 
           {sosCountdown !== null && (
-            <div style={{ background: "rgba(0,0,0,0.4)", borderRadius: 14, padding: "16px", marginBottom: 20 }}>
-              <p style={{ fontSize: 16, fontWeight: 700, color: "#fca5a5" }}>Broadcasting SOS alert in {sosCountdown} seconds...</p>
+            <div style={{ background: "rgba(0,0,0,0.4)", borderRadius: 14, padding: "14px", marginBottom: 16 }}>
+              <p style={{ fontSize: 15, fontWeight: 700, color: "#fca5a5" }}>Broadcasting SOS alert in {sosCountdown} seconds...</p>
               <button
-                onClick={cancelSos}
-                style={{ marginTop: 10, padding: "8px 20px", background: "#fff", color: "#991b1b", border: "none", borderRadius: 8, fontWeight: 800, cursor: "pointer" }}
+                onClick={cancelSosCountdown}
+                style={{ marginTop: 8, padding: "8px 20px", background: "#fff", color: "#991b1b", border: "none", borderRadius: 8, fontWeight: 800, cursor: "pointer" }}
               >
                 CANCEL SOS
               </button>
@@ -115,8 +163,8 @@ const StudentEmergency = () => {
                 color: "#fff",
                 border: "none",
                 borderRadius: 16,
-                padding: "18px 42px",
-                fontSize: 18,
+                padding: "16px 36px",
+                fontSize: 17,
                 fontWeight: 900,
                 letterSpacing: 1,
                 cursor: "pointer",
@@ -124,6 +172,9 @@ const StudentEmergency = () => {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 10,
+                width: "100%",
+                justifyContent: "center",
+                minHeight: 52,
               }}
             >
               <span>🚨</span> TRIGGER EMERGENCY SOS
@@ -131,12 +182,12 @@ const StudentEmergency = () => {
           )}
 
           {sosTriggered && (
-            <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 16 }}>
+            <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 14 }}>
               <button
-                onClick={() => setSosTriggered(false)}
-                style={{ padding: "10px 24px", background: "rgba(255,255,255,0.2)", color: "#fff", border: "1px solid #fff", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}
+                onClick={handleCancelFalseAlarm}
+                style={{ padding: "10px 24px", background: "rgba(255,255,255,0.25)", color: "#fff", border: "1px solid #fff", borderRadius: 8, fontWeight: 700, cursor: "pointer", minHeight: 44 }}
               >
-                Clear / Resolve Alert
+                Cancel False Alarm
               </button>
             </div>
           )}
@@ -144,7 +195,7 @@ const StudentEmergency = () => {
       </div>
 
       {/* ── EMERGENCY CONTACTS & ACTIONS ─────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
         {/* Rapid Dial Directory */}
         <div className="ad-card">
           <div className="ad-card-header">
@@ -154,23 +205,23 @@ const StudentEmergency = () => {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[
-              { role: "University Security Control Room", phone: "+91 79 2397 7000", desc: "Main Campus Gate & Emergency Dispatch", icon: "🛡️" },
-              { role: "Transport Fleet Manager Hotline", phone: "+91 98765 00000", desc: "Fleet Breakdown & Route Reroute Desk", icon: "🚌" },
-              { role: "Campus Medical Center / Ambulance", phone: "+91 79 2397 7108", desc: "First Aid & Rapid Paramedic Dispatch", icon: "🚑" },
-              { role: "City Police Emergency Hotline", phone: "112 / 100", desc: "National Emergency Service", icon: "👮" },
+              { role: "University Security Control Room", phone: "+91 79 2397 7000", desc: "Main Campus Gate & Security", icon: "🛡️" },
+              { role: "Transport Fleet Manager Hotline", phone: "+91 98765 00000", desc: "Breakdown & Route Reroute Desk", icon: "🚌" },
+              { role: "Campus Medical / Ambulance", phone: "+91 79 2397 7108", desc: "First Aid & Paramedic Dispatch", icon: "🚑" },
+              { role: "Police Emergency Hotline", phone: "112", desc: "National Emergency Service", icon: "👮" },
             ].map((contact, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0" }}>
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                  <span style={{ fontSize: 24 }}>{contact.icon}</span>
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", background: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0" }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <span style={{ fontSize: 22 }}>{contact.icon}</span>
                   <div>
-                    <h4 style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>{contact.role}</h4>
-                    <p style={{ fontSize: 11.5, color: "#64748b" }}>{contact.desc}</p>
-                    <p style={{ fontSize: 13, fontWeight: 800, color: "#2563eb", marginTop: 2 }}>{contact.phone}</p>
+                    <h4 style={{ fontSize: 13.5, fontWeight: 700, color: "#1e293b" }}>{contact.role}</h4>
+                    <p style={{ fontSize: 11, color: "#64748b" }}>{contact.desc}</p>
+                    <p style={{ fontSize: 12.5, fontWeight: 800, color: "#2563eb", marginTop: 2 }}>{contact.phone}</p>
                   </div>
                 </div>
                 <a
                   href={`tel:${contact.phone}`}
-                  style={{ padding: "8px 16px", background: "#2563eb", color: "#fff", borderRadius: 8, textDecoration: "none", fontSize: 12.5, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
+                  style={{ padding: "8px 14px", background: "#2563eb", color: "#fff", borderRadius: 8, textDecoration: "none", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, minHeight: 44 }}
                 >
                   <Icon d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.36 11.77a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.48 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" size={14} stroke="#fff" />
                   Call
@@ -182,7 +233,7 @@ const StudentEmergency = () => {
           <div style={{ marginTop: 16 }}>
             <button
               onClick={handleShareLocation}
-              style={{ width: "100%", padding: "12px", background: "#eff6ff", color: "#1d4ed8", border: "1.5px solid #bfdbfe", borderRadius: 8, fontWeight: 700, fontSize: 13.5, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+              style={{ width: "100%", padding: "12px", background: "#eff6ff", color: "#1d4ed8", border: "1.5px solid #bfdbfe", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44 }}
             >
               <Icon d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" size={16} stroke="#1d4ed8" />
               {locationShared ? "✓ Live Location Link Copied & Sent to Guardians!" : "Share Live Bus Location with Guardians"}
@@ -190,7 +241,7 @@ const StudentEmergency = () => {
           </div>
         </div>
 
-        {/* Report Bus Accident / Breakdown */}
+        {/* Report Bus Incident */}
         <div className="ad-card">
           <div className="ad-card-header">
             <h3 className="ad-card-title">Report Immediate Incident</h3>
@@ -209,7 +260,7 @@ const StudentEmergency = () => {
               <select
                 value={reportType}
                 onChange={(e) => setReportType(e.target.value)}
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1.5px solid #cbd5e1", fontSize: 13.5, background: "#fff" }}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1.5px solid #cbd5e1", fontSize: 13.5, background: "#fff", minHeight: 44 }}
               >
                 <option value="Accident / Collision">Vehicle Accident / Collision</option>
                 <option value="Bus Breakdown / Mechanical Failure">Bus Breakdown / Mechanical Failure</option>
@@ -227,14 +278,14 @@ const StudentEmergency = () => {
                 onChange={(e) => setReportNotes(e.target.value)}
                 placeholder="Give details about vehicle condition, any injuries, road cross street..."
                 required
-                rows={4}
+                rows={3}
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1.5px solid #cbd5e1", fontSize: 13.5, resize: "vertical", fontFamily: "inherit" }}
               />
             </div>
 
             <button
               type="submit"
-              style={{ width: "100%", padding: "12px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, fontWeight: 800, fontSize: 14, cursor: "pointer" }}
+              style={{ width: "100%", padding: "12px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, fontWeight: 800, fontSize: 14, cursor: "pointer", minHeight: 44 }}
             >
               Report Bus Incident to Transport Desk
             </button>

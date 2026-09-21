@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./Notifications.css";
 
 const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidth = 1.8 }) => (
@@ -10,64 +10,25 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 
 const INITIAL_NOTIFS = [
   {
-    id: 1,
-    title: "Bus On The Way • 7 min ETA",
-    tag: "Live Transit",
-    category: "service",
-    desc: "Your assigned bus BUS-104 is approaching Motera Crossroads on Route R-04. Please be ready at Chandkheda Stop.",
-    time: "2 min ago",
-    unread: true,
-    icon: "M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10zM12 6v6l4 2",
+    _id: "1",
+    type: "service",
+    message: "Your assigned bus BUS-104 is approaching Motera Crossroads on Route R-04. Please be ready at Chandkheda Stop.",
+    read: false,
+    createdAt: new Date().toISOString(),
   },
   {
-    id: 2,
-    title: "Driver Checked In",
-    tag: "Crew Update",
-    category: "service",
-    desc: "Driver Mahesh Patel checked in for morning departure and vehicle pre-trip inspection passed 100%.",
-    time: "15 min ago",
-    unread: true,
-    icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
+    _id: "2",
+    type: "alerts",
+    message: "Driver Mahesh Patel checked in for morning departure and vehicle pre-trip inspection passed 100%.",
+    read: false,
+    createdAt: new Date(Date.now() - 15 * 60000).toISOString(),
   },
   {
-    id: 3,
-    title: "Traffic Alert • SG Highway",
-    tag: "Route Alert",
-    category: "alerts",
-    desc: "Moderate congestion near Koba Circle due to road resurfacing. Estimated +3 min transit variance.",
-    time: "45 min ago",
-    unread: true,
-    icon: "M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01",
-  },
-  {
-    id: 4,
-    title: "Transport Pass Validated",
-    tag: "Pass Status",
-    category: "pass",
-    desc: "Your digital transport pass PASS-STU-2026-0125 for Semester VI is active and paid for 2025-2026.",
-    time: "Yesterday",
-    unread: false,
-    icon: "M20 12V22H4V12M22 7H2v5h20V7zM12 22V7",
-  },
-  {
-    id: 5,
-    title: "Timetable Schedule Released",
-    tag: "Timetable",
-    category: "service",
-    desc: "Updated monsoon return timings: Evening departure from University bus bay shifted to 05:00 PM.",
-    time: "2 days ago",
-    unread: false,
-    icon: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z",
-  },
-  {
-    id: 6,
-    title: "Fee Receipt Generated",
-    tag: "Finance",
-    category: "pass",
-    desc: "Receipt #RCPT-2026-089 for ₹18,000 transport fee has been issued and emailed to your registered address.",
-    time: "3 days ago",
-    unread: false,
-    icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+    _id: "3",
+    type: "pass",
+    message: "Your digital transport pass PASS-STU-2026-0125 for Semester VI is active and verified.",
+    read: true,
+    createdAt: new Date(Date.now() - 24 * 3600000).toISOString(),
   },
 ];
 
@@ -75,96 +36,134 @@ const Notifications = () => {
   const [notifs, setNotifs] = useState(INITIAL_NOTIFS);
   const [activeTab, setActiveTab] = useState("all");
 
-  const unreadCount = notifs.filter((n) => n.unread).length;
+  useEffect(() => {
+    fetch("/api/v1/student/me/notifications", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("glow_access_token") || ""}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.notifications && data.notifications.length > 0) {
+          setNotifs(data.notifications);
+        }
+      })
+      .catch((err) => console.warn("Notifications REST fetch fallback active:", err));
+  }, []);
+
+  const unreadCount = notifs.filter((n) => !n.read).length;
 
   const markAllRead = () => {
-    setNotifs(notifs.map((n) => ({ ...n, unread: false })));
+    setNotifs(notifs.map((n) => ({ ...n, read: true })));
+
+    fetch("/api/v1/student/me/notifications/read-all", {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("glow_access_token") || ""}`,
+      },
+    }).catch((err) => console.warn("Read-all REST error:", err));
   };
 
-  const toggleRead = (id) => {
-    setNotifs(notifs.map((n) => (n.id === id ? { ...n, unread: !n.unread } : n)));
+  const deleteNotification = (id) => {
+    setNotifs(notifs.filter((n) => (n._id || n.id) !== id));
+
+    fetch(`/api/v1/student/me/notifications/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("glow_access_token") || ""}`,
+      },
+    }).catch((err) => console.warn("Delete notification REST error:", err));
   };
 
   const filteredNotifs = notifs.filter((n) => {
     if (activeTab === "all") return true;
-    if (activeTab === "unread") return n.unread;
-    if (activeTab === "service") return n.category === "service";
-    if (activeTab === "alerts") return n.category === "alerts";
-    if (activeTab === "pass") return n.category === "pass";
+    if (activeTab === "unread") return !n.read;
     return true;
   });
 
   return (
     <div className="student-view-wrap">
       <div className="nf-container">
-        {/* ── TOP CONTROLS & TABS ───────────────────────────────── */}
-        <div className="nf-header-card">
-          <div className="nf-tabs">
+        {/* TOP CONTROLS */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             {[
-              { id: "all", label: "All Alerts", count: notifs.length },
-              { id: "unread", label: "Unread", count: unreadCount },
-              { id: "service", label: "Live Transit", count: notifs.filter(n => n.category === "service").length },
-              { id: "alerts", label: "Route Alerts", count: notifs.filter(n => n.category === "alerts").length },
-              { id: "pass", label: "Pass & Fees", count: notifs.filter(n => n.category === "pass").length },
-            ].map((tab) => (
+              { id: "all", label: "All Alerts" },
+              { id: "unread", label: `Unread (${unreadCount})` },
+            ].map((t) => (
               <button
-                key={tab.id}
-                className={`nf-tab-btn ${activeTab === tab.id ? "nf-tab-btn--active" : ""}`}
-                onClick={() => setActiveTab(tab.id)}
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                style={{
+                  padding: "8px 18px",
+                  borderRadius: 20,
+                  border: `1.5px solid ${activeTab === t.id ? "#2563eb" : "#cbd5e1"}`,
+                  background: activeTab === t.id ? "#2563eb" : "#fff",
+                  color: activeTab === t.id ? "#fff" : "#475569",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: "pointer",
+                  minHeight: 44,
+                }}
               >
-                <span>{tab.label}</span>
-                <span className={`nf-tab-pill ${activeTab === tab.id ? "nf-tab-pill--active" : ""}`}>
-                  {tab.count}
-                </span>
+                {t.label}
               </button>
             ))}
           </div>
 
-          {unreadCount > 0 && (
-            <button className="nf-mark-read-btn" onClick={markAllRead}>
-              <Icon d="M5 13l4 4L19 7" size={15} stroke="#0066ff" />
-              <span>Mark all as read</span>
-            </button>
-          )}
+          <button
+            onClick={markAllRead}
+            style={{ padding: "8px 16px", background: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: 8, color: "#334155", fontSize: 13, fontWeight: 700, cursor: "pointer", minHeight: 44 }}
+          >
+            ✓ Mark All As Read
+          </button>
         </div>
 
-        {/* ── NOTIFICATIONS LIST ────────────────────────────────── */}
-        <div className="nf-list-wrap">
+        {/* NOTIFICATIONS LIST */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {filteredNotifs.length === 0 ? (
-            <div className="nf-empty-card">
-              <div className="nf-empty-icon">🔔</div>
-              <h3 className="nf-empty-title">No notifications found</h3>
-              <p className="nf-empty-sub">You are all caught up with your transit updates.</p>
+            <div style={{ padding: 40, textAlign: "center", color: "#64748b", background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0" }}>
+              No notifications found.
             </div>
           ) : (
-            filteredNotifs.map((item) => (
+            filteredNotifs.map((n) => (
               <div
-                key={item.id}
-                className={`nf-card-item ${item.unread ? "nf-card-item--unread" : ""}`}
-                onClick={() => toggleRead(item.id)}
+                key={n._id || n.id}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  padding: "16px 20px",
+                  background: n.read ? "#ffffff" : "#f0f7ff",
+                  border: `1px solid ${n.read ? "#e2e8f0" : "#bfdbfe"}`,
+                  borderRadius: 12,
+                  gap: 14,
+                }}
               >
-                <div className="nf-icon-box">
-                  <Icon d={item.icon} size={20} stroke="#0066ff" />
+                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <div style={{ width: 36, height: 36, background: "#2563eb", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0, marginTop: 2 }}>
+                    🔔
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>{n.type?.toUpperCase() || "TRANSIT ALERT"}</h4>
+                    <p style={{ fontSize: 13, color: "#334155", lineHeight: 1.4 }}>{n.message}</p>
+                    <span style={{ fontSize: 11, color: "#64748b", marginTop: 6, display: "inline-block" }}>{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
                 </div>
 
-                <div className="nf-body">
-                  <div className="nf-title-row">
-                    <div className="nf-title-group">
-                      <h4 className="nf-title">{item.title}</h4>
-                      <span className="nf-tag">{item.tag}</span>
-                    </div>
-                    <div className="nf-meta-group">
-                      <span className="nf-time">{item.time}</span>
-                      {item.unread && <span className="nf-unread-dot" title="Unread" />}
-                    </div>
-                  </div>
-                  <p className="nf-desc">{item.desc}</p>
-                </div>
+                <button
+                  onClick={() => deleteNotification(n._id || n.id)}
+                  style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", padding: 6, fontSize: 16 }}
+                  title="Delete notification"
+                >
+                  ✕
+                </button>
               </div>
             ))
           )}
         </div>
       </div>
+      <footer className="ad-footer"><span>© 2026 GLOW Bus Development System.</span></footer>
     </div>
   );
 };

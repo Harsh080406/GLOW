@@ -10,7 +10,6 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 
 const StudentSchedule = () => {
   const [activeTab, setActiveTab] = useState("daily");
-  const [selectedDay, setSelectedDay] = useState("Today (Saturday)");
 
   const weeklySchedule = [
     { day: "Monday", morning: "07:45 AM → 08:15 AM", evening: "05:00 PM → 05:50 PM", bus: "BUS-104", status: "Regular" },
@@ -22,46 +21,49 @@ const StudentSchedule = () => {
     { day: "Sunday", morning: "--", evening: "--", bus: "--", status: "No Service (Holiday)" },
   ];
 
-  const holidays = [
-    { date: "15 Aug 2026", name: "Independence Day", type: "National Holiday", busService: "Suspended" },
-    { date: "27 Aug 2026", name: "Janmashtami", type: "Public Holiday", busService: "Suspended" },
-    { date: "02 Oct 2026", name: "Mahatma Gandhi Jayanti", type: "National Holiday", busService: "Suspended" },
-    { date: "20 Oct - 26 Oct 2026", name: "Diwali Vacation", type: "Academic Break", busService: "Special Exam / Skeleton Fleet" },
-  ];
+  const handleDownloadTimetablePdf = () => {
+    const type = activeTab === "exam" ? "exam" : "regular";
+    window.open(`/api/v1/student/me/schedule/pdf?type=${type}`, "_blank");
+  };
 
   return (
     <div className="student-view-wrap">
-      {/* ── TABS ───────────────────────────────────────────────── */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-        {[
-          { id: "daily", label: "Today's Schedule" },
-          { id: "weekly", label: "Weekly Schedule" },
-          { id: "exam", label: "Special Exam Timings" },
-          { id: "holidays", label: "Holiday Transit Calendar" },
-        ].map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setActiveTab(t.id)}
-            style={{
-              padding: "10px 20px",
-              borderRadius: 24,
-              border: `1.5px solid ${activeTab === t.id ? "#2563eb" : "#e2e8f0"}`,
-              background: activeTab === t.id ? "#2563eb" : "#fff",
-              color: activeTab === t.id ? "#fff" : "#475569",
-              fontWeight: 700,
-              fontSize: 13,
-              cursor: "pointer",
-            }}
-          >
-            {t.label}
-          </button>
-        ))}
+      {/* HEADER WITH PDF DOWNLOAD */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {[
+            { id: "daily", label: "Today's Schedule" },
+            { id: "weekly", label: "Weekly Schedule" },
+            { id: "exam", label: "Special Exam Timings" },
+          ].map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              style={{
+                padding: "10px 20px",
+                borderRadius: 24,
+                border: `1.5px solid ${activeTab === t.id ? "#2563eb" : "#e2e8f0"}`,
+                background: activeTab === t.id ? "#2563eb" : "#fff",
+                color: activeTab === t.id ? "#fff" : "#475569",
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: "pointer",
+                minHeight: 44,
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <button className="ad-btn-primary" onClick={handleDownloadTimetablePdf} style={{ minHeight: 44 }}>
+          <Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" size={15} stroke="#fff" />Download Timetable PDF
+        </button>
       </div>
 
-      {/* ── DAILY VIEW ─────────────────────────────────────────── */}
+      {/* DAILY VIEW */}
       {activeTab === "daily" && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-          {/* Morning Trip */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
           <div className="ad-card" style={{ borderLeft: "4px solid #22c55e" }}>
             <div className="ad-card-header">
               <div>
@@ -76,7 +78,6 @@ const StudentSchedule = () => {
                 { time: "07:50 AM", stop: "New Ranip Cross Roads", desc: "Stop 2" },
                 { time: "07:55 AM", stop: "Sabarmati Bridge", desc: "Stop 3" },
                 { time: "08:00 AM", stop: "Motera Stadium Circle", desc: "Stop 4" },
-                { time: "08:05 AM", stop: "Chandlodiya Junction", desc: "Stop 5" },
                 { time: "08:15 AM", stop: "University Campus Bus Bay", desc: "Final Campus Drop" },
               ].map((s, i) => (
                 <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: s.isYours ? "#eff6ff" : "#f8fafc", borderRadius: 8, border: s.isYours ? "1px solid #bfdbfe" : "none" }}>
@@ -90,7 +91,6 @@ const StudentSchedule = () => {
             </div>
           </div>
 
-          {/* Evening Trip */}
           <div className="ad-card" style={{ borderLeft: "4px solid #3b82f6" }}>
             <div className="ad-card-header">
               <div>
@@ -101,19 +101,15 @@ const StudentSchedule = () => {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 14 }}>
               {[
-                { time: "05:00 PM", stop: "University Campus Bus Bay", desc: "Boarding at Campus Bay 3" },
-                { time: "05:18 PM", stop: "Chandlodiya Junction", desc: "Drop Stop 1" },
-                { time: "05:25 PM", stop: "Motera Stadium Circle", desc: "Drop Stop 2" },
-                { time: "05:32 PM", stop: "Sabarmati Bridge", desc: "Drop Stop 3" },
-                { time: "05:40 PM", stop: "New Ranip Cross Roads", desc: "Drop Stop 4" },
-                { time: "05:50 PM", stop: "Chandkheda Bus Stop", desc: "Final Drop (Your Stop)", isYours: true },
+                { time: "05:00 PM", stop: "University Campus Bus Bay", desc: "Campus Boarding" },
+                { time: "05:35 PM", stop: "Chandkheda Bus Stop", desc: "Your Drop Off", isYours: true },
               ].map((s, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: s.isYours ? "#eff6ff" : "#f8fafc", borderRadius: 8, border: s.isYours ? "1px solid #bfdbfe" : "none" }}>
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: s.isYours ? "#eff6ff" : "#f8fafc", borderRadius: 8 }}>
                   <div>
                     <p style={{ fontSize: 13.5, fontWeight: s.isYours ? 800 : 600, color: s.isYours ? "#1d4ed8" : "#1e293b" }}>{s.stop}</p>
                     <p style={{ fontSize: 11, color: "#64748b" }}>{s.desc}</p>
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: s.isYours ? "#1d4ed8" : "#475569" }}>{s.time}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#2563eb" }}>{s.time}</span>
                 </div>
               ))}
             </div>
@@ -121,13 +117,9 @@ const StudentSchedule = () => {
         </div>
       )}
 
-      {/* ── WEEKLY ROTATION ────────────────────────────────────── */}
+      {/* WEEKLY VIEW */}
       {activeTab === "weekly" && (
         <div className="ad-card">
-          <div className="ad-card-header">
-            <h3 className="ad-card-title">Weekly Schedule Overview</h3>
-            <span className="ad-badge ad-badge--green">Route R-04 · Bus BUS-104</span>
-          </div>
           <div className="ad-table-wrap">
             <table className="ad-table">
               <thead>
@@ -136,16 +128,16 @@ const StudentSchedule = () => {
                   <th className="ad-th">Morning Departure</th>
                   <th className="ad-th">Evening Departure</th>
                   <th className="ad-th">Assigned Bus</th>
-                  <th className="ad-th">Service Type</th>
+                  <th className="ad-th">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {weeklySchedule.map((w) => (
-                  <tr key={w.day} className="ad-tr" style={{ background: w.day === "Saturday" ? "#fffbeb" : "transparent" }}>
+                {weeklySchedule.map((w, i) => (
+                  <tr key={i} className="ad-tr">
                     <td className="ad-td" style={{ fontWeight: 700 }}>{w.day}</td>
                     <td className="ad-td">{w.morning}</td>
                     <td className="ad-td">{w.evening}</td>
-                    <td className="ad-td" style={{ fontWeight: 600 }}>{w.bus}</td>
+                    <td className="ad-td" style={{ fontWeight: 700, color: "#2563eb" }}>{w.bus}</td>
                     <td className="ad-td">
                       <span className={`ad-badge ${w.status === "Regular" ? "ad-badge--green" : w.status === "Half Day" ? "ad-badge--yellow" : "ad-badge--red"}`}>
                         {w.status}
@@ -159,61 +151,13 @@ const StudentSchedule = () => {
         </div>
       )}
 
-      {/* ── EXAM SPECIAL ───────────────────────────────────────── */}
+      {/* EXAM TIMINGS */}
       {activeTab === "exam" && (
-        <div className="ad-card">
-          <div className="ad-card-header">
-            <h3 className="ad-card-title">Mid-Semester & Final Examination Special Shuttles</h3>
-            <span className="ad-badge ad-badge--yellow">Special Timings</span>
-          </div>
-          <p style={{ fontSize: 13, color: "#64748b", marginBottom: 16 }}>During examination weeks, buses operate on high-frequency staggered shifts to accommodate shift 1 (09:00 AM) and shift 2 (02:00 PM) examinations.</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <div style={{ padding: "16px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
-              <h4 style={{ fontSize: 15, fontWeight: 700, color: "#1e293b" }}>Morning Exam Slot (09:00 AM - 12:00 PM)</h4>
-              <p style={{ fontSize: 13, color: "#475569", marginTop: 4 }}>• Pickup starts at 07:30 AM (15 min earlier)</p>
-              <p style={{ fontSize: 13, color: "#475569" }}>• Campus arrival by 08:15 AM</p>
-              <p style={{ fontSize: 13, color: "#475569" }}>• Return shuttle departs at 12:45 PM</p>
-            </div>
-            <div style={{ padding: "16px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
-              <h4 style={{ fontSize: 15, fontWeight: 700, color: "#1e293b" }}>Afternoon Exam Slot (02:00 PM - 05:00 PM)</h4>
-              <p style={{ fontSize: 13, color: "#475569", marginTop: 4 }}>• Afternoon pickup starts at 12:30 PM</p>
-              <p style={{ fontSize: 13, color: "#475569" }}>• Campus arrival by 01:15 PM</p>
-              <p style={{ fontSize: 13, color: "#475569" }}>• Regular return shuttle departs at 05:30 PM</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── HOLIDAYS ───────────────────────────────────────────── */}
-      {activeTab === "holidays" && (
-        <div className="ad-card">
-          <div className="ad-card-header">
-            <h3 className="ad-card-title">Academic Year 2026-27 Transit Holiday Calendar</h3>
-            <span className="ad-badge ad-badge--red">No Regular Service</span>
-          </div>
-          <div className="ad-table-wrap">
-            <table className="ad-table">
-              <thead>
-                <tr>
-                  <th className="ad-th">Date</th>
-                  <th className="ad-th">Holiday Name</th>
-                  <th className="ad-th">Category</th>
-                  <th className="ad-th">Fleet Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {holidays.map((h) => (
-                  <tr key={h.name} className="ad-tr">
-                    <td className="ad-td" style={{ fontWeight: 700 }}>{h.date}</td>
-                    <td className="ad-td">{h.name}</td>
-                    <td className="ad-td">{h.type}</td>
-                    <td className="ad-td">
-                      <span className="ad-badge ad-badge--red">● {h.busService}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="ad-card" style={{ background: "#fffbf0", border: "1px solid #fef3c7" }}>
+          <h3 className="ad-card-title" style={{ color: "#92400e", marginBottom: 8 }}>Mid-Sem & End-Sem Exam Transit Timings</h3>
+          <p style={{ fontSize: 13, color: "#b45309", marginBottom: 16 }}>Special examination shuttles operate at 08:00 AM for 09:00 AM exam shifts and return at 01:30 PM.</p>
+          <div style={{ display: "flex", gap: 12 }}>
+            <span className="ad-badge ad-badge--yellow">Exam Special Shuttle Active</span>
           </div>
         </div>
       )}
