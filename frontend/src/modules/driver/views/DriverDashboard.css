@@ -934,7 +934,338 @@
   border-color: #bfdbfe;
 }
 
-/* ── RESPONSIVE ─────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   DRIVER COCKPIT CONTRACT & TOUCH TARGET SAFETY
+   - <768px: clean single-column stack (speed gauge, trip card, action buttons)
+   - ≥768px: two-column layout
+   - Minimum 56px height for [Scan] and [SOS] touch targets
+   ════════════════════════════════════════════════════════════ */
+
+.dd-cockpit-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dd-cockpit-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Speed Gauge Card */
+.dd-speed-card {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  padding: 22px 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.dd-speed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dd-speed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #eff6ff;
+  color: #0066ff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.dd-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0066ff;
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.25);
+  animation: dd-pulse 1.8s infinite;
+}
+
+@keyframes dd-pulse {
+  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 102, 255, 0.4); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(0, 102, 255, 0); }
+  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 102, 255, 0); }
+}
+
+.dd-speed-gauge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
+.dd-speed-dial {
+  display: flex;
+  align-items: baseline;
+}
+
+.dd-speed-number {
+  font-size: 52px;
+  font-weight: 900;
+  line-height: 1;
+  color: #0f172a;
+  letter-spacing: -1.5px;
+}
+
+.dd-speed-unit {
+  font-size: 15px;
+  font-weight: 800;
+  color: #64748b;
+  margin-left: 6px;
+}
+
+.dd-speed-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dd-speed-limit {
+  font-size: 12px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dd-speed-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.dd-speed-mini-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.dd-speed-mini-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.dd-speed-mini-val {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-top: 2px;
+}
+
+/* Action Buttons Container */
+.dd-cockpit-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Fixed Large Touch Targets (Minimum 56px height) */
+.dd-btn-touch {
+  min-height: 56px;
+  height: auto;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  width: 100%;
+}
+
+.dd-btn-touch:active {
+  transform: scale(0.985);
+}
+
+.dd-btn-touch-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dd-btn-touch-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.dd-btn-touch-text strong {
+  font-size: 14.5px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.dd-btn-touch-text small {
+  font-size: 11.5px;
+  font-weight: 500;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+/* Primary Action: QR Scanner (min-height 56px) */
+.dd-btn-touch-scan {
+  background: #0066ff;
+  color: #ffffff;
+  border: 2px solid #0052cc;
+}
+.dd-btn-touch-scan:hover {
+  background: #0052cc;
+}
+
+/* Critical Emergency: Driver SOS (min-height 56px) */
+.dd-btn-touch-sos {
+  background: #dc2626;
+  color: #ffffff;
+  border: 2px solid #b91c1c;
+}
+.dd-btn-touch-sos:hover {
+  background: #b91c1c;
+}
+
+/* Delay Broadcast */
+.dd-btn-touch-delay {
+  background: #f59e0b;
+  color: #ffffff;
+  border: 2px solid #d97706;
+}
+.dd-btn-touch-delay:hover {
+  background: #d97706;
+}
+
+/* QR Scanner & Latency Styles */
+#driver-qr-reader {
+  width: 100% !important;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px dashed #0066ff;
+  background: #0f172a;
+}
+#driver-qr-reader video {
+  border-radius: 10px;
+  object-fit: cover;
+  width: 100% !important;
+}
+
+.dd-scanner-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.dd-scanner-tab-btn {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dd-scanner-tab-btn--active {
+  background: #0066ff;
+  color: #ffffff;
+  border-color: #0066ff;
+}
+
+.dd-latency-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 14px;
+}
+
+.dd-latency-badge--met {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.dd-latency-badge--missed {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+/* ── RESPONSIVE CONTRACT (<768px single-column stack, ≥768px two-column) ── */
+@media (max-width: 767px) {
+  .dd-cockpit-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .dd-cockpit-speed-col {
+    order: 1; /* speed gauge first */
+  }
+  .dd-cockpit-trip-col {
+    order: 2; /* trip card second */
+  }
+  .dd-cockpit-actions {
+    order: 3; /* action buttons third */
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 768px) {
+  .dd-cockpit-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.35fr;
+    gap: 20px;
+    align-items: stretch;
+  }
+  .dd-cockpit-speed-col {
+    grid-column: 1 / 2;
+  }
+  .dd-cockpit-trip-col {
+    grid-column: 2 / 3;
+  }
+  .dd-cockpit-actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+}
+
 @media (max-width: 992px) {
   .dd-sidebar {
     position: fixed;
