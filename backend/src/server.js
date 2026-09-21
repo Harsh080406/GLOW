@@ -41,6 +41,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use("/uploads", express.static("uploads"));
 
 // 2. Register Feature Module API Routes
 app.use("/api", healthRoutes);
@@ -49,6 +50,7 @@ app.use("/api/v1", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/v1/auth", authRoutes);
 
+app.use("/api/student", studentRoutes);
 app.use("/api/v1/student", studentRoutes);
 app.use("/api/v1/driver", driverRoutes);
 app.use("/api/v1/admin", adminRoutes);
