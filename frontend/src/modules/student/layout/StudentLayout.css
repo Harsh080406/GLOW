@@ -171,3 +171,47 @@
   .sl-topbar { top: 0; padding: 12px 16px; }
   .sl-content { padding: 16px; }
 }
+
+@media (max-width: 640px) {
+  .sl-topbar {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .sl-topbar-title {
+    font-size: 14.5px;
+    max-width: 170px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sl-topbar-sub {
+    display: none;
+  }
+  .sl-topbar-right {
+    gap: 6px;
+  }
+  .sl-sos-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  .sl-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 11px;
+  }
+  .sl-content {
+    padding: 12px 10px;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .sl-topbar-title {
+    max-width: 120px;
+    font-size: 13.5px;
+  }
+  .sl-sos-btn {
+    padding: 4px 8px;
+    font-size: 10.5px;
+  }
+}

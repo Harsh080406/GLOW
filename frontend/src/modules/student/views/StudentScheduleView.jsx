@@ -371,7 +371,7 @@ const StudentSchedule = () => {
           className="ad-btn-primary"
           onClick={handleDownloadTimetablePdf}
           disabled={downloading}
-          style={{ minHeight: 44, opacity: downloading ? 0.75 : 1 }}
+          style={{ minHeight: 44, opacity: downloading ? 0.75 : 1, flex: "1 1 220px", justifyContent: "center" }}
         >
           <Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" size={15} stroke="#fff" />
           {downloading ? "Downloading PDF..." : "Download Timetable PDF"}
@@ -380,7 +380,7 @@ const StudentSchedule = () => {
 
       {/* DAILY VIEW */}
       {activeTab === "daily" && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
           <div className="ad-card" style={{ borderLeft: "4px solid #22c55e" }}>
             <div className="ad-card-header">
               <div>

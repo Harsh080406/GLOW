@@ -340,5 +340,38 @@
 @media (max-width: 640px) {
   .adb-stats-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .adb-stat-card {
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+  .adb-stat-val {
+    font-size: 20px;
+  }
+  .adb-emergency-banner {
+    padding: 12px 14px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .adb-emergency-banner button {
+    width: 100%;
+    justify-content: center;
+  }
+  .adb-quick-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .adb-quick-btn {
+    padding: 12px 14px;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .adb-stats-grid {
+    grid-template-columns: 1fr;
   }
 }

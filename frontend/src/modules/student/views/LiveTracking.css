@@ -402,3 +402,42 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .lt-hero-banner {
+    padding: 16px 14px;
+    gap: 14px;
+  }
+  .lt-hero-main {
+    gap: 12px;
+  }
+  .lt-hero-bus-icon {
+    width: 44px;
+    height: 44px;
+  }
+  .lt-hero-title {
+    font-size: 18px;
+  }
+  .lt-hero-sub {
+    font-size: 12px;
+  }
+  .lt-hero-stats {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .lt-stat-box {
+    padding: 8px 10px;
+  }
+  .lt-card {
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+  .lt-stop-name {
+    font-size: 12.5px;
+  }
+  .lt-map-container {
+    height: 280px !important;
+  }
+}

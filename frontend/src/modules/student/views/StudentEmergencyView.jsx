@@ -195,7 +195,7 @@ const StudentEmergency = () => {
       </div>
 
       {/* ── EMERGENCY CONTACTS & ACTIONS ─────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
         {/* Rapid Dial Directory */}
         <div className="ad-card">
           <div className="ad-card-header">

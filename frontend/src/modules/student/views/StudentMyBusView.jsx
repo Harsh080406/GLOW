@@ -44,7 +44,7 @@ const StudentMyBus = () => {
   return (
     <div className="student-view-wrap">
       {/* Bus info card */}
-      <div style={{ background: "linear-gradient(135deg,#1e40af,#2563eb)", borderRadius: 16, padding: "24px 28px", color: "#fff", display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+      <div style={{ background: "linear-gradient(135deg,#1e40af,#2563eb)", borderRadius: 16, padding: "clamp(16px, 4vw, 24px) clamp(16px, 4vw, 28px)", color: "#fff", display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
         <div style={{ width: 60, height: 60, background: "rgba(255,255,255,0.18)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <BusIcon size={34} color="#fff" />
         </div>
@@ -57,7 +57,7 @@ const StudentMyBus = () => {
       </div>
 
       {/* Details grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
         <div className="ad-card">
           <h3 className="ad-card-title" style={{ marginBottom: 14 }}>Bus Details</h3>
           {[

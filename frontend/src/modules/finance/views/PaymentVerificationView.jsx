@@ -251,22 +251,22 @@ const PaymentVerification = () => {
               )}
             </div>
 
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <button
                 onClick={() => handleApproveSlip(selectedSlip)}
-                style={{ flex: 1.2, padding: "12px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 8, fontWeight: 800, cursor: "pointer" }}
+                style={{ flex: "1 1 180px", padding: "12px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 8, fontWeight: 800, cursor: "pointer", minHeight: 44 }}
               >
                 ✓ Approve & Activate Pass
               </button>
               <button
                 onClick={() => handleOpenRejectModal(selectedSlip)}
-                style={{ flex: 1, padding: "12px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}
+                style={{ flex: "1 1 160px", padding: "12px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer", minHeight: 44 }}
               >
                 ✕ Reject with Reason
               </button>
               <button
                 onClick={() => setSelectedSlip(null)}
-                style={{ padding: "12px 18px", background: "#e2e8f0", color: "#334155", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}
+                style={{ flex: "1 1 80px", padding: "12px 18px", background: "#e2e8f0", color: "#334155", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer", minHeight: 44 }}
               >
                 Close
               </button>
