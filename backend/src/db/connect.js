@@ -1,7 +1,10 @@
 import mongoose from "mongoose";
 
 const connectDB = async () => {
-  const mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017/glow_transit";
+  const mongoURI =
+    process.env.MONGODB_URI ||
+    process.env.MONGO_URI ||
+    "mongodb://localhost:27017/glow_transit";
 
   try {
     const conn = await mongoose.connect(mongoURI, {

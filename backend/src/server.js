@@ -4,7 +4,17 @@ import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import path from "path";
+import { fileURLToPath } from "url";
 import connectDB from "./db/connect.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env explicitly from backend directory or workspace root
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+dotenv.config();
 
 // Import Route Handlers
 import healthRoutes from "./routes/health.js";
@@ -76,7 +86,7 @@ app.use(globalErrorHandler);
 const isTestEnv =
   process.env.NODE_ENV === "test" ||
   process.argv.includes("--test") ||
-  process.argv.some((arg) => arg.includes("test"));
+  process.argv.some((arg) => arg.endsWith(".test.js") || arg.endsWith(".spec.js"));
 
 // 5. Initialize WebSocket Server
 if (!isTestEnv) {
