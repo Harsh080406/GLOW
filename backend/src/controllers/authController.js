@@ -2,6 +2,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { generateCsrfToken } from "../middleware/csrf.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "glow_super_secret_jwt_access_key_2026";
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "glow_super_secret_jwt_refresh_key_2026";
@@ -101,10 +102,19 @@ export const loginUser = async (req, res, next) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
+    const csrfToken = generateCsrfToken();
+    res.cookie("XSRF-TOKEN", csrfToken, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     return res.json({
       success: true,
       accessToken,
       refreshToken,
+      csrfToken,
       user: {
         id: user.id || user._id,
         email: user.email,
@@ -201,6 +211,7 @@ export const logoutUser = async (req, res, next) => {
     }
 
     res.clearCookie("refreshToken");
+    res.clearCookie("XSRF-TOKEN");
     return res.json({
       success: true,
       message: "Logged out successfully.",
@@ -208,6 +219,18 @@ export const logoutUser = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+// 3.1 GET /api/auth/csrf-token
+export const getCsrfToken = (req, res) => {
+  const csrfToken = generateCsrfToken();
+  res.cookie("XSRF-TOKEN", csrfToken, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+  return res.json({ success: true, csrfToken });
 };
 
 // 4. GET /api/v1/auth/google - Initiate Google OAuth 2.0 Authorization Flow

@@ -73,8 +73,15 @@ app.use("*", (req, res) => {
 // 4. Global Error Handling Middleware
 app.use(globalErrorHandler);
 
+const isTestEnv =
+  process.env.NODE_ENV === "test" ||
+  process.argv.includes("--test") ||
+  process.argv.some((arg) => arg.includes("test"));
+
 // 5. Initialize WebSocket Server
-setupWebSocketServer(server);
+if (!isTestEnv) {
+  setupWebSocketServer(server);
+}
 
 // 6. Database Connection & Server Startup
 const startServer = async () => {
@@ -103,4 +110,8 @@ const startServer = async () => {
   }
 };
 
-startServer();
+if (!isTestEnv) {
+  startServer();
+}
+
+export { app, server, startServer };

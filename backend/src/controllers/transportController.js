@@ -5,6 +5,7 @@ import Route from "../models/Route.js";
 import Student from "../models/Student.js";
 import Trip from "../models/Trip.js";
 import User from "../models/User.js";
+import { withTransaction } from "../utils/transactionUtils.js";
 
 // Helper: Ensure routes are linked to buses if not yet linked
 const getPopulatedRoutesAndBuses = async () => {
@@ -441,22 +442,32 @@ export const autoBalanceRoutes = async (req, res, next) => {
       });
     }
 
-    // If commit is true, execute updates in the database
-    for (const shift of shifts) {
-      await Student.findByIdAndUpdate(shift.studentId, {
-        routeId: shift.targetRoute.id,
-        assignedBusId: shift.targetRoute.busId,
-      });
-    }
-
-    // Sync Bus occupancies
-    for (const routeIdStr of [...sourceRoutesRelieved, ...targetRoutesUtilized]) {
-      const occ = await Student.countDocuments({ routeId: routeIdStr });
-      const rObj = routes.find((r) => r._id.toString() === routeIdStr);
-      if (rObj?.assignedBusId) {
-        await Bus.findByIdAndUpdate(rObj.assignedBusId, { occupancy: occ });
+    // If commit is true, execute updates in the database within a transaction
+    await withTransaction(async (session) => {
+      for (const shift of shifts) {
+        await Student.findByIdAndUpdate(
+          shift.studentId,
+          {
+            routeId: shift.targetRoute.id,
+            assignedBusId: shift.targetRoute.busId,
+          },
+          session ? { session } : undefined
+        );
       }
-    }
+
+      // Sync Bus occupancies
+      for (const routeIdStr of [...sourceRoutesRelieved, ...targetRoutesUtilized]) {
+        const occ = await Student.countDocuments({ routeId: routeIdStr }).session(session || null);
+        const rObj = routes.find((r) => r._id.toString() === routeIdStr);
+        if (rObj?.assignedBusId) {
+          await Bus.findByIdAndUpdate(
+            rObj.assignedBusId,
+            { occupancy: occ },
+            session ? { session } : undefined
+          );
+        }
+      }
+    });
 
     return res.json({
       success: true,
