@@ -12,7 +12,7 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 );
 
 const FeeStructure = () => {
-  const { feeStructures, setFeeStructures, addFeeStructure } = useTransit();
+  const { feeStructures, setFeeStructures, addFeeStructure, authFetch } = useTransit();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -22,11 +22,11 @@ const FeeStructure = () => {
   const [newAmount, setNewAmount] = useState("");
   const [newDueDate, setNewDueDate] = useState("15 Sep 2026");
 
-  const handleAddFee = (e) => {
+  const handleAddFee = async (e) => {
     e.preventDefault();
     if (!newName || !newAmount) return;
 
-    addFeeStructure({
+    await addFeeStructure({
       name: newName,
       type: newType,
       zone: newZone,
@@ -40,10 +40,30 @@ const FeeStructure = () => {
     setNewAmount("");
   };
 
-  const toggleStatus = (id) => {
+  const toggleStatus = async (item) => {
+    const id = item.id || item._id;
+    const nextStatus = item.status === "Active" ? "Inactive" : "Active";
     setFeeStructures((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, status: f.status === "Active" ? "Inactive" : "Active" } : f))
+      prev.map((f) => ((f.id === id || f._id === id) ? { ...f, status: nextStatus } : f))
     );
+    try {
+      await authFetch(`/finance/fee-structures/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status: nextStatus }),
+      });
+    } catch (err) {
+      console.warn("Toggle status error:", err.message);
+    }
+  };
+
+  const handleDeleteFee = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this fee slab?")) return;
+    setFeeStructures((prev) => prev.filter((f) => f.id !== id && f._id !== id));
+    try {
+      await authFetch(`/finance/fee-structures/${id}`, { method: "DELETE" });
+    } catch (err) {
+      console.warn("Delete fee slab error:", err.message);
+    }
   };
 
   return (
@@ -128,12 +148,21 @@ const FeeStructure = () => {
                           </span>
                         </td>
                         <td className="ad-td">
-                          <button
-                            onClick={() => toggleStatus(f.id)}
-                            style={{ padding: "4px 10px", background: f.status === "Active" ? "#fef2f2" : "#f0fdf4", color: f.status === "Active" ? "#dc2626" : "#16a34a", border: `1px solid ${f.status === "Active" ? "#fecaca" : "#bbf7d0"}`, borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-                          >
-                            {f.status === "Active" ? "Deactivate" : "Activate"}
-                          </button>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button
+                              onClick={() => toggleStatus(f)}
+                              style={{ padding: "4px 10px", background: f.status === "Active" ? "#fef2f2" : "#f0fdf4", color: f.status === "Active" ? "#dc2626" : "#16a34a", border: `1px solid ${f.status === "Active" ? "#fecaca" : "#bbf7d0"}`, borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                            >
+                              {f.status === "Active" ? "Deactivate" : "Activate"}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteFee(f.id || f._id)}
+                              style={{ padding: "4px 8px", background: "#f8fafc", color: "#64748b", border: "1px solid #cbd5e1", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                              title="Delete tariff"
+                            >
+                              🗑️
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

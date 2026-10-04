@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FinanceSidebar from "../layout/FinanceSidebar";
 import RoleSwitcherBar from "../../../shared/components/RoleSwitcherBar";
 import { useTransit } from "../../../shared/context/TransitContext";
@@ -14,28 +14,81 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 );
 
 const ReceiptsInvoices = () => {
-  const { transactions } = useTransit();
+  const { transactions, authFetch } = useTransit();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [activeReceipt, setActiveReceipt] = useState(null);
   const [showRecordModal, setShowRecordModal] = useState(false);
+  const [receiptsList, setReceiptsList] = useState([]);
+  const [downloadingId, setDownloadingId] = useState(null);
+  const [emailedId, setEmailedId] = useState(null);
 
-  const filtered = (transactions || []).filter(
+  useEffect(() => {
+    const fetchReceipts = async () => {
+      try {
+        const res = await authFetch("/finance/receipts");
+        if (res?.success && res?.receipts) {
+          setReceiptsList(res.receipts);
+        }
+      } catch (err) {
+        console.warn("Could not load receipts:", err.message);
+      }
+    };
+    fetchReceipts();
+  }, [authFetch]);
+
+  // Combine live receiptsList and transactions
+  const combined = receiptsList.length > 0 ? receiptsList : transactions;
+
+  const filtered = (combined || []).filter(
     (t) =>
       t.id?.toLowerCase().includes(search.toLowerCase()) ||
       t.studentName?.toLowerCase().includes(search.toLowerCase()) ||
       t.studentId?.toLowerCase().includes(search.toLowerCase()) ||
-      t.receiptId?.toLowerCase().includes(search.toLowerCase())
+      t.receiptId?.toLowerCase().includes(search.toLowerCase()) ||
+      t.receiptNumber?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleDownloadPdf = async (item) => {
+    const id = item.receiptId || item.id || item.receiptNumber;
+    setDownloadingId(id);
+    try {
+      const blob = await authFetch(`/finance/receipts/${id}/pdf`, { responseType: "blob" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `GLOW_Official_Receipt_${id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.warn("Direct PDF download note:", err.message);
+      setActiveReceipt(item);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handleEmailReceipt = async (item) => {
+    const id = item.receiptId || item.id || item.receiptNumber;
+    setEmailedId(id);
+    try {
+      await authFetch(`/finance/receipts/${id}/email`, { method: "POST" });
+    } catch (err) {
+      console.warn("Email error:", err.message);
+    }
+    setTimeout(() => setEmailedId(null), 3000);
+  };
 
   const handleExportInvoicesExcel = () => {
     const dataToExport = filtered.map((t) => ({
-      "Receipt Number": t.receiptId || `REC-2026-${t.id?.replace(/\D/g, "") || "8819"}`,
+      "Receipt Number": t.receiptNumber || t.receiptId || `REC-2026-${t.id?.replace(/\D/g, "") || "8819"}`,
       "Transaction ID": t.id,
       "Student Name": t.studentName,
       "Student ID": t.studentId,
-      "Department": t.dept,
-      "Route": t.route,
+      "Department": t.dept || "Computer Science",
+      "Route": t.route || "GSFC University",
       "Amount (INR)": t.amount,
       "Receipt Date": t.date,
       "Payment Mode": t.method,
@@ -119,12 +172,28 @@ const ReceiptsInvoices = () => {
                         <td className="ad-td" style={{ fontWeight: 800, color: "#16a34a" }}>₹{t.amount.toLocaleString()}</td>
                         <td className="ad-td">{t.date}</td>
                         <td className="ad-td">
-                          <button
-                            onClick={() => setActiveReceipt(t)}
-                            style={{ padding: "4px 12px", background: "#eff6ff", color: "#0066ff", border: "1px solid #bfdbfe", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-                          >
-                            Preview & Print
-                          </button>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button
+                              onClick={() => setActiveReceipt(t)}
+                              style={{ padding: "4px 10px", background: "#eff6ff", color: "#0066ff", border: "1px solid #bfdbfe", borderRadius: 6, fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}
+                            >
+                              Preview
+                            </button>
+                            <button
+                              onClick={() => handleDownloadPdf(t)}
+                              style={{ padding: "4px 8px", background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0", borderRadius: 6, fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}
+                              title="Download official PDF with QR tag"
+                            >
+                              {downloadingId === (t.receiptId || t.id || t.receiptNumber) ? "..." : "📥 PDF (QR)"}
+                            </button>
+                            <button
+                              onClick={() => handleEmailReceipt(t)}
+                              style={{ padding: "4px 8px", background: "#f8fafc", color: "#475569", border: "1px solid #cbd5e1", borderRadius: 6, fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}
+                              title="Send receipt notice to student email"
+                            >
+                              {emailedId === (t.receiptId || t.id || t.receiptNumber) ? "✓ Sent" : "✉️ Email"}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

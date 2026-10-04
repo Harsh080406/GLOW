@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FinanceSidebar from "../layout/FinanceSidebar";
 import RoleSwitcherBar from "../../../shared/components/RoleSwitcherBar";
 import { useTransit } from "../../../shared/context/TransitContext";
@@ -12,15 +12,38 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 );
 
 const FinanceRefunds = () => {
-  const { refundRequests, setRefundRequests } = useTransit();
+  const { refundRequests, setRefundRequests, authFetch } = useTransit();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedRefund, setSelectedRefund] = useState(null);
 
-  const handleAction = (id, newStatus) => {
+  useEffect(() => {
+    const fetchRefunds = async () => {
+      try {
+        const res = await authFetch("/finance/refunds");
+        if (res?.success && res?.refunds) {
+          setRefundRequests(res.refunds);
+        }
+      } catch (err) {
+        console.warn("Could not load refunds:", err.message);
+      }
+    };
+    fetchRefunds();
+  }, [authFetch, setRefundRequests]);
+
+  const handleAction = async (id, newStatus) => {
     setRefundRequests((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r))
+      prev.map((r) => ((r.id === id || r._id === id) ? { ...r, status: newStatus } : r))
     );
     setSelectedRefund(null);
+
+    try {
+      await authFetch(`/finance/refunds/${id}/process`, {
+        method: "POST",
+        body: JSON.stringify({ status: newStatus, notes: `Refund ${newStatus.toLowerCase()} by Finance Officer` }),
+      });
+    } catch (err) {
+      console.warn("Process refund error:", err.message);
+    }
   };
 
   return (

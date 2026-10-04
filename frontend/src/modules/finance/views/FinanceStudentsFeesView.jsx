@@ -14,7 +14,7 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 );
 
 const FinanceStudentsFees = () => {
-  const { students, transactions } = useTransit();
+  const { students, transactions, authFetch } = useTransit();
   const [searchTerm, setSearchTerm] = useState("UNI20260125");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [reminderSent, setReminderSent] = useState(null);
@@ -27,13 +27,22 @@ const FinanceStudentsFees = () => {
   const matchedStudent = students.find(
     (s) =>
       s.id?.toLowerCase().includes(searchTerm.trim().toLowerCase()) ||
+      s.enrollmentId?.toLowerCase().includes(searchTerm.trim().toLowerCase()) ||
       s.name?.toLowerCase().includes(searchTerm.trim().toLowerCase())
   ) || students[0];
 
-  const studentTxns = (transactions || []).filter((t) => t.studentId === matchedStudent?.id);
+  const studentTxns = (transactions || []).filter(
+    (t) => t.studentId === matchedStudent?.id || t.studentId === matchedStudent?.enrollmentId
+  );
 
-  const handleSendReminder = (student) => {
-    setReminderSent(student.id);
+  const handleSendReminder = async (student) => {
+    const sId = student.id || student.enrollmentId;
+    setReminderSent(sId);
+    try {
+      await authFetch(`/finance/students/${sId}/remind`, { method: "POST" });
+    } catch (err) {
+      console.warn("Reminder dispatch note:", err.message);
+    }
     setTimeout(() => setReminderSent(null), 3000);
   };
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FinanceSidebar from "../layout/FinanceSidebar";
 import RoleSwitcherBar from "../../../shared/components/RoleSwitcherBar";
 import { useTransit } from "../../../shared/context/TransitContext";
@@ -12,28 +12,70 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 );
 
 const DiscountsScholarships = () => {
-  const { discounts, setDiscounts } = useTransit();
+  const { discounts, setDiscounts, authFetch } = useTransit();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [name, setName] = useState("");
   const [discountType, setDiscountType] = useState("Percentage");
   const [value, setValue] = useState("");
 
-  const handleAdd = (e) => {
+  useEffect(() => {
+    const fetchDiscounts = async () => {
+      try {
+        const res = await authFetch("/finance/discounts");
+        if (res?.success && res?.discounts) {
+          setDiscounts(res.discounts);
+        }
+      } catch (err) {
+        console.warn("Could not fetch discounts:", err.message);
+      }
+    };
+    fetchDiscounts();
+  }, [authFetch, setDiscounts]);
+
+  const handleAdd = async (e) => {
     e.preventDefault();
     if (!name || !value) return;
 
-    setDiscounts((prev) => [
-      ...prev,
-      {
-        id: `DSC-0${prev.length + 1}`,
-        name: name,
-        discountType: discountType,
-        value: Number(value),
-        studentsApplied: 0,
-        status: "Active",
-      },
-    ]);
+    try {
+      const res = await authFetch("/finance/discounts", {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          discountType,
+          value: Number(value),
+        }),
+      });
+
+      if (res?.success && res?.discount) {
+        setDiscounts((prev) => [res.discount, ...prev]);
+      } else {
+        setDiscounts((prev) => [
+          ...prev,
+          {
+            id: `DSC-0${prev.length + 1}`,
+            name,
+            discountType,
+            value: Number(value),
+            studentsApplied: 0,
+            status: "Active",
+          },
+        ]);
+      }
+    } catch (err) {
+      console.warn("Local discount fallback:", err.message);
+      setDiscounts((prev) => [
+        ...prev,
+        {
+          id: `DSC-0${prev.length + 1}`,
+          name,
+          discountType,
+          value: Number(value),
+          studentsApplied: 0,
+          status: "Active",
+        },
+      ]);
+    }
 
     setShowAddModal(false);
     setName("");
