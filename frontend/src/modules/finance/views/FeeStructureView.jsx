@@ -114,7 +114,7 @@ const FeeStructure = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {feeStructures.map((f) => (
+                    {(feeStructures || []).map((f) => (
                       <tr key={f.id} className="ad-tr">
                         <td className="ad-td" style={{ fontWeight: 700 }}>{f.id}</td>
                         <td className="ad-td"><strong>{f.name}</strong></td>

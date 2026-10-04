@@ -60,7 +60,7 @@ const StudentLayout = ({ children, title: overrideTitle, subtitle: overrideSubti
 
         <div className="sl-main">
           {/* Persistent Student Topbar Header */}
-          <header className="sl-topbar">
+          <header className="sl-topbar no-print">
             <button className="sl-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
               <Icon d="M3 12h18M3 6h18M3 18h18" size={22} />
             </button>

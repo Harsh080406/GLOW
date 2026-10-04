@@ -104,10 +104,10 @@ const TransportReports = () => {
                   </thead>
                   <tbody>
                     {[
-                      { id: "R-04", name: "Chandkheda Bus Stop → University Campus", dist: "11.2 km", bus: "BUS-104", pax: 38, ontime: "98.5%", speed: "42 km/h" },
-                      { id: "R-01", name: "SG Highway Iscon → University Campus", dist: "16.5 km", bus: "BUS-101", pax: 44, ontime: "96.2%", speed: "46 km/h" },
-                      { id: "R-02", name: "Maninagar Station → University Campus", dist: "14.2 km", bus: "BUS-108", pax: 32, ontime: "92.0%", speed: "34 km/h" },
-                      { id: "R-05", name: "Gandhinagar Sec 21 → University Campus", dist: "18.0 km", bus: "BUS-115", pax: 41, ontime: "99.1%", speed: "51 km/h" },
+                      { id: "R-04", name: "Fatehgunj Bus Stop → GSFC University Campus", dist: "9.4 km", bus: "BUS-104", pax: 38, ontime: "98.5%", speed: "42 km/h" },
+                      { id: "R-01", name: "Alkapuri RC Dutt Rd → GSFC University Campus", dist: "13.8 km", bus: "BUS-101", pax: 44, ontime: "96.2%", speed: "46 km/h" },
+                      { id: "R-02", name: "Sayajigunj Station → GSFC University Campus", dist: "11.2 km", bus: "BUS-108", pax: 32, ontime: "92.0%", speed: "34 km/h" },
+                      { id: "R-05", name: "Karelibaug Water Tank → GSFC University Campus", dist: "12.5 km", bus: "BUS-115", pax: 41, ontime: "99.1%", speed: "51 km/h" },
                     ].map((r) => (
                       <tr key={r.id} className="ad-tr">
                         <td className="ad-td" style={{ fontWeight: 700 }}>{r.id}</td>

@@ -10,6 +10,7 @@ import ErrorBoundary from "./shared/components/ErrorBoundary";
 import {
   LandingPageView,
   LoginPageView,
+  OAuthCallbackView,
 } from "./modules/public";
 
 // ── 2. Student Mobility Module ─────────────────────────────
@@ -111,6 +112,7 @@ function App() {
             <Route path="/login/admin" element={<LoginPageView />} />
             <Route path="/login/student" element={<LoginPageView />} />
             <Route path="/login/driver" element={<LoginPageView />} />
+            <Route path="/oauth/callback" element={<OAuthCallbackView />} />
             <Route path="/403" element={<ForbiddenView />} />
 
             {/* ── 1. Student Mobility Portal (Protected) ───── */}

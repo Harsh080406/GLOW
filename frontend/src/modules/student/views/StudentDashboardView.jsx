@@ -49,8 +49,8 @@ const MiniMap = ({ progress = 46 }) => {
           <circle r="14" fill="#0066ff" stroke="#fff" strokeWidth="2.5" />
           <text x="-6" y="4" fontSize="10">🚌</text>
         </g>
-        <text x="30" y="173" fontSize="10" fill="#0066ff" fontWeight="700">Chandkheda Stop</text>
-        <text x="400" y="32" fontSize="10" fill="#0f172a" fontWeight="700">University Campus</text>
+        <text x="30" y="173" fontSize="10" fill="#0066ff" fontWeight="700">Fatehgunj Stop</text>
+        <text x="390" y="32" fontSize="10" fill="#0f172a" fontWeight="700">GSFC University</text>
       </svg>
       <div className="sdb-map-badge-wrap">
         <div className="sdb-live-tag">
@@ -69,15 +69,15 @@ const StudentDashboardView = () => {
   const busId = student.busId || "BUS-104";
   const telemetry = (liveBusTelemetry && liveBusTelemetry[busId]) || (liveBusTelemetry && liveBusTelemetry["BUS-104"]) || {};
 
-  const routeName = student.routeName || student.route || "Route 4D (Chandkheda)";
-  const pickupStop = student.pickupStop || student.boarding || "Chandkheda Stop";
+  const routeName = student.routeName || student.route || "Route 4D (Fatehgunj - GSFC)";
+  const pickupStop = student.pickupStop || student.boarding || "Fatehgunj Stop";
   const pickupTime = student.pickupTime || "07:45 AM";
   const feeStatus = student.feeStatus || "PAID";
   const pendingFee = student.pendingFee || 0;
   const passStatus = student.passStatus || student.pass || "ACTIVE";
 
   const etaMinutes = telemetry.etaMinutes || 6;
-  const locationName = telemetry.currentLocationName || telemetry.nextStop || "Motera Crossroads";
+  const locationName = telemetry.currentLocationName || telemetry.nextStop || "Nizampura Char Rasta";
   const speed = telemetry.speed || 42;
 
   const notifications = [
@@ -217,10 +217,10 @@ const StudentDashboardView = () => {
           </div>
           <div className="sdb-sched-list">
             {[
-              { time: "07:45 AM", label: "Morning Boarding", place: "Chandkheda Stop", tagLabel: "Boarding" },
-              { time: "08:15 AM", label: "Arrival Campus", place: "University Main Gate", tagLabel: "Campus" },
-              { time: "05:00 PM", label: "Evening Boarding", place: "University Bus Bay", tagLabel: "Return" },
-              { time: "05:50 PM", label: "Arrival Home", place: "Chandkheda Stop", tagLabel: "Drop-off" },
+              { time: "07:45 AM", label: "Morning Boarding", place: "Fatehgunj Stop", tagLabel: "Boarding" },
+              { time: "08:15 AM", label: "Arrival Campus", place: "GSFC University Main Gate", tagLabel: "Campus" },
+              { time: "05:00 PM", label: "Evening Boarding", place: "GSFC University Bus Bay", tagLabel: "Return" },
+              { time: "05:50 PM", label: "Arrival Home", place: "Fatehgunj Stop", tagLabel: "Drop-off" },
             ].map((s, i) => (
               <div key={i} className="sdb-sched-row">
                 <span className="sdb-sched-time">{s.time}</span>

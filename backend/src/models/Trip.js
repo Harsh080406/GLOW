@@ -13,6 +13,9 @@ const tripSchema = new mongoose.Schema(
     startedAt: { type: Date },
     completedAt: { type: Date },
     occupancySnapshot: { type: Number, default: 0 },
+    departureTime: { type: String },
+    shiftType: { type: String, default: "regular" },
+    published: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

@@ -1,4 +1,15 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import QRCode from "qrcode";
+
+const sanitize = (text) => {
+  if (text === null || text === undefined) return "";
+  return String(text)
+    .replace(/[\u2190-\u2193\u2794\u2799\u279C\u21D2\u21E2]/g, "->")
+    .replace(/[—–]/g, "-")
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/[^\x20-\x7E]/g, " ");
+};
 
 export const pdfService = {
   /**
@@ -21,7 +32,7 @@ export const pdfService = {
       color: rgb(0.08, 0.35, 0.65), // GLOW Navy Blue
     });
 
-    page.drawText("GLOW CAMPUS TRANSIT SYSTEM", {
+    page.drawText("GSFC UNIVERSITY - GLOW CAMPUS TRANSIT", {
       x: 30,
       y: height - 40,
       size: 18,
@@ -29,7 +40,7 @@ export const pdfService = {
       color: rgb(1, 1, 1),
     });
 
-    page.drawText(`Official Route Schedule & Corridor Map — ${routeData.name || "Route Corridor"}`, {
+    page.drawText(sanitize(`Official Route Schedule & Corridor Map - ${routeData?.name || "Route Corridor"}`), {
       x: 30,
       y: height - 65,
       size: 12,
@@ -87,64 +98,224 @@ export const pdfService = {
    */
   async generateSchedulePdf(studentData, scheduleType = "regular") {
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([600, 750]);
+    const page = pdfDoc.addPage([595, 842]);
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
     const { width, height } = page.getSize();
 
+    // Outer border
     page.drawRectangle({
-      x: 0,
-      y: height - 90,
-      width,
-      height: 90,
-      color: rgb(0.1, 0.45, 0.35), // Teal theme for schedule
+      x: 20,
+      y: 20,
+      width: width - 40,
+      height: height - 40,
+      borderWidth: 1.5,
+      borderColor: rgb(0.12, 0.45, 0.38),
+      color: rgb(0.99, 1, 0.99),
     });
 
-    page.drawText("GLOW TRANSIT — ACADEMIC TIMETABLE", {
-      x: 30,
-      y: height - 40,
-      size: 18,
+    // Header Banner
+    page.drawRectangle({
+      x: 20,
+      y: height - 105,
+      width: width - 40,
+      height: 85,
+      color: rgb(0.08, 0.38, 0.32),
+    });
+
+    page.drawText("GSFC UNIVERSITY · GLOW TRANSIT SYSTEM", {
+      x: 36,
+      y: height - 52,
+      size: 17,
       font: fontBold,
       color: rgb(1, 1, 1),
     });
 
-    page.drawText(`Official Shift & Transit Schedule (${scheduleType.toUpperCase()} MODE)`, {
-      x: 30,
-      y: height - 65,
-      size: 12,
+    page.drawText(sanitize(`OFFICIAL TRANSIT TIMETABLE & SHIFT SCHEDULE (${scheduleType.toUpperCase()} MODE)`), {
+      x: 36,
+      y: height - 74,
+      size: 10.5,
       font,
-      color: rgb(0.9, 0.98, 0.95),
+      color: rgb(0.85, 0.96, 0.92),
     });
 
-    let y = height - 120;
-    page.drawText(`Student: ${studentData?.name || "Rahul Sharma"} (${studentData?.id || "UNI20260125"})`, {
-      x: 30,
+    page.drawText("Vigyan Bhavan, Fertilizernagar, Vadodara - 391750 · Academic Year 2026-2027", {
+      x: 36,
+      y: height - 92,
+      size: 8.5,
+      font,
+      color: rgb(0.7, 0.88, 0.82),
+    });
+
+    // Student & Route Info Box
+    let y = height - 135;
+    page.drawRectangle({
+      x: 36,
+      y: y - 38,
+      width: width - 72,
+      height: 48,
+      color: rgb(0.93, 0.97, 0.95),
+      borderWidth: 1,
+      borderColor: rgb(0.75, 0.88, 0.82),
+    });
+
+    page.drawText(sanitize(`Student Name: ${studentData?.name || "Rahul Sharma"}`), { x: 48, y: y - 8, size: 10, font: fontBold, color: rgb(0.1, 0.2, 0.15) });
+    page.drawText(sanitize(`Enrollment ID: ${studentData?.id || studentData?.enrollmentId || "GSFC20260125"}`), { x: 230, y: y - 8, size: 10, font, color: rgb(0.2, 0.3, 0.25) });
+    page.drawText(sanitize(`Assigned Bus: ${studentData?.assignedBus || "BUS-104 (Volvo 9600)"}`), { x: 400, y: y - 8, size: 10, font: fontBold, color: rgb(0.08, 0.38, 0.32) });
+
+    page.drawText(sanitize(`Route Corridor: ${studentData?.routeName || "R-04 (Fatehgunj <-> GSFC University)"}`), { x: 48, y: y - 26, size: 10, font, color: rgb(0.2, 0.3, 0.25) });
+    page.drawText(sanitize(`Boarding Stop: ${studentData?.pickupStop || "Fatehgunj Bus Stop (07:45 AM)"}`), { x: 330, y: y - 26, size: 10, font: fontBold, color: rgb(0.1, 0.45, 0.35) });
+
+    // Section 1: Daily Schedule
+    y -= 62;
+    page.drawText("1. TODAY'S DAILY TRANSIT TIMETABLE & STOP SEQUENCE", {
+      x: 36,
       y,
       size: 11,
       font: fontBold,
+      color: rgb(0.08, 0.38, 0.32),
     });
-    page.drawText(`Route: ${studentData?.routeName || "Route R-04 (SG Highway)"}`, { x: 320, y, size: 11, font });
 
-    y -= 35;
-    page.drawRectangle({ x: 30, y: y - 5, width: 540, height: 25, color: rgb(0.9, 0.95, 0.93) });
-    page.drawText("Shift / Service", { x: 40, y, size: 11, font: fontBold });
-    page.drawText("Departure Time", { x: 200, y, size: 11, font: fontBold });
-    page.drawText("Corridor", { x: 340, y, size: 11, font: fontBold });
-    page.drawText("Status", { x: 480, y, size: 11, font: fontBold });
+    y -= 18;
+    page.drawRectangle({ x: 36, y: y - 4, width: width - 72, height: 18, color: rgb(0.85, 0.94, 0.88) });
+    page.drawText("Trip #1 · Morning Pickup: Fatehgunj Bus Stop -> GSFC University Campus Gate", {
+      x: 44,
+      y: y + 1,
+      size: 9,
+      font: fontBold,
+      color: rgb(0.08, 0.42, 0.25),
+    });
 
-    const rows = [
-      { shift: "Morning Pickup", time: "07:30 AM", route: "R-04 SG Highway", status: "On Time" },
-      { shift: "Mid-Day Campus Link", time: "01:15 PM", route: "R-04 Shuttle", status: "Scheduled" },
-      { shift: "Evening Return", time: "05:15 PM", route: "R-04 SG Highway", status: "Scheduled" },
+    const morningStops = [
+      { time: "07:45 AM", stop: "Fatehgunj Bus Stop", role: "Primary Pickup Stop" },
+      { time: "07:50 AM", stop: "Nizampura Char Rasta", role: "Intermediate Stop" },
+      { time: "07:56 AM", stop: "Chhani Jakat Naka", role: "Intermediate Stop" },
+      { time: "08:04 AM", stop: "Fertilizernagar Gate", role: "Intermediate Stop" },
+      { time: "08:15 AM", stop: "GSFC University Campus Bus Bay", role: "Final Campus Drop" },
     ];
 
-    rows.forEach((row) => {
-      y -= 25;
-      page.drawText(row.shift, { x: 40, y, size: 10, font });
-      page.drawText(row.time, { x: 200, y, size: 10, font });
-      page.drawText(row.route, { x: 340, y, size: 10, font });
-      page.drawText(row.status, { x: 480, y, size: 10, font });
+    y -= 14;
+    morningStops.forEach((s) => {
+      page.drawText(sanitize(s.time), { x: 48, y, size: 8.5, font: fontBold, color: rgb(0.1, 0.2, 0.2) });
+      page.drawText(sanitize(s.stop), { x: 130, y, size: 8.5, font, color: rgb(0.15, 0.2, 0.2) });
+      page.drawText(sanitize(s.role), { x: 350, y, size: 8, font, color: rgb(0.4, 0.5, 0.45) });
+      y -= 15;
+    });
+
+    y -= 4;
+    page.drawRectangle({ x: 36, y: y - 4, width: width - 72, height: 18, color: rgb(0.88, 0.92, 0.98) });
+    page.drawText("Trip #2 · Evening Return: GSFC University Campus -> Fatehgunj Bus Stop", {
+      x: 44,
+      y: y + 1,
+      size: 9,
+      font: fontBold,
+      color: rgb(0.15, 0.3, 0.65),
+    });
+
+    const eveningStops = [
+      { time: "05:00 PM", stop: "GSFC University Campus Bus Bay", role: "Campus Boarding" },
+      { time: "05:35 PM", stop: "Fatehgunj Bus Stop", role: "Destination Drop" },
+    ];
+
+    y -= 14;
+    eveningStops.forEach((s) => {
+      page.drawText(sanitize(s.time), { x: 48, y, size: 8.5, font: fontBold, color: rgb(0.1, 0.2, 0.2) });
+      page.drawText(sanitize(s.stop), { x: 130, y, size: 8.5, font, color: rgb(0.15, 0.2, 0.2) });
+      page.drawText(sanitize(s.role), { x: 350, y, size: 8, font, color: rgb(0.4, 0.5, 0.45) });
+      y -= 15;
+    });
+
+    // Section 2: Weekly Shift Table
+    y -= 10;
+    page.drawText("2. WEEKLY OPERATIONAL SHIFTS & ROTATIONS", {
+      x: 36,
+      y,
+      size: 11,
+      font: fontBold,
+      color: rgb(0.08, 0.38, 0.32),
+    });
+
+    y -= 18;
+    page.drawRectangle({ x: 36, y: y - 5, width: width - 72, height: 20, color: rgb(0.12, 0.45, 0.38) });
+    page.drawText("Day", { x: 48, y: y + 1, size: 9, font: fontBold, color: rgb(1, 1, 1) });
+    page.drawText("Morning Slot", { x: 140, y: y + 1, size: 9, font: fontBold, color: rgb(1, 1, 1) });
+    page.drawText("Evening Slot", { x: 270, y: y + 1, size: 9, font: fontBold, color: rgb(1, 1, 1) });
+    page.drawText("Assigned Shuttle", { x: 400, y: y + 1, size: 9, font: fontBold, color: rgb(1, 1, 1) });
+    page.drawText("Status", { x: 495, y: y + 1, size: 9, font: fontBold, color: rgb(1, 1, 1) });
+
+    const weeklyRows = [
+      { day: "Monday", morning: "07:45 AM -> 08:15 AM", evening: "05:00 PM -> 05:50 PM", bus: "BUS-104", status: "Regular Service" },
+      { day: "Tuesday", morning: "07:45 AM -> 08:15 AM", evening: "05:00 PM -> 05:50 PM", bus: "BUS-104", status: "Regular Service" },
+      { day: "Wednesday", morning: "07:45 AM -> 08:15 AM", evening: "05:00 PM -> 05:50 PM", bus: "BUS-104", status: "Regular Service" },
+      { day: "Thursday", morning: "07:45 AM -> 08:15 AM", evening: "05:00 PM -> 05:50 PM", bus: "BUS-104", status: "Regular Service" },
+      { day: "Friday", morning: "07:45 AM -> 08:15 AM", evening: "05:00 PM -> 05:50 PM", bus: "BUS-104", status: "Regular Service" },
+      { day: "Saturday", morning: "07:45 AM -> 08:15 AM", evening: "01:30 PM -> 02:20 PM", bus: "BUS-104", status: "Half Day Slot" },
+      { day: "Sunday", morning: "--", evening: "--", bus: "--", status: "Holiday (No Service)" },
+    ];
+
+    y -= 14;
+    weeklyRows.forEach((w, idx) => {
+      const isAlt = idx % 2 === 1;
+      if (isAlt) {
+        page.drawRectangle({ x: 36, y: y - 3, width: width - 72, height: 16, color: rgb(0.96, 0.98, 0.97) });
+      }
+      page.drawText(sanitize(w.day), { x: 48, y, size: 8.5, font: fontBold, color: rgb(0.1, 0.15, 0.15) });
+      page.drawText(sanitize(w.morning), { x: 140, y, size: 8, font, color: rgb(0.2, 0.25, 0.25) });
+      page.drawText(sanitize(w.evening), { x: 270, y, size: 8, font, color: rgb(0.2, 0.25, 0.25) });
+      page.drawText(sanitize(w.bus), { x: 400, y, size: 8, font: fontBold, color: rgb(0.08, 0.38, 0.32) });
+      page.drawText(sanitize(w.status), { x: 495, y, size: 8, font, color: w.status.includes("Holiday") ? rgb(0.7, 0.2, 0.2) : rgb(0.1, 0.5, 0.2) });
+      y -= 17;
+    });
+
+    // Section 3: Exam and Special Notice
+    y -= 10;
+    page.drawRectangle({
+      x: 36,
+      y: y - 48,
+      width: width - 72,
+      height: 52,
+      color: rgb(0.99, 0.98, 0.92),
+      borderWidth: 1,
+      borderColor: rgb(0.9, 0.85, 0.6),
+    });
+
+    page.drawText("EXAMINATION PERIOD & SPECIAL PROTOCOLS", {
+      x: 48,
+      y: y - 8,
+      size: 9.5,
+      font: fontBold,
+      color: rgb(0.55, 0.35, 0.05),
+    });
+    page.drawText("Special examination shuttles operate at 08:00 AM sharp for 09:00 AM session slots and return at 01:30 PM & 05:30 PM.", {
+      x: 48,
+      y: y - 22,
+      size: 8,
+      font,
+      color: rgb(0.4, 0.3, 0.1),
+    });
+    page.drawText("Boarding requires a valid GLOW Digital Pass or NFC Student ID. For route inquiries: transit@gsfcuni.edu.in", {
+      x: 48,
+      y: y - 36,
+      size: 8,
+      font,
+      color: rgb(0.4, 0.3, 0.1),
+    });
+
+    // Verification Footer
+    page.drawText("Generated via GLOW Campus Transit OS · GSFC University Transportation Cell · Vadodara - 391750", {
+      x: 36,
+      y: 35,
+      size: 8,
+      font,
+      color: rgb(0.45, 0.55, 0.5),
+    });
+    page.drawText(`Document Ref: TT-${Date.now().toString().slice(-8)} · Valid: 2026-2027`, {
+      x: 380,
+      y: 35,
+      size: 8,
+      font: fontBold,
+      color: rgb(0.45, 0.55, 0.5),
     });
 
     return await pdfDoc.save();
@@ -189,7 +360,7 @@ export const pdfService = {
       color: rgb(1, 1, 1),
     });
 
-    page.drawText("GLOW CAMPUS TRANSIT SYSTEM — OFFICIAL CREDENTIAL", {
+    page.drawText("GSFC UNIVERSITY - GLOW CAMPUS TRANSIT SYSTEM", {
       x: 40,
       y: height - 80,
       size: 10,
@@ -198,30 +369,116 @@ export const pdfService = {
     });
 
     let y = height - 150;
-    page.drawText(`PASS ID: ${passData?.passCode || "PASS-STU-2026-0125"}`, { x: 40, y, size: 14, font: fontBold });
+    page.drawText(sanitize(`PASS ID: ${passData?.passCode || "PASS-STU-2026-0125"}`), { x: 40, y, size: 14, font: fontBold });
     y -= 25;
-    page.drawText(`Student Name: ${passData?.studentName || "Rahul Sharma"}`, { x: 40, y, size: 12, font });
+    page.drawText(sanitize(`Student Name: ${passData?.studentName || "Rahul Sharma"}`), { x: 40, y, size: 12, font });
     y -= 20;
-    page.drawText(`Enrollment ID: ${passData?.studentId || "UNI20260125"}`, { x: 40, y, size: 11, font });
+    page.drawText(sanitize(`Enrollment ID: ${passData?.studentId || "UNI20260125"}`), { x: 40, y, size: 11, font });
     y -= 20;
-    page.drawText(`Route Corridor: ${passData?.routeName || "Route R-04 (SG Highway)"}`, { x: 40, y, size: 11, font });
+    page.drawText(sanitize(`Route Corridor: ${passData?.routeName || "Route R-04 (Fatehgunj - GSFC)"}`), { x: 40, y, size: 11, font });
     y -= 20;
-    page.drawText(`Distance Zone: ${passData?.zone || "Zone B"}`, { x: 40, y, size: 11, font });
+    page.drawText(sanitize(`Distance Zone: ${passData?.zone || "Zone B"}`), { x: 40, y, size: 11, font });
     y -= 20;
-    page.drawText(`Pass Status: ${passData?.status || "ACTIVE"}`, { x: 40, y, size: 11, font: fontBold });
+    page.drawText(sanitize(`Pass Status: ${passData?.status || "ACTIVE"}`), { x: 40, y, size: 11, font: fontBold });
     y -= 20;
-    page.drawText(`Valid Until: ${passData?.expiryDate || "31 May 2027"}`, { x: 40, y, size: 11, font });
+    page.drawText(sanitize(`Valid Until: ${passData?.expiryDate || "31 May 2027"}`), { x: 40, y, size: 11, font });
 
     // HMAC Signature Display Box
     y -= 40;
     page.drawRectangle({ x: 40, y: y - 10, width: width - 80, height: 40, color: rgb(0.93, 0.94, 0.97) });
-    page.drawText("HMAC SECURITY PAYLOAD SIGNATURE:", { x: 50, y: y + 12, size: 8, font: fontBold });
-    page.drawText(passData?.signedPayload || "HMAC_SIG_SHA256_GLOW_PASS_2026_VALID", {
+    page.drawText("HMAC SECURITY PAYLOAD SIGNATURE:", { x: 50, y: y + 14, size: 8, font: fontBold });
+    page.drawText(sanitize(passData?.signedPayload || "HMAC_SIG_SHA256_GLOW_PASS_2026_VALID"), {
       x: 50,
-      y: y - 2,
-      size: 9,
+      y: y,
+      size: 8.5,
       font,
       color: rgb(0.2, 0.2, 0.6),
+    });
+
+    // ── QR CODE GENERATION & EMBEDDING ────────────────────────
+    const qrPayload = passData?.signedPayload || `PASS-${passData?.studentId || "UNI20260125"}|R-04|ZONE-B|SIG_VALID`;
+    const qrPngBuffer = await QRCode.toBuffer(qrPayload, {
+      type: "png",
+      width: 320,
+      margin: 1,
+      color: {
+        dark: "#0f172a",
+        light: "#ffffff",
+      },
+    });
+
+    const qrImage = await pdfDoc.embedPng(qrPngBuffer);
+    const qrSize = 130;
+    const qrX = (width - qrSize) / 2;
+    const qrBoxY = y - 180;
+
+    // QR Code Container Box
+    page.drawRectangle({
+      x: qrX - 16,
+      y: qrBoxY,
+      width: qrSize + 32,
+      height: qrSize + 32,
+      borderWidth: 1,
+      borderColor: rgb(0.85, 0.88, 0.93),
+      color: rgb(1, 1, 1),
+    });
+
+    // Draw QR Code
+    page.drawImage(qrImage, {
+      x: qrX,
+      y: qrBoxY + 16,
+      width: qrSize,
+      height: qrSize,
+    });
+
+    // QR Subtitle Labels
+    const titleText = "CRYPTOGRAPHICALLY SIGNED QR PASS";
+    page.drawText(titleText, {
+      x: (width - fontBold.widthOfTextAtSize(titleText, 8.5)) / 2,
+      y: qrBoxY - 14,
+      size: 8.5,
+      font: fontBold,
+      color: rgb(0.12, 0.16, 0.24),
+    });
+
+    const subText = "Scan with GLOW Driver Cockpit Scanner for immediate gate clearance";
+    page.drawText(subText, {
+      x: (width - font.widthOfTextAtSize(subText, 7.5)) / 2,
+      y: qrBoxY - 26,
+      size: 7.5,
+      font,
+      color: rgb(0.4, 0.45, 0.52),
+    });
+
+    // Status Badge at Bottom
+    const badgeWidth = 110;
+    const badgeHeight = 22;
+    page.drawRectangle({
+      x: (width - badgeWidth) / 2,
+      y: qrBoxY - 56,
+      width: badgeWidth,
+      height: badgeHeight,
+      borderWidth: 0,
+      color: rgb(0.13, 0.77, 0.36),
+    });
+
+    const activeText = "ACTIVE PASS";
+    page.drawText(activeText, {
+      x: (width - fontBold.widthOfTextAtSize(activeText, 9.5)) / 2,
+      y: qrBoxY - 49,
+      size: 9.5,
+      font: fontBold,
+      color: rgb(1, 1, 1),
+    });
+
+    // Official Certified Footer
+    const footerText = "Official certified transport credential issued by GSFC University Transit Cell, Vadodara.";
+    page.drawText(footerText, {
+      x: (width - font.widthOfTextAtSize(footerText, 7.5)) / 2,
+      y: 28,
+      size: 7.5,
+      font,
+      color: rgb(0.55, 0.6, 0.65),
     });
 
     return await pdfDoc.save();

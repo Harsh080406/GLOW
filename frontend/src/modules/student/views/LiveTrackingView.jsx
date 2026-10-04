@@ -61,12 +61,12 @@ const TrackingMap = ({ busProgress, routeStops, nextStopIndex, lat, lng, speed, 
 
         {/* Route Stops */}
         {[
-          { x: 80, y: 280, name: "Chandkheda Stop", isStart: true },
-          { x: 170, y: 240, name: "Visat Circle" },
-          { x: 270, y: 210, name: "Motera Crossroads" },
-          { x: 380, y: 180, name: "Ranip Bus Port" },
-          { x: 480, y: 130, name: "Koba Circle" },
-          { x: 580, y: 90, name: "University Campus", isEnd: true },
+          { x: 80, y: 280, name: "Fatehgunj Stop", isStart: true },
+          { x: 170, y: 240, name: "Nizampura Char Rasta" },
+          { x: 270, y: 210, name: "Chhani Jakat Naka" },
+          { x: 380, y: 180, name: "Bajwa Crossing" },
+          { x: 480, y: 130, name: "Fertilizernagar Gate" },
+          { x: 580, y: 90, name: "GSFC University", isEnd: true },
         ].map((stop, i) => {
           const isPassed = i < nextStopIndex;
           const isNext = i === nextStopIndex;
@@ -126,23 +126,23 @@ const LiveTracking = () => {
   const busProgress = telemetry.progressPercent || 46;
   const speed = telemetry.speed || 42;
   const nextStopIndex = telemetry.nextStopIndex !== undefined ? telemetry.nextStopIndex : 2;
-  const nextStopName = telemetry.nextStop || "Motera Crossroads";
+  const nextStopName = telemetry.nextStop || "Chhani Jakat Naka";
   const etaMinutes = telemetry.etaMinutes || 6;
-  const lat = telemetry.lat || 23.0982;
-  const lng = telemetry.lng || 72.5784;
+  const lat = telemetry.lat || 22.3412;
+  const lng = telemetry.lng || 73.1710;
   const driverName = telemetry.driverName || "Mahesh Patel";
   const driverPhone = telemetry.driverPhone || "+91 98765 11111";
 
-  const routeName = currentStudent?.routeName || currentStudent?.route || "Route 4D (Chandkheda)";
-  const pickupStop = currentStudent?.pickupStop || currentStudent?.boarding || "Chandkheda Stop";
+  const routeName = currentStudent?.routeName || currentStudent?.route || "Route 4D (Fatehgunj - GSFC)";
+  const pickupStop = currentStudent?.pickupStop || currentStudent?.boarding || "Fatehgunj Stop";
 
   const routeStops = [
-    { name: "Chandkheda Stop", time: "07:30 AM", eta: "Departed", status: nextStopIndex > 0 ? "passed" : "approaching" },
-    { name: "Visat Circle", time: "07:42 AM", eta: nextStopIndex === 1 ? `${etaMinutes} min` : nextStopIndex > 1 ? "Passed" : "Upcoming", status: nextStopIndex === 1 ? "approaching" : nextStopIndex > 1 ? "passed" : "upcoming" },
-    { name: "Motera Crossroads", time: "07:54 AM", eta: nextStopIndex === 2 ? `${etaMinutes} min` : nextStopIndex > 2 ? "Passed" : "Upcoming", status: nextStopIndex === 2 ? "approaching" : nextStopIndex > 2 ? "passed" : "upcoming" },
-    { name: "Ranip Bus Port", time: "08:04 AM", eta: nextStopIndex === 3 ? `${etaMinutes} min` : nextStopIndex > 3 ? "Passed" : "Upcoming", status: nextStopIndex === 3 ? "approaching" : nextStopIndex > 3 ? "passed" : "upcoming" },
-    { name: "Koba Circle", time: "08:14 AM", eta: nextStopIndex === 4 ? `${etaMinutes} min` : nextStopIndex > 4 ? "Passed" : "Upcoming", status: nextStopIndex === 4 ? "approaching" : nextStopIndex > 4 ? "passed" : "upcoming" },
-    { name: "University Campus", time: "08:20 AM", eta: "Destination", status: "destination" },
+    { name: "Fatehgunj Stop", time: "07:30 AM", eta: "Departed", status: nextStopIndex > 0 ? "passed" : "approaching" },
+    { name: "Nizampura Char Rasta", time: "07:42 AM", eta: nextStopIndex === 1 ? `${etaMinutes} min` : nextStopIndex > 1 ? "Passed" : "Upcoming", status: nextStopIndex === 1 ? "approaching" : nextStopIndex > 1 ? "passed" : "upcoming" },
+    { name: "Chhani Jakat Naka", time: "07:54 AM", eta: nextStopIndex === 2 ? `${etaMinutes} min` : nextStopIndex > 2 ? "Passed" : "Upcoming", status: nextStopIndex === 2 ? "approaching" : nextStopIndex > 2 ? "passed" : "upcoming" },
+    { name: "Bajwa Crossing", time: "08:04 AM", eta: nextStopIndex === 3 ? `${etaMinutes} min` : nextStopIndex > 3 ? "Passed" : "Upcoming", status: nextStopIndex === 3 ? "approaching" : nextStopIndex > 3 ? "passed" : "upcoming" },
+    { name: "Fertilizernagar Gate", time: "08:14 AM", eta: nextStopIndex === 4 ? `${etaMinutes} min` : nextStopIndex > 4 ? "Passed" : "Upcoming", status: nextStopIndex === 4 ? "approaching" : nextStopIndex > 4 ? "passed" : "upcoming" },
+    { name: "GSFC University", time: "08:20 AM", eta: "Destination", status: "destination" },
   ];
 
   return (

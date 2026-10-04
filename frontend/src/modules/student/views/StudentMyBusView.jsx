@@ -31,10 +31,10 @@ const MapSVG = () => (
       ))}
       <polyline points="60,200 110,80 290,80 490,80 570,45" fill="none" stroke="#22c55e" strokeWidth="3.5" strokeLinecap="round"/>
       <circle cx="60" cy="200" r="7" fill="#3b82f6" stroke="#fff" strokeWidth="2"/>
-      <text x="30" y="213" fontSize="9" fill="#1e40af" fontWeight="700">Chandkheda</text>
+      <text x="30" y="213" fontSize="9" fill="#1e40af" fontWeight="700">Fatehgunj</text>
       <g transform="translate(290,80)"><circle r="13" fill="#22c55e" stroke="#fff" strokeWidth="2.5"/><text x="-7" y="5" fontSize="12">🚌</text></g>
       <circle cx="570" cy="45" r="7" fill="#ef4444" stroke="#fff" strokeWidth="2"/>
-      <text x="540" y="35" fontSize="9" fill="#991b1b" fontWeight="700">University</text>
+      <text x="490" y="35" fontSize="9" fill="#991b1b" fontWeight="700">GSFC University</text>
     </svg>
   </div>
 );
@@ -51,7 +51,7 @@ const StudentMyBus = () => {
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: 13, opacity: 0.75, marginBottom: 4 }}>Your Assigned Bus</p>
           <h2 style={{ fontSize: 28, fontWeight: 900, marginBottom: 2 }}>BUS-104</h2>
-          <p style={{ opacity: 0.85, fontSize: 14 }}>Route: University → Chandkheda &nbsp;·&nbsp; Route 2A</p>
+          <p style={{ opacity: 0.85, fontSize: 14 }}>Route: GSFC University ↔ Fatehgunj &nbsp;·&nbsp; Route 4D</p>
         </div>
         <span style={{ background: "#22c55e", color: "#fff", borderRadius: 20, padding: "5px 16px", fontWeight: 700, fontSize: 13 }}>● On Route</span>
       </div>
@@ -62,7 +62,7 @@ const StudentMyBus = () => {
           <h3 className="ad-card-title" style={{ marginBottom: 14 }}>Bus Details</h3>
           {[
             ["Bus Number",      "BUS-104"],
-            ["Registration",    "GJ-05-AB-1234"],
+            ["Registration",    "GJ-06-AB-1004"],
             ["Type",            "Volvo AC Seater"],
             ["Capacity",        "52 seats"],
             ["Current Status",  "On Route"],
@@ -105,7 +105,7 @@ const StudentMyBus = () => {
         </div>
         <MapSVG />
         <div style={{ display:"flex", gap:20, marginTop:16, flexWrap:"wrap" }}>
-          {[["Current Location","Between Naranpura & Gujarat Uni"],["Next Stop","Gujarat University"],["Speed","42 km/h"],["ETA to Campus","~7 min"]].map(([l,v])=>(
+          {[["Current Location","Between Nizampura & Chhani"],["Next Stop","Chhani Jakat Naka"],["Speed","42 km/h"],["ETA to Campus","~7 min"]].map(([l,v])=>(
             <div key={l}>
               <p style={{ fontSize:11, color:"#7c8494", textTransform:"uppercase", letterSpacing:"0.5px" }}>{l}</p>
               <p style={{ fontSize:14, fontWeight:700, color:"#1a1d23", marginTop:2 }}>{v}</p>

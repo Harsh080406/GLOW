@@ -72,7 +72,7 @@ const StudentSidebar = ({ isOpen, onClose }) => {
 
   return (
     <>
-      <aside className={`ss-sidebar ${isCollapsed ? "ss-sidebar--collapsed" : ""} ${isOpen ? "ss-sidebar--open" : ""}`}>
+      <aside className={`ss-sidebar no-print ${isCollapsed ? "ss-sidebar--collapsed" : ""} ${isOpen ? "ss-sidebar--open" : ""}`}>
         {/* Brand Header — Clicking toggles between full and small icon-only logo */}
         <button
           type="button"

@@ -63,7 +63,7 @@ export function setupWebSocketServer(server) {
             payload: {
               id: `EMG-${Date.now().toString().slice(-4)}`,
               busId: payload?.busId || "BUS-104",
-              location: payload?.location || "Motera Crossroads",
+              location: payload?.location || "Nizampura Char Rasta, Vadodara",
               reportedBy: ws.user?.email || "Student Commuter",
               timestamp: new Date().toISOString(),
               severity: "CRITICAL",

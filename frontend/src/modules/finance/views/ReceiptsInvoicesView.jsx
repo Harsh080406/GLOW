@@ -20,7 +20,7 @@ const ReceiptsInvoices = () => {
   const [activeReceipt, setActiveReceipt] = useState(null);
   const [showRecordModal, setShowRecordModal] = useState(false);
 
-  const filtered = transactions.filter(
+  const filtered = (transactions || []).filter(
     (t) =>
       t.id?.toLowerCase().includes(search.toLowerCase()) ||
       t.studentName?.toLowerCase().includes(search.toLowerCase()) ||

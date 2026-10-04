@@ -24,7 +24,7 @@ const PendingFees = () => {
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [collectTargetId, setCollectTargetId] = useState("");
 
-  const pendingStudents = students.filter(
+  const pendingStudents = (students || []).filter(
     (s) =>
       (s.pendingFee || 0) > 0 &&
       (s.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||

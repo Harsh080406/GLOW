@@ -43,5 +43,27 @@ You can log in to any of the role dashboards directly from the `/login` portal u
 ### 5. Transport Operations Hub (`/transport/dashboard`)
 - *Route Optimization*: Real-time capacity balancing to prevent overcrowding.
 - *Schedule Management*: Regular semester and exam special staggered shifts (09:00 AM & 02:00 PM).
+
 ---
-© 2026 GLOW Campus Transit & Fleet Management System. All rights reserved.
+
+# Architecture & Database Setup
+
+### MongoDB Replica Sets & Multi-Document Transactions
+The vehicle assignment system (`POST /api/admin/drivers/:id/assign-vehicle`) uses atomic multi-document transactions via `mongoose.startSession()` to prevent concurrent double-assignments of a single driver to two different buses.
+
+- **Production / MongoDB Atlas**: Replica sets are enabled by default. Multi-document transactions operate automatically.
+- **Local MongoDB**: If running standalone local MongoDB instances (without replica set initiation), the controller provides an automatic atomic update fallback. To enable native transactions locally:
+  ```bash
+  # Initialize replica set on local mongod:
+  mongod --replSet rs0 --dbpath /data/db
+  # In mongosh:
+  rs.initiate()
+  ```
+
+### Real-Time Engine & Live Telemetry
+- **WebSocket Gateway**: High-frequency channel broadcasting on `bus:*:telemetry`, `sos:alerts`, and `notifications:{userId}`.
+- **GPS Simulator**: Runs on a configurable interval persisted in the singleton `SystemConfig` document, dynamically updating polling frequency.
+- **2FA (TOTP)**: Super Administrator accounts feature RFC 6238 TOTP enrollment powered by `otplib` and `qrcode`.
+
+---
+© 2026 GLOW Campus Transit & Fleet Management System. All rights reserved.

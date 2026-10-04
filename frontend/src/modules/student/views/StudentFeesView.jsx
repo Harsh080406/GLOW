@@ -309,7 +309,7 @@ const StudentFees = () => {
 
             {/* Receipt Header */}
             <div style={{ textAlign: "center", borderBottom: "2px dashed #e2e8f0", paddingBottom: 20, marginBottom: 20 }}>
-              <span style={{ fontSize: 11, letterSpacing: 1.5, color: "#64748b", textTransform: "uppercase", fontWeight: 700 }}>GLOW UNIVERSITY TRANSPORT SYSTEM</span>
+              <span style={{ fontSize: 11, letterSpacing: 1.5, color: "#64748b", textTransform: "uppercase", fontWeight: 700 }}>GSFC UNIVERSITY — GLOW TRANSPORT SYSTEM</span>
               <h2 style={{ fontSize: 22, fontWeight: 900, color: "#1e293b", marginTop: 4 }}>FEE PAYMENT RECEIPT</h2>
               <p style={{ fontSize: 12, color: "#16a34a", fontWeight: 700, marginTop: 4 }}>● TAX INVOICE / OFFICIAL RECEIPT</p>
             </div>

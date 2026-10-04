@@ -284,8 +284,8 @@ export const ViewReceiptModal = ({ isOpen, onClose, transaction }) => {
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <GlowLogo width={42} darkMode={false} />
               <div>
-                <h3 style={{ fontSize: 16, fontWeight: 900, color: "#0f172a", letterSpacing: -0.2 }}>GLOW CAMPUS TRANSIT</h3>
-                <p style={{ fontSize: 11, color: "#64748b" }}>University Transportation & Accounts Division</p>
+                <h3 style={{ fontSize: 16, fontWeight: 900, color: "#0f172a", letterSpacing: -0.2 }}>GSFC UNIVERSITY TRANSIT</h3>
+                <p style={{ fontSize: 11, color: "#64748b" }}>Transportation & Accounts Division, Fertilizernagar, Vadodara</p>
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
@@ -303,7 +303,7 @@ export const ViewReceiptModal = ({ isOpen, onClose, transaction }) => {
             <div>
               <span style={{ color: "#64748b", display: "block", fontSize: 11 }}>COMMUTER NAME:</span>
               <strong style={{ color: "#0f172a" }}>{transaction.studentName || "Rahul Sharma"}</strong>
-              <span style={{ color: "#475569", display: "block" }}>ID: {transaction.studentId || "UNI20260125"}</span>
+              <span style={{ color: "#475569", display: "block" }}>ID: {transaction.studentId || "GSFC20260125"}</span>
             </div>
             <div>
               <span style={{ color: "#64748b", display: "block", fontSize: 11 }}>TRANSACTION DETAILS:</span>
@@ -323,7 +323,7 @@ export const ViewReceiptModal = ({ isOpen, onClose, transaction }) => {
             <tbody>
               <tr>
                 <td style={{ padding: "8px", borderBottom: "1px solid #f1f5f9" }}>
-                  Annual Campus Shuttle Transportation Fee ({transaction.route || "Route 4D - Chandkheda"})
+                  Annual Campus Shuttle Transportation Fee ({transaction.route || "Route 4D - Fatehgunj"})
                 </td>
                 <td style={{ padding: "8px", borderBottom: "1px solid #f1f5f9", textAlign: "right" }}>
                   ₹{baseAmount.toLocaleString()}

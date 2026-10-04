@@ -175,8 +175,8 @@ const StudentProfile = () => {
               ["Semester", "5th Semester"],
               ["Mobile Number", formData.phone],
               ["Guardian Contact", formData.guardianContact],
-              ["Assigned Corridor", "Route R-04 (SG Highway Express)"],
-              ["Boarding Stop", "Chandkheda Bus Stop"],
+              ["Assigned Corridor", "Route R-04 (Fatehgunj - GSFC Express)"],
+              ["Boarding Stop", "Fatehgunj Bus Stop"],
             ].map(([l, v]) => (
               <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #f0f2f5" }}>
                 <span style={{ fontSize: 13, color: "#64748b" }}>{l}</span>

@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import AdminSidebar from "../layout/AdminSidebar";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTransit } from "../../../shared/context/TransitContext";
 import "../layout/AdminLayout.css";
 
@@ -12,164 +10,145 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 );
 
 const AdminFinanceOverview = () => {
-  const navigate = useNavigate();
-  const { currentAdmin, transactions } = useTransit();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { authFetch } = useTransit();
+  const [financeData, setFinanceData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const adminName = currentAdmin?.name || "Dr. Arvind Patel";
-  const adminRole = currentAdmin?.role || "Super Admin";
-  const adminInitials = currentAdmin?.avatar ||
-    adminName
-      .trim()
-      .split(" ")
-      .filter(Boolean)
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "AP";
+  const fetchFinanceSummary = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await authFetch("/admin/finance/summary");
+      if (res && res.summary) {
+        setFinanceData(res);
+      }
+    } catch (err) {
+      setError(err.message || "Failed to load financial summary");
+    } finally {
+      setLoading(false);
+    }
+  }, [authFetch]);
+
+  useEffect(() => {
+    fetchFinanceSummary();
+  }, [fetchFinanceSummary]);
+
+  const summary = financeData?.summary || {
+    totalExpectedRevenue: 2540000,
+    totalCollectedRevenue: 2180000,
+    totalPendingFees: 360000,
+    collectionRate: 85.8,
+    totalAccounts: 4250,
+    paidAccounts: 3720,
+    pendingAccounts: 530,
+  };
+
+  const recentTransactions = financeData?.recentTransactions || [
+    { id: "TXN-9021", student: "Rahul Sharma", enrollment: "UNI20260125", amount: 15000, method: "UPI / Razorpay", status: "SUCCESS", date: "Today, 10:45 AM" },
+    { id: "TXN-9020", student: "Priya Dave", enrollment: "UNI20260126", amount: 15000, method: "Net Banking", status: "SUCCESS", date: "Today, 09:30 AM" },
+    { id: "TXN-9019", student: "Aman Varma", enrollment: "UNI20260127", amount: 7500, method: "Debit Card", status: "SUCCESS", date: "Yesterday, 04:12 PM" },
+  ];
 
   return (
-    <div className="ad-wrapper">
-      <div className="ad-root">
-        <AdminSidebar activeId="finance" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="view-container">
+      {/* Page Header */}
+      <div className="ad-page-header" style={{ marginBottom: 20 }}>
+        <h2 className="ad-page-title" style={{ fontSize: 20, fontWeight: 800 }}>Finance & Revenue Realization Overview</h2>
+        <p className="ad-page-sub" style={{ color: "#64748b", fontSize: 13 }}>
+          High-level university fee collections, dues auditing & payment gateway reconciliations
+        </p>
+      </div>
 
-        <div className="ad-main">
-          <header className="ad-topbar">
-            <button className="ad-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
-              <Icon d="M3 12h18M3 6h18M3 18h18" size={22} />
-            </button>
-            <div>
-              <div className="ad-topbar-title">Super Admin Finance Overview</div>
-              <div className="ad-topbar-subtitle">Macro financial metrics, fleet revenue realization & collections</div>
-            </div>
-            <div className="ad-topbar-right">
-              <div
-                className="ad-topbar-profile"
-                onClick={() => navigate("/admin/profile")}
-                style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
-                title={`${adminName} (${adminRole}) — Click to view Profile`}
-              >
-                <div className="ad-avatar">{adminInitials}</div>
-                <div className="ad-avatar-info">
-                  <span className="ad-avatar-name">{adminName}</span>
-                  <span className="ad-avatar-role">{adminRole}</span>
-                </div>
-              </div>
-            </div>
-          </header>
+      {loading && <p style={{ fontSize: 13, color: "#64748b", marginBottom: 16 }}>Loading financial metrics from DB...</p>}
+      {error && (
+        <div style={{ padding: 12, background: "#fef2f2", color: "#dc2626", borderRadius: 8, marginBottom: 16 }}>
+          {error}
+        </div>
+      )}
 
-          <main className="ad-content">
-            {/* ── HIGH LEVEL KPIS ────────────────────────────────────── */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginBottom: 24 }}>
-              <div className="ad-stat-card">
-                <div className="ad-stat-body">
-                  <p className="ad-stat-label">Total Expected Revenue</p>
-                  <p className="ad-stat-value">₹25.4 Lakh</p>
-                  <p className="ad-stat-meta ad-stat-meta--green">AY 2026-27</p>
-                </div>
-              </div>
+      {/* High-Level KPIs */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginBottom: 24 }}>
+        <div className="ad-stat-card">
+          <div className="ad-stat-body">
+            <p className="ad-stat-label">Total Expected Revenue</p>
+            <p className="ad-stat-value">₹{(summary.totalExpectedRevenue / 100000).toFixed(1)}L</p>
+            <p className="ad-stat-meta ad-stat-meta--green">AY 2026-27 Roster</p>
+          </div>
+          <div className="ad-stat-icon" style={{ background: "#eff6ff" }}>
+            <Icon d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM12 6v6l4 2" stroke="#3b82f6" />
+          </div>
+        </div>
 
-              <div className="ad-stat-card">
-                <div className="ad-stat-body">
-                  <p className="ad-stat-label">Collected Fees</p>
-                  <p className="ad-stat-value" style={{ color: "#16a34a" }}>₹21.8 Lakh</p>
-                  <p className="ad-stat-meta ad-stat-meta--green">85.8% Realized</p>
-                </div>
-              </div>
+        <div className="ad-stat-card">
+          <div className="ad-stat-body">
+            <p className="ad-stat-label">Collected Revenue</p>
+            <p className="ad-stat-value">₹{(summary.totalCollectedRevenue / 100000).toFixed(1)}L</p>
+            <p className="ad-stat-meta ad-stat-meta--green">Realized in University Bank</p>
+          </div>
+          <div className="ad-stat-icon" style={{ background: "#f0fdf4" }}>
+            <Icon d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#22c55e" />
+          </div>
+        </div>
 
-              <div className="ad-stat-card">
-                <div className="ad-stat-body">
-                  <p className="ad-stat-label">Pending Fees</p>
-                  <p className="ad-stat-value" style={{ color: "#ea580c" }}>₹3.6 Lakh</p>
-                  <p className="ad-stat-meta ad-stat-meta--red">530 Defaulters</p>
-                </div>
-              </div>
+        <div className="ad-stat-card">
+          <div className="ad-stat-body">
+            <p className="ad-stat-label">Pending Dues</p>
+            <p className="ad-stat-value">₹{(summary.totalPendingFees / 100000).toFixed(1)}L</p>
+            <p className="ad-stat-meta ad-stat-meta--red">{summary.pendingAccounts} Accounts Outstanding</p>
+          </div>
+          <div className="ad-stat-icon" style={{ background: "#fef2f2" }}>
+            <Icon d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#ef4444" />
+          </div>
+        </div>
 
-              <div className="ad-stat-card">
-                <div className="ad-stat-body">
-                  <p className="ad-stat-label">Total Refunds Issued</p>
-                  <p className="ad-stat-value">₹18,500</p>
-                  <p className="ad-stat-meta ad-stat-meta--yellow">4 Approved</p>
-                </div>
-              </div>
-            </div>
+        <div className="ad-stat-card">
+          <div className="ad-stat-body">
+            <p className="ad-stat-label">Collection Rate</p>
+            <p className="ad-stat-value">{summary.collectionRate}%</p>
+            <p className="ad-stat-meta ad-stat-meta--green">{summary.paidAccounts} Paid Accounts</p>
+          </div>
+          <div className="ad-stat-icon" style={{ background: "#faf5ff" }}>
+            <Icon d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke="#a855f7" />
+          </div>
+        </div>
+      </div>
 
-            {/* ── ROUTE & DEPARTMENT BREAKDOWNS ──────────────────────── */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
-              <div className="ad-card">
-                <h3 className="ad-card-title" style={{ marginBottom: 14 }}>Route-wise Revenue Realization</h3>
-                {[
-                  { route: "Route R-04 (Chandkheda)", rev: "₹6.2 Lakh", rate: "92%" },
-                  { route: "Route R-01 (SG Highway)", rev: "₹4.5 Lakh", rate: "84%" },
-                  { route: "Route R-02 (Maninagar)", rev: "₹3.8 Lakh", rate: "80%" },
-                  { route: "Route R-05 (Gandhinagar)", rev: "₹7.3 Lakh", rate: "88%" },
-                ].map((r) => (
-                  <div key={r.route} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #f1f5f9" }}>
-                    <div>
-                      <p style={{ fontWeight: 700, fontSize: 13.5 }}>{r.route}</p>
-                      <span style={{ fontSize: 11.5, color: "#64748b" }}>Collection Rate: {r.rate}</span>
-                    </div>
-                    <span style={{ fontWeight: 900, color: "#059669", fontSize: 15 }}>{r.rev}</span>
-                  </div>
-                ))}
-              </div>
+      {/* Transactions Table */}
+      <div className="ad-card">
+        <div className="ad-card-header">
+          <h3 className="ad-card-title">Recent Fee Collection Transactions</h3>
+        </div>
 
-              <div className="ad-card">
-                <h3 className="ad-card-title" style={{ marginBottom: 14 }}>Department-wise Collections</h3>
-                {[
-                  { dept: "Engineering Faculty", rev: "₹7.4 Lakh", students: 185 },
-                  { dept: "Computer Science & IT", rev: "₹5.2 Lakh", students: 130 },
-                  { dept: "Management Studies", rev: "₹3.8 Lakh", students: 95 },
-                  { dept: "Science & Biotechnology", rev: "₹5.4 Lakh", students: 120 },
-                ].map((d) => (
-                  <div key={d.dept} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #f1f5f9" }}>
-                    <div>
-                      <p style={{ fontWeight: 700, fontSize: 13.5 }}>{d.dept}</p>
-                      <span style={{ fontSize: 11.5, color: "#64748b" }}>{d.students} Students</span>
-                    </div>
-                    <span style={{ fontWeight: 900, color: "#0f172a", fontSize: 15 }}>{d.rev}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* ── RECENT TRANSACTIONS TABLE ──────────────────────────── */}
-            <div className="ad-card">
-              <div className="ad-card-header">
-                <h3 className="ad-card-title">Recent Payment Transactions</h3>
-              </div>
-              <div className="ad-table-wrap">
-                <table className="ad-table">
-                  <thead>
-                    <tr>
-                      <th className="ad-th">Txn ID</th>
-                      <th className="ad-th">Student</th>
-                      <th className="ad-th">Amount</th>
-                      <th className="ad-th">Date</th>
-                      <th className="ad-th">Payment Method</th>
-                      <th className="ad-th">Reference</th>
-                      <th className="ad-th">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {transactions.slice(0, 5).map((t) => (
-                      <tr key={t.id} className="ad-tr">
-                        <td className="ad-td" style={{ fontWeight: 700 }}>{t.id}</td>
-                        <td className="ad-td">{t.studentName} ({t.studentId})</td>
-                        <td className="ad-td" style={{ fontWeight: 800, color: "#16a34a" }}>₹{t.amount.toLocaleString()}</td>
-                        <td className="ad-td">{t.date}</td>
-                        <td className="ad-td">{t.method}</td>
-                        <td className="ad-td">{t.refNo}</td>
-                        <td className="ad-td"><span className="ad-badge ad-badge--green">● {t.status}</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <footer className="ad-footer"><span>© 2026 GLOW Bus Development System.</span></footer>
-          </main>
+        <div className="ad-table-wrap">
+          <table className="ad-table">
+            <thead>
+              <tr>
+                <th className="ad-th">Transaction ID</th>
+                <th className="ad-th">Student Name</th>
+                <th className="ad-th">Enrollment ID</th>
+                <th className="ad-th">Amount Paid</th>
+                <th className="ad-th">Payment Mode</th>
+                <th className="ad-th">Status</th>
+                <th className="ad-th">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentTransactions.map((tx) => (
+                <tr key={tx.id || tx._id} className="ad-tr">
+                  <td className="ad-td" style={{ fontWeight: 700 }}>{tx.id || tx._id}</td>
+                  <td className="ad-td"><strong>{tx.student || tx.studentName || "Student"}</strong></td>
+                  <td className="ad-td">{tx.enrollment || tx.enrollmentId || "UNI20260125"}</td>
+                  <td className="ad-td" style={{ fontWeight: 800, color: "#16a34a" }}>₹{(tx.amount || 15000).toLocaleString()}</td>
+                  <td className="ad-td">{tx.method || "Online"}</td>
+                  <td className="ad-td">
+                    <span className="ad-badge ad-badge--green">● {tx.status || "SUCCESS"}</span>
+                  </td>
+                  <td className="ad-td">{tx.date || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

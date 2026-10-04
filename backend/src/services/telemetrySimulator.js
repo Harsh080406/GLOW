@@ -1,11 +1,13 @@
 import Bus from "../models/Bus.js";
 import Route from "../models/Route.js";
+import SystemConfig from "../models/SystemConfig.js";
 
 class TelemetrySimulator {
   constructor() {
     this.busSimStates = new Map();
     this.intervalId = null;
     this.broadcastCallback = null;
+    this.pollingIntervalMs = 3000;
   }
 
   async init(broadcastCallback) {
@@ -13,6 +15,17 @@ class TelemetrySimulator {
     console.log("⚡ Initializing 85-Bus Real-Time Telemetry Simulator Engine...");
 
     try {
+      // Read initial GPS polling frequency from SystemConfig singleton
+      try {
+        const config = await SystemConfig.getSingleton();
+        if (config?.gpsPollingFrequency) {
+          this.pollingIntervalMs = config.gpsPollingFrequency * 1000;
+          console.log(`⏱️ SystemConfig loaded: GPS polling frequency set to ${config.gpsPollingFrequency}s`);
+        }
+      } catch (e) {
+        console.warn("Could not read SystemConfig frequency on startup:", e.message);
+      }
+
       const buses = await Bus.find().populate("currentDriverId");
       const routes = await Route.find();
 
@@ -56,10 +69,17 @@ class TelemetrySimulator {
   start() {
     if (this.intervalId) clearInterval(this.intervalId);
 
-    // Broadcast frame every 3 seconds per specification
+    // Broadcast frame at configured interval (default 3000ms)
     this.intervalId = setInterval(() => {
       this.tick();
-    }, 3000);
+    }, this.pollingIntervalMs || 3000);
+  }
+
+  updateFrequency(seconds) {
+    const sec = Math.max(1, Math.min(10, Number(seconds) || 3));
+    this.pollingIntervalMs = sec * 1000;
+    console.log(`⏱️ Dynamic Runtime Update: Telemetry Simulator frequency updated to ${sec}s (${this.pollingIntervalMs}ms)`);
+    this.start();
   }
 
   stop() {
