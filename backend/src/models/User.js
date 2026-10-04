@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       required: true,
-      enum: ["student", "driver", "super_admin", "transport_manager", "finance_admin"],
+      enum: ["student", "driver", "super_admin", "transport_manager", "transport_admin", "finance_admin"],
     },
     googleId: { type: String },
     refreshTokenHash: { type: String },
