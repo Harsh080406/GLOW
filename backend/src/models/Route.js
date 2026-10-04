@@ -16,6 +16,7 @@ const routeSchema = new mongoose.Schema(
     distanceKm: { type: Number, required: true },
     durationMin: { type: Number, required: true },
     stops: [stopSchema],
+    assignedBusId: { type: mongoose.Schema.Types.ObjectId, ref: "Bus" },
   },
   { timestamps: true }
 );

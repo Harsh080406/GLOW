@@ -140,6 +140,15 @@ const runSeed = async () => {
         phone: "+91 98765 33445",
         avatar: "VS",
       },
+      {
+        name: "Devendra Joshi",
+        email: "transportadmin@glowbus.edu",
+        passwordHash: defaultPasswordHash,
+        role: "transport_admin",
+        department: "Transport Operations & Fleet Depot",
+        phone: "+91 98765 44556",
+        avatar: "DJ",
+      },
     ]);
 
     const studentUser = demoUsers[0];
@@ -178,6 +187,12 @@ const runSeed = async () => {
     }
     const createdBuses = await Bus.insertMany(busDocs);
 
+    // Link Routes to Primary Assigned Buses
+    for (let i = 0; i < createdRoutes.length; i++) {
+      createdRoutes[i].assignedBusId = createdBuses[i]._id;
+      await createdRoutes[i].save();
+    }
+
     // Link Drivers to Buses
     const driverDocs = allDriverUsers.map((dUser, idx) => ({
       userId: dUser._id,
@@ -204,16 +219,42 @@ const runSeed = async () => {
     const createdStudentUsers = await User.insertMany(studentUsersDocs);
     const allStudentUsers = [studentUser, ...createdStudentUsers];
 
-    const studentDocs = allStudentUsers.map((sUser, idx) => ({
-      userId: sUser._id,
-      enrollmentId: `UNI2026${(1000 + idx).toString()}`,
-      branch: sUser.department || "Computer Science",
-      semester: `${(idx % 8) + 1}th Semester`,
-      assignedStopId: "Fatehgunj Bus Stop",
-      routeId: createdRoutes[idx % createdRoutes.length]._id,
-      guardianContact: "+91 98765 00000",
-    }));
+    // Distribute students with intentional corridor imbalance:
+    // Route 0 (R-01): 54 commuters (Cap: 50, Over-capacity)
+    // Route 1 (R-02): 32 commuters (Cap: 50, Under-capacity parallel corridor)
+    // Remaining students distributed across remaining corridors
+    const studentDocs = allStudentUsers.map((sUser, idx) => {
+      let assignedRouteIndex;
+      if (idx < 54) {
+        assignedRouteIndex = 0; // Route 01 (Over Capacity)
+      } else if (idx < 54 + 32) {
+        assignedRouteIndex = 1; // Route 02 (Under Capacity parallel)
+      } else {
+        assignedRouteIndex = (idx % (createdRoutes.length - 2)) + 2;
+      }
+
+      const assignedRoute = createdRoutes[assignedRouteIndex];
+      const assignedBus = createdBuses[assignedRouteIndex];
+      const stopObj = assignedRoute.stops[idx % assignedRoute.stops.length] || assignedRoute.stops[0];
+
+      return {
+        userId: sUser._id,
+        enrollmentId: `UNI2026${(1000 + idx).toString()}`,
+        branch: sUser.department || "Computer Science",
+        semester: `${(idx % 8) + 1}th Semester`,
+        assignedStopId: stopObj.name,
+        routeId: assignedRoute._id,
+        assignedBusId: assignedBus._id,
+        guardianContact: "+91 98765 00000",
+      };
+    });
     await Student.insertMany(studentDocs);
+
+    // Sync Bus occupancies based on active assignments
+    for (let i = 0; i < createdRoutes.length; i++) {
+      const occ = await Student.countDocuments({ routeId: createdRoutes[i]._id });
+      await Bus.findByIdAndUpdate(createdBuses[i]._id, { occupancy: occ });
+    }
 
     // Seed Rahul Sharma's Transport Pass & Fee Ledger
     const rahulStudent = await Student.findOne({ userId: studentUser._id });
