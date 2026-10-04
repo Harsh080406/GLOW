@@ -142,6 +142,8 @@ router.get("/settings", getSettings);
 router.put("/settings", updateSettings);
 
 // 14. Admin Profile & Real TOTP 2FA
+router.get("/profile", getAdminProfile);
+router.put("/profile", updateAdminProfile);
 router.get("/me/profile", getAdminProfile);
 router.put("/me/profile", updateAdminProfile);
 router.post("/2fa/generate", generate2FA);
