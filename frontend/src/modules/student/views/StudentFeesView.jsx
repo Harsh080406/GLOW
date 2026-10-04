@@ -10,13 +10,17 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 );
 
 const StudentFees = () => {
-  const { currentStudent, transactions, payStudentFee } = useTransit();
+  const { currentStudent, transactions, payStudentFee, feeStructures } = useTransit();
   const student = currentStudent || {};
-  const totalFee = student.totalFee || 15000;
-  const paidFee = student.paidFee || 0;
-  const pendingFee = student.pendingFee !== undefined ? student.pendingFee : 15000;
-  const dueDate = student.dueDate || "15 Sep 2026";
   const zone = student.zone || "Zone B";
+  const zoneKey = zone.replace("Zone ", "").trim();
+  const matchingSlab = (feeStructures || []).find(
+    (f) => (f.zone || "").includes(zoneKey) || (f.zone || "").includes(zone)
+  );
+  const totalFee = matchingSlab ? matchingSlab.amount : student.totalFee || 9500;
+  const paidFee = student.paidFee || 0;
+  const pendingFee = student.pendingFee !== undefined ? student.pendingFee : Math.max(0, totalFee - paidFee);
+  const dueDate = matchingSlab?.dueDate || student.dueDate || "15 Sep 2026";
 
   const [showPayModal, setShowPayModal] = useState(false);
   const [payAmount, setPayAmount] = useState(pendingFee || 5000);

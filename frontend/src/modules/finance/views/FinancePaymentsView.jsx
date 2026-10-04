@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FinanceSidebar from "../layout/FinanceSidebar";
 import RoleSwitcherBar from "../../../shared/components/RoleSwitcherBar";
 import { useTransit } from "../../../shared/context/TransitContext";
@@ -9,17 +9,33 @@ import "../../admin/layout/AdminLayout.css";
 const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidth = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={stroke}
     strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d={d} />
-  </svg>
+  <path d={d} />
+</svg>
 );
 
 const FinancePayments = () => {
-  const { transactions } = useTransit();
+  const { transactions, setTransactions, authFetch } = useTransit();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [methodFilter, setMethodFilter] = useState("ALL");
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [selectedReceiptTxn, setSelectedReceiptTxn] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  useEffect(() => {
+    const fetchPaymentsStream = async () => {
+      try {
+        const queryParam = methodFilter !== "ALL" ? `?gateway=${encodeURIComponent(methodFilter)}` : "";
+        const res = await authFetch(`/finance/payments${queryParam}`);
+        if (res?.success && res?.payments) {
+          setTransactions(res.payments);
+        }
+      } catch (err) {
+        console.warn("Could not fetch payments stream:", err.message);
+      }
+    };
+    fetchPaymentsStream();
+  }, [methodFilter, authFetch, setTransactions]);
 
   const filteredTxns = (transactions || []).filter((t) => {
     const matchesSearch =
@@ -31,22 +47,54 @@ const FinancePayments = () => {
     return matchesSearch && matchesMethod;
   });
 
-  const handleExportExcel = () => {
-    const dataToExport = filteredTxns.map((t) => ({
-      "Transaction ID": t.id,
-      "Receipt No": t.receiptId || "REC-2026-0001",
-      "Student Name": t.studentName,
-      "Student ID": t.studentId,
-      "Department": t.dept,
-      "Route": t.route,
-      "Amount (INR)": t.amount,
-      "Payment Date": t.date,
-      "Payment Method": t.method,
-      "Reference UTR": t.refNo,
-      "Status": t.status,
-    }));
+  const handleExportExcel = async () => {
+    setIsExporting(true);
+    try {
+      const blob = await authFetch("/finance/payments/export-excel", { responseType: "blob" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `GLOW_Payment_Ledger_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.warn("Server excel export fallback:", err.message);
+      const dataToExport = filteredTxns.map((t) => ({
+        "Transaction ID": t.id,
+        "Receipt No": t.receiptId || "REC-2026-0001",
+        "Student Name": t.studentName,
+        "Student ID": t.studentId,
+        "Department": t.dept,
+        "Route": t.route,
+        "Amount (INR)": t.amount,
+        "Payment Date": t.date,
+        "Payment Method": t.method,
+        "Reference UTR": t.refNo,
+        "Status": t.status,
+      }));
+      exportToExcel(dataToExport, `GLOW_Payment_Ledger_${new Date().toISOString().slice(0, 10)}.xlsx`, "Payments Ledger");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
-    exportToExcel(dataToExport, `GLOW_Payment_Ledger_${new Date().toISOString().slice(0, 10)}.xlsx`, "Payments Ledger");
+  const handlePrintInvoice = async (t) => {
+    try {
+      const blob = await authFetch(`/finance/payments/${t.id}/invoice-pdf`, { responseType: "blob" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `GLOW_Invoice_${t.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.warn("Server invoice PDF fallback:", err.message);
+      setSelectedReceiptTxn(t);
+    }
   };
 
   return (
@@ -158,21 +206,39 @@ const FinancePayments = () => {
                         <td className="ad-td" style={{ fontFamily: "monospace", fontSize: 12 }}>{t.refNo}</td>
                         <td className="ad-td"><span className="ad-badge ad-badge--green">● {t.status}</span></td>
                         <td className="ad-td">
-                          <button
-                            onClick={() => setSelectedReceiptTxn(t)}
-                            style={{
-                              padding: "4px 10px",
-                              background: "#eff6ff",
-                              color: "#0066ff",
-                              border: "1px solid #bfdbfe",
-                              borderRadius: 6,
-                              fontSize: 12,
-                              fontWeight: 700,
-                              cursor: "pointer",
-                            }}
-                          >
-                            Receipt
-                          </button>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button
+                              onClick={() => setSelectedReceiptTxn(t)}
+                              style={{
+                                padding: "4px 8px",
+                                background: "#eff6ff",
+                                color: "#0066ff",
+                                border: "1px solid #bfdbfe",
+                                borderRadius: 6,
+                                fontSize: 11.5,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                              }}
+                            >
+                              Receipt
+                            </button>
+                            <button
+                              onClick={() => handlePrintInvoice(t)}
+                              style={{
+                                padding: "4px 8px",
+                                background: "#f8fafc",
+                                color: "#334155",
+                                border: "1px solid #cbd5e1",
+                                borderRadius: 6,
+                                fontSize: 11.5,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                              }}
+                              title="Download official PDF invoice"
+                            >
+                              🖨️ PDF
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

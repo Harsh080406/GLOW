@@ -20,6 +20,8 @@ import SosAlert from "../models/SosAlert.js";
 import MaintenanceLog from "../models/MaintenanceLog.js";
 import AuditLog from "../models/AuditLog.js";
 import Complaint from "../models/Complaint.js";
+import Refund from "../models/Refund.js";
+import Discount from "../models/Discount.js";
 
 const runSeed = async () => {
   console.log("🌱 Starting GLOW MERN Database Seeding Pipeline...");
@@ -267,15 +269,164 @@ const runSeed = async () => {
       signedPayload: "PASS-STU-2026-0125|UNI20260125|R-04|SIG_984",
     });
 
-    await FeeLedger.create({
-      studentId: studentUser._id,
-      zone: "B",
-      totalFee: 15000,
-      paidAmount: 10000,
-      balanceDue: 5000,
-      status: "PARTIAL",
-      dueDate: new Date("2026-09-15"),
-    });
+    // Seed 100 realistic Student Fee Ledgers across Zones A, B, C
+    const feeLedgerDocs = [];
+    const paymentsDocs = [];
+    const gateways = ["UPI", "Card", "NetBanking", "Challan"];
+
+    for (let i = 0; i < Math.min(100, allStudentUsers.length); i++) {
+      const u = allStudentUsers[i];
+      const s = studentDocs[i];
+      const zone = i % 3 === 0 ? "A" : i % 3 === 1 ? "B" : "C";
+      const totalFee = zone === "A" ? 6000 : zone === "B" ? 9500 : 14000;
+      
+      let paidAmount = 0;
+      let status = "OVERDUE";
+      const daysOverdue = (i % 25) + 5;
+      const dueDate = new Date(Date.now() - daysOverdue * 86400000);
+
+      if (i === 0) {
+        // Rahul Sharma
+        paidAmount = 10000;
+        status = "PARTIAL";
+      } else if (i % 3 === 0) {
+        paidAmount = totalFee;
+        status = "PAID";
+      } else if (i % 3 === 1) {
+        paidAmount = Math.floor(totalFee / 2);
+        status = "PARTIAL";
+      } else {
+        paidAmount = 0;
+        status = "OVERDUE";
+      }
+
+      const balanceDue = Math.max(0, totalFee - paidAmount);
+
+      feeLedgerDocs.push({
+        studentId: u._id,
+        studentRef: s._id,
+        zone,
+        totalFee,
+        paidAmount,
+        balanceDue,
+        status,
+        dueDate,
+      });
+
+      if (paidAmount > 0) {
+        paymentsDocs.push({
+          studentId: u._id,
+          amount: paidAmount,
+          gateway: gateways[i % gateways.length],
+          status: "COMPLETED",
+          txnRef: `TXN-2026-${1000 + i}`,
+          paymentDate: new Date(Date.now() - (i % 15) * 86400000),
+        });
+      }
+    }
+    await FeeLedger.insertMany(feeLedgerDocs);
+    await Payment.insertMany(paymentsDocs);
+
+    // Seed Offline Verification Queue (Bank Challans)
+    await Payment.insertMany([
+      {
+        studentId: allStudentUsers[1]._id,
+        amount: 9500,
+        gateway: "Challan",
+        status: "PENDING",
+        txnRef: "CHALLAN-SBI-884920",
+        bankName: "State Bank of India (Fertilizernagar)",
+        attachmentUrl: "/assets/sample_challan_slip.jpg",
+        paymentDate: new Date(Date.now() - 2 * 86400000),
+      },
+      {
+        studentId: allStudentUsers[2]._id,
+        amount: 6000,
+        gateway: "Challan",
+        status: "PENDING",
+        txnRef: "CHALLAN-BOB-914022",
+        bankName: "Bank of Baroda (Sayajigunj)",
+        attachmentUrl: "/assets/sample_challan_slip.jpg",
+        paymentDate: new Date(Date.now() - 1 * 86400000),
+      },
+      {
+        studentId: allStudentUsers[3]._id,
+        amount: 9500,
+        gateway: "Challan",
+        status: "PENDING",
+        txnRef: "CHALLAN-HDFC-302194",
+        bankName: "HDFC Bank (Alkapuri)",
+        attachmentUrl: "/assets/sample_challan_slip.jpg",
+        paymentDate: new Date(),
+      },
+    ]);
+
+    // Seed Refunds & Discounts
+    await Refund.insertMany([
+      {
+        studentId: allStudentUsers[4]._id,
+        reason: "Semester Exchange Program Transfer to Germany",
+        amount: 7500,
+        originalPaid: 15000,
+        claimedAmount: 7500,
+        refundAmount: 7500,
+        status: "PENDING",
+      },
+      {
+        studentId: allStudentUsers[5]._id,
+        reason: "Hostel accommodation allotted on campus",
+        amount: 4750,
+        originalPaid: 9500,
+        claimedAmount: 4750,
+        refundAmount: 4750,
+        status: "APPROVED",
+        processedBy: demoUsers[2]._id,
+        processedAt: new Date(Date.now() - 3 * 86400000),
+      },
+    ]);
+
+    await Discount.insertMany([
+      {
+        studentId: allStudentUsers[6]._id,
+        waiverPercent: 25,
+        discountedAmount: 2375,
+        category: "Merit Scholarship",
+        reason: "Top 5% Semester SGPA Academic Excellence",
+        status: "ACTIVE",
+        approvedBy: demoUsers[2]._id,
+      },
+      {
+        studentId: allStudentUsers[7]._id,
+        waiverPercent: 50,
+        discountedAmount: 3000,
+        category: "Sports Excellence Concession",
+        reason: "State University Athletics Gold Medalist",
+        status: "ACTIVE",
+        approvedBy: demoUsers[2]._id,
+      },
+    ]);
+
+    // Seed Initial Audit Logs
+    await AuditLog.insertMany([
+      {
+        actorId: demoUsers[2]._id,
+        actionType: "POST /api/v1/finance/payments/collect",
+        targetCollection: "Finance",
+        targetId: "TXN-2026-081",
+        details: "Collected fee payment of Rs. 9,500 via UPI (Google Pay)",
+        ip: "127.0.0.1",
+        timestamp: new Date(Date.now() - 3600000 * 5),
+      },
+      {
+        actorId: demoUsers[2]._id,
+        actionType: "POST /api/v1/finance/verification/approve",
+        targetCollection: "Finance",
+        targetId: "CHALLAN-SBI-884920",
+        details: "Approved offline bank deposit challan for Rs. 9,500",
+        ip: "127.0.0.1",
+        timestamp: new Date(Date.now() - 3600000 * 12),
+      },
+    ]);
 
     console.log("\n========================================================");
     console.log("✅ GLOW MERN Database Seeding Pipeline Complete!");

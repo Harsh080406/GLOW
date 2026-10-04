@@ -10,7 +10,7 @@ const studentSchema = new mongoose.Schema(
     routeId: { type: mongoose.Schema.Types.ObjectId, ref: "Route" },
     assignedBusId: { type: mongoose.Schema.Types.ObjectId, ref: "Bus" },
     feeStatus: { type: String, enum: ["Paid", "Pending", "Waived"], default: "Paid" },
-    passStatus: { type: String, enum: ["ACTIVE", "EXPIRED", "PENDING_FEE"], default: "ACTIVE" },
+    passStatus: { type: String, enum: ["ACTIVE", "EXPIRED", "PENDING_FEE", "BLOCKED"], default: "ACTIVE" },
     guardianContact: { type: String },
   },
   { timestamps: true }

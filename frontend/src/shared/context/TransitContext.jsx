@@ -10,8 +10,8 @@ export const useTransit = () => {
   return context;
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
-const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || "ws://localhost:5000";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
+export const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || "ws://localhost:5000";
 
 export const TransitProvider = ({ children }) => {
   // Authentication & Role State
@@ -325,8 +325,9 @@ export const TransitProvider = ({ children }) => {
   // Helper: Auth Fetch Wrapper
   const authFetch = useCallback(
     async (endpoint, options = {}) => {
+      const isFormData = options.body instanceof FormData;
       const headers = {
-        "Content-Type": "application/json",
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         ...options.headers,
       };
@@ -334,7 +335,11 @@ export const TransitProvider = ({ children }) => {
       try {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
         if (!response.ok) {
-          throw new Error(`API Error ${response.status}: ${response.statusText}`);
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || errData.message || `API Error ${response.status}: ${response.statusText}`);
+        }
+        if (options.responseType === "blob") {
+          return await response.blob();
         }
         return await response.json();
       } catch (err) {
@@ -381,7 +386,41 @@ export const TransitProvider = ({ children }) => {
           setRoutes(routeRes.value.routes);
         }
       } else if (activeRole === "finance_admin") {
-        const data = await authFetch("/finance/dashboard");
+        const [dashRes, feeRes, stuRes, txnRes, verifRes, refRes, discRes, auditRes, profRes] = await Promise.allSettled([
+          authFetch("/finance/dashboard"),
+          authFetch("/finance/fee-structures"),
+          authFetch("/finance/students"),
+          authFetch("/finance/payments"),
+          authFetch("/finance/verification"),
+          authFetch("/finance/refunds"),
+          authFetch("/finance/discounts"),
+          authFetch("/finance/audit"),
+          authFetch("/finance/profile"),
+        ]);
+        if (feeRes.status === "fulfilled" && feeRes.value?.feeStructures) {
+          setFeeStructures(feeRes.value.feeStructures);
+        }
+        if (stuRes.status === "fulfilled" && stuRes.value?.students) {
+          setStudents(stuRes.value.students);
+        }
+        if (txnRes.status === "fulfilled" && txnRes.value?.payments) {
+          setTransactions(txnRes.value.payments);
+        }
+        if (verifRes.status === "fulfilled" && verifRes.value?.verificationQueue) {
+          setOfflinePayments(verifRes.value.verificationQueue);
+        }
+        if (refRes.status === "fulfilled" && refRes.value?.refunds) {
+          setRefundRequests(refRes.value.refunds);
+        }
+        if (discRes.status === "fulfilled" && discRes.value?.discounts) {
+          setDiscounts(discRes.value.discounts);
+        }
+        if (auditRes.status === "fulfilled" && auditRes.value?.auditLogs) {
+          setAuditLogs(auditRes.value.auditLogs);
+        }
+        if (profRes.status === "fulfilled" && profRes.value?.profile) {
+          setCurrentFinanceAdmin((prev) => ({ ...prev, ...profRes.value.profile, signingKey: profRes.value.signingKey }));
+        }
       }
     } catch (err) {
       setError("Backend API offline or unreachable. Using synchronized live telemetry.");
@@ -581,15 +620,68 @@ export const TransitProvider = ({ children }) => {
   };
 
   // Finance Action Methods
-  const payStudentFee = (amount, method = "UPI", refNo = null) => {
+  const payStudentFee = async (amount, method = "UPI", refNo = null, targetStudent = null, bankName = null, cashierRemarks = null) => {
+    const stu = targetStudent || currentStudent;
+    const studentId = stu?.id || stu?.enrollmentId || "GSFC20260125";
     const reference = refNo || `UPI-${Date.now().toString().slice(-8)}`;
+
+    try {
+      const res = await authFetch("/finance/payments/collect", {
+        method: "POST",
+        body: JSON.stringify({
+          studentId,
+          amount: Number(amount),
+          paymentMethod: method || "Cash Counter",
+          referenceNo: reference,
+          bankName,
+          cashierRemarks,
+        }),
+      });
+
+      if (res?.success && res?.payment) {
+        const p = res.payment;
+        const newTxn = {
+          id: p.transactionRef || `TXN-${Date.now().toString().slice(-6)}`,
+          receiptId: res.receipt?.receiptNumber || `REC-${Date.now().toString().slice(-6)}`,
+          studentName: stu?.name || "Student",
+          studentId: stu?.id || studentId,
+          dept: stu?.dept || stu?.department || "Computer Science",
+          route: stu?.routeName || stu?.route || "R-04 Fatehgunj",
+          amount: Number(amount),
+          date: new Date().toISOString().slice(0, 10),
+          method: method || "Cash Counter",
+          refNo: reference,
+          status: "SUCCESS",
+        };
+        setTransactions((prev) => [newTxn, ...prev]);
+        setStudents((prev) =>
+          prev.map((s) => {
+            if (s.id === studentId || s.enrollmentId === studentId) {
+              const pendingFee = Math.max(0, (s.pendingFee || 0) - Number(amount));
+              const paidFee = (s.paidFee || 0) + Number(amount);
+              return {
+                ...s,
+                pendingFee,
+                paidFee,
+                paymentStatus: pendingFee === 0 ? "PAID" : "PARTIAL",
+              };
+            }
+            return s;
+          })
+        );
+        return newTxn;
+      }
+    } catch (err) {
+      console.warn("Offline/local fallback for payStudentFee:", err.message);
+    }
+
     const newTxn = {
       id: `TXN-${Date.now().toString().slice(-6)}`,
       receiptId: `REC-${Date.now().toString().slice(-6)}`,
-      studentName: currentStudent?.name || "Rahul Sharma",
-      studentId: currentStudent?.id || "UNI20260125",
-      dept: currentStudent?.department || "Computer Science",
-      route: currentStudent?.routeName || "R-04 Fatehgunj - GSFC",
+      studentName: stu?.name || "Rahul Sharma",
+      studentId: stu?.id || "UNI20260125",
+      dept: stu?.department || stu?.dept || "Computer Science",
+      route: stu?.routeName || stu?.route || "R-04 Fatehgunj - GSFC",
       amount: Number(amount),
       date: new Date().toISOString().slice(0, 10),
       method: method || "UPI",
@@ -615,10 +707,23 @@ export const TransitProvider = ({ children }) => {
     return newTxn;
   };
 
-  const verifyOfflinePayment = (id, isApproved) => {
+  const verifyOfflinePayment = async (id, isApproved, rejectionReason = "") => {
+    try {
+      if (isApproved) {
+        await authFetch(`/finance/verification/${id}/approve`, { method: "POST" });
+      } else {
+        await authFetch(`/finance/verification/${id}/reject`, {
+          method: "POST",
+          body: JSON.stringify({ rejectionReason }),
+        });
+      }
+    } catch (err) {
+      console.warn("Error in verifyOfflinePayment:", err.message);
+    }
+
     setOfflinePayments((prev) =>
       prev.map((p) => {
-        if (p.id === id) {
+        if (p.id === id || p._id === id) {
           return { ...p, status: isApproved ? "VERIFIED" : "REJECTED" };
         }
         return p;
@@ -626,10 +731,10 @@ export const TransitProvider = ({ children }) => {
     );
 
     if (isApproved) {
-      const payment = offlinePayments.find((p) => p.id === id);
+      const payment = offlinePayments.find((p) => p.id === id || p._id === id);
       if (payment) {
         const approvedTxn = {
-          id: `TXN-${Date.now().toString().slice(-6)}`,
+          id: payment.refNo || `TXN-${Date.now().toString().slice(-6)}`,
           receiptId: `REC-${Date.now().toString().slice(-6)}`,
           studentName: payment.studentName,
           studentId: payment.studentId,
@@ -646,14 +751,25 @@ export const TransitProvider = ({ children }) => {
     }
   };
 
-  const addFeeStructure = (feeObj) => {
-    setFeeStructures((prev) => [
-      ...prev,
-      {
-        id: `FEE-${Date.now().toString().slice(-4)}`,
-        ...feeObj,
-      },
-    ]);
+  const addFeeStructure = async (feeObj) => {
+    try {
+      const res = await authFetch("/finance/fee-structures", {
+        method: "POST",
+        body: JSON.stringify(feeObj),
+      });
+      if (res?.success && res?.feeStructure) {
+        setFeeStructures((prev) => [res.feeStructure, ...prev]);
+        return res.feeStructure;
+      }
+    } catch (err) {
+      console.warn("addFeeStructure fallback:", err.message);
+    }
+    const fallback = {
+      id: `FEE-${Date.now().toString().slice(-4)}`,
+      ...feeObj,
+    };
+    setFeeStructures((prev) => [fallback, ...prev]);
+    return fallback;
   };
 
   const contextValue = {

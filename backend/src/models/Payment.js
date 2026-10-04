@@ -12,6 +12,9 @@ const paymentSchema = new mongoose.Schema(
     status: { type: String, enum: ["COMPLETED", "PENDING", "REJECTED"], default: "COMPLETED" },
     txnRef: { type: String, required: true },
     attachmentUrl: { type: String },
+    bankName: { type: String },
+    rejectionReason: { type: String },
+    paymentDate: { type: Date, default: Date.now },
     verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }

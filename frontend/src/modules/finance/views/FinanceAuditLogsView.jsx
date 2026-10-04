@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FinanceSidebar from "../layout/FinanceSidebar";
 import RoleSwitcherBar from "../../../shared/components/RoleSwitcherBar";
 import { useTransit } from "../../../shared/context/TransitContext";
@@ -12,8 +12,22 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 );
 
 const FinanceAuditLogs = () => {
-  const { auditLogs } = useTransit();
+  const { auditLogs, setAuditLogs, authFetch } = useTransit();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchAudit = async () => {
+      try {
+        const res = await authFetch("/finance/audit");
+        if (res?.success && res?.auditLogs) {
+          setAuditLogs(res.auditLogs);
+        }
+      } catch (err) {
+        console.warn("Could not load audit logs:", err.message);
+      }
+    };
+    fetchAudit();
+  }, [authFetch, setAuditLogs]);
 
   return (
     <div className="ad-wrapper">

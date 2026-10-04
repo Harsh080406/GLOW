@@ -302,19 +302,50 @@ export const downloadPassPdf = async (req, res, next) => {
 export const getStudentFees = async (req, res, next) => {
   try {
     const student = await getStudentByUser(req.user);
-    const ledger = await FeeLedger.findOne({ studentId: student?._id });
-    const payments = await Payment.find().sort({ createdAt: -1 });
+    const pass = await TransportPass.findOne({
+      $or: [{ studentId: req.user._id }, { studentId: student?._id }],
+    });
+    const zoneCode = pass?.zone || "B";
+
+    // Compute fee from live FeeSlab by student's zone
+    const slab =
+      (await FeeSlab.findOne({
+        $or: [{ zone: zoneCode }, { zone: `Zone ${zoneCode}` }],
+      })) || (await FeeSlab.findOne());
+
+    const totalFeeAmount = slab?.amount || (zoneCode === "A" ? 6000 : zoneCode === "B" ? 9500 : 14000);
+
+    let ledger = await FeeLedger.findOne({
+      $or: [{ studentId: req.user._id }, { studentId: student?._id }],
+    });
+
+    if (!ledger) {
+      ledger = {
+        totalFee: totalFeeAmount,
+        paidAmount: 0,
+        balanceDue: totalFeeAmount,
+        pendingAmount: totalFeeAmount,
+        dueDate: slab?.dueDate || "2026-10-15",
+        status: "OVERDUE",
+        zone: `Zone ${zoneCode}`,
+      };
+    }
+
+    const payments = await Payment.find({
+      studentId: { $in: [req.user._id, student?._id] },
+    }).sort({ createdAt: -1 });
 
     return res.json({
       success: true,
-      ledger: ledger || {
-        totalFee: 14000,
-        paidAmount: 9000,
-        balanceDue: 5000,
-        pendingAmount: 5000,
-        dueDate: "2026-10-15",
-        status: "PARTIAL",
-        zone: "Zone B",
+      ledger: {
+        totalFee: ledger.totalFee || totalFeeAmount,
+        paidAmount: ledger.paidAmount || 0,
+        balanceDue: ledger.balanceDue ?? (totalFeeAmount - (ledger.paidAmount || 0)),
+        pendingAmount: ledger.balanceDue ?? (totalFeeAmount - (ledger.paidAmount || 0)),
+        dueDate: ledger.dueDate || slab?.dueDate || "2026-10-15",
+        status: ledger.status || "OVERDUE",
+        zone: ledger.zone || `Zone ${zoneCode}`,
+        slabAmount: totalFeeAmount,
       },
       payments,
     });

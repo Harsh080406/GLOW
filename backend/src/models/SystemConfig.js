@@ -32,6 +32,14 @@ const systemConfigSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    signingKeySecret: {
+      type: String,
+      default: "glow_hmac_secret_2026_finance_key",
+    },
+    signingKeyRotatedAt: {
+      type: Date,
+      default: Date.now,
+    },
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

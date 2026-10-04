@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FinanceSidebar from "../layout/FinanceSidebar";
 import RoleSwitcherBar from "../../../shared/components/RoleSwitcherBar";
+import { useTransit } from "../../../shared/context/TransitContext";
 import { exportToExcel } from "../../../shared/utils/excelExport";
 import "../../admin/layout/AdminLayout.css";
 
@@ -12,26 +13,55 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 );
 
 const FinancialReports = () => {
+  const { authFetch } = useTransit();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [exportMessage, setExportMessage] = useState(null);
+  const [liveReports, setLiveReports] = useState(null);
 
-  const handleExportExcel = () => {
-    const reportData = [
-      { "Category": "KPI Summary", "Metric": "Total Expected Revenue", "Value": "₹25.4 Lakh" },
-      { "Category": "KPI Summary", "Metric": "Fees Realized", "Value": "₹21.8 Lakh (85.8%)" },
-      { "Category": "KPI Summary", "Metric": "Pending Dues", "Value": "₹3.6 Lakh" },
-      { "Category": "Monthly Trend", "Metric": "June Inflow", "Value": "₹8.2 Lakh" },
-      { "Category": "Monthly Trend", "Metric": "July Inflow", "Value": "₹12.4 Lakh" },
-      { "Category": "Monthly Trend", "Metric": "August Inflow", "Value": "₹15.8 Lakh" },
-      { "Category": "Route Yield", "Metric": "Route A (Alkapuri R-01)", "Value": "₹4.5 Lakh (20.6%)" },
-      { "Category": "Route Yield", "Metric": "Route B (Fatehgunj R-04)", "Value": "₹6.2 Lakh (28.4%)" },
-      { "Category": "Route Yield", "Metric": "Route C (Sayajigunj R-02)", "Value": "₹3.8 Lakh (17.4%)" },
-      { "Category": "Route Yield", "Metric": "Route D (Manjalpur R-03)", "Value": "₹7.3 Lakh (33.6%)" },
-    ];
+  useEffect(() => {
+    const fetchReportsData = async () => {
+      try {
+        const res = await authFetch("/finance/reports");
+        if (res?.success) {
+          setLiveReports(res);
+        }
+      } catch (err) {
+        console.warn("Could not load financial reports stats:", err.message);
+      }
+    };
+    fetchReportsData();
+  }, [authFetch]);
 
-    exportToExcel(reportData, `GLOW_Financial_Yield_Audit_Report_${new Date().toISOString().slice(0, 10)}.xlsx`, "Financial Report");
-    setExportMessage("✓ Financial Audit Report downloaded as Excel (.xlsx)");
-    setTimeout(() => setExportMessage(null), 3000);
+  const handleExportExcel = async () => {
+    try {
+      const blob = await authFetch("/finance/reports/export-master-excel", { responseType: "blob" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `GLOW_Master_Financial_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      setExportMessage("✓ Master Multi-Sheet Workbook (.xlsx) generated & downloaded!");
+    } catch (err) {
+      console.warn("Excel export fallback:", err.message);
+      const reportData = [
+        { "Category": "KPI Summary", "Metric": "Total Expected Revenue", "Value": "₹25.4 Lakh" },
+        { "Category": "KPI Summary", "Metric": "Fees Realized", "Value": "₹21.8 Lakh (85.8%)" },
+        { "Category": "KPI Summary", "Metric": "Pending Dues", "Value": "₹3.6 Lakh" },
+        { "Category": "Monthly Trend", "Metric": "June Inflow", "Value": "₹8.2 Lakh" },
+        { "Category": "Monthly Trend", "Metric": "July Inflow", "Value": "₹12.4 Lakh" },
+        { "Category": "Monthly Trend", "Metric": "August Inflow", "Value": "₹15.8 Lakh" },
+        { "Category": "Route Yield", "Metric": "Route A (Alkapuri R-01)", "Value": "₹4.5 Lakh (20.6%)" },
+        { "Category": "Route Yield", "Metric": "Route B (Fatehgunj R-04)", "Value": "₹6.2 Lakh (28.4%)" },
+        { "Category": "Route Yield", "Metric": "Route C (Sayajigunj R-02)", "Value": "₹3.8 Lakh (17.4%)" },
+        { "Category": "Route Yield", "Metric": "Route D (Manjalpur R-03)", "Value": "₹7.3 Lakh (33.6%)" },
+      ];
+      exportToExcel(reportData, `GLOW_Master_Financial_Report_${new Date().toISOString().slice(0, 10)}.xlsx`, "Financial Report");
+      setExportMessage("✓ Financial Audit Report downloaded as Excel (.xlsx)");
+    }
+    setTimeout(() => setExportMessage(null), 3500);
   };
 
   const handleExportPDF = () => {

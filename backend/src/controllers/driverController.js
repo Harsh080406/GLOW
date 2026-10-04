@@ -222,13 +222,15 @@ export const validatePass = async (req, res, next) => {
       ],
     }).populate("userId").populate("routeId");
 
-    const studentUser = student?.userId || (await User.findOne({ role: "student" }));
-    const pass = (await TransportPass.findOne({ studentId: student?._id || studentUser?._id })) || {
+    const studentUser = student?.userId;
+
+    const pass = (await TransportPass.findOne({ $or: [{ studentId: student?._id }, { studentId: studentUser?._id }] })) || {
       passCode: "PASS-STU-2026-0125",
-      status: "ACTIVE",
+      status: student?.passStatus || "ACTIVE",
     };
 
-    const isPassActive = pass.status === "ACTIVE";
+    const isPassBlocked = pass.status === "BLOCKED" || student?.passStatus === "BLOCKED";
+    const isPassActive = !isPassBlocked && pass.status === "ACTIVE" && student?.passStatus !== "BLOCKED";
     const routeMatch = true; // Route matches assigned corridor
 
     // Calculate response latency
@@ -239,13 +241,14 @@ export const validatePass = async (req, res, next) => {
 
     return res.json({
       valid: isPassActive && signatureValid,
-      status: pass.status, // "ACTIVE" | "EXPIRED" | "PENDING_FEE"
+      status: isPassBlocked ? "BLOCKED" : pass.status,
+      message: isPassBlocked ? "Pass has been blocked by Finance Division due to overdue fees." : undefined,
       student: {
         id: student?.enrollmentId || studentEnrollment || "UNI20260125",
         name: studentUser?.name || "Rahul Sharma",
         branch: student?.branch || "Computer Science",
         photoUrl: "/assets/student-portrait.jpg",
-        passStatus: pass.status,
+        passStatus: isPassBlocked ? "BLOCKED" : pass.status,
         routeMatch,
       },
       latencyMs: Number(latencyMs.toFixed(2)),
