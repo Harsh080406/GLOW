@@ -51,7 +51,7 @@ const FinanceAuditLogs = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {auditLogs.map((log) => (
+                    {(auditLogs || []).map((log) => (
                       <tr key={log.id} className="ad-tr">
                         <td className="ad-td" style={{ fontWeight: 700 }}>{log.id}</td>
                         <td className="ad-td">{log.timestamp}</td>

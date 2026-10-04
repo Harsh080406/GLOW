@@ -23,10 +23,10 @@ const FinancialReports = () => {
       { "Category": "Monthly Trend", "Metric": "June Inflow", "Value": "₹8.2 Lakh" },
       { "Category": "Monthly Trend", "Metric": "July Inflow", "Value": "₹12.4 Lakh" },
       { "Category": "Monthly Trend", "Metric": "August Inflow", "Value": "₹15.8 Lakh" },
-      { "Category": "Route Yield", "Metric": "Route A (SG Highway)", "Value": "₹4.5 Lakh (20.6%)" },
-      { "Category": "Route Yield", "Metric": "Route B (Chandkheda R-04)", "Value": "₹6.2 Lakh (28.4%)" },
-      { "Category": "Route Yield", "Metric": "Route C (Maninagar R-02)", "Value": "₹3.8 Lakh (17.4%)" },
-      { "Category": "Route Yield", "Metric": "Route D (Gandhinagar R-05)", "Value": "₹7.3 Lakh (33.6%)" },
+      { "Category": "Route Yield", "Metric": "Route A (Alkapuri R-01)", "Value": "₹4.5 Lakh (20.6%)" },
+      { "Category": "Route Yield", "Metric": "Route B (Fatehgunj R-04)", "Value": "₹6.2 Lakh (28.4%)" },
+      { "Category": "Route Yield", "Metric": "Route C (Sayajigunj R-02)", "Value": "₹3.8 Lakh (17.4%)" },
+      { "Category": "Route Yield", "Metric": "Route D (Manjalpur R-03)", "Value": "₹7.3 Lakh (33.6%)" },
     ];
 
     exportToExcel(reportData, `GLOW_Financial_Yield_Audit_Report_${new Date().toISOString().slice(0, 10)}.xlsx`, "Financial Report");
@@ -113,10 +113,10 @@ const FinancialReports = () => {
               <div className="ad-card">
                 <h3 className="ad-card-title" style={{ marginBottom: 14 }}>Route-wise Revenue Yield</h3>
                 {[
-                  { route: "Route A (SG Highway)", val: "₹4.5 Lakh", share: "20.6%" },
-                  { route: "Route B (Chandkheda R-04)", val: "₹6.2 Lakh", share: "28.4%" },
-                  { route: "Route C (Maninagar R-02)", val: "₹3.8 Lakh", share: "17.4%" },
-                  { route: "Route D (Gandhinagar R-05)", val: "₹7.3 Lakh", share: "33.6%" },
+                  { route: "Route A (Alkapuri R-01)", val: "₹4.5 Lakh", share: "20.6%" },
+                  { route: "Route B (Fatehgunj R-04)", val: "₹6.2 Lakh", share: "28.4%" },
+                  { route: "Route C (Sayajigunj R-02)", val: "₹3.8 Lakh", share: "17.4%" },
+                  { route: "Route D (Manjalpur R-03)", val: "₹7.3 Lakh", share: "33.6%" },
                 ].map((r) => (
                   <div key={r.route} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #f1f5f9" }}>
                     <div>

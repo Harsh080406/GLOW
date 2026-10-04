@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTransit } from "../../../shared/context/TransitContext";
 import "../layout/AdminLayout.css";
@@ -10,9 +11,9 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
   </svg>
 );
 
-/* ── Live Fleet SVG Map (White / Blue / Black Theme) ──────── */
-const FleetMap = () => (
-  <div className="adb-map-wrap">
+/* ── Live Fleet SVG Map (Interactive / Responsive) ──────── */
+const FleetMap = ({ dispatches = [] }) => (
+  <div className="adb-map-wrap" style={{ touchAction: "pan-x pan-y pinch-zoom" }}>
     <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg" className="adb-map-svg">
       {/* Background */}
       <rect width="700" height="280" fill="#f8fafc" />
@@ -38,36 +39,48 @@ const FleetMap = () => (
       <polyline points="60,200 100,200 280,200 480,200 600,200" fill="none" stroke="#0f172a" strokeWidth="3" strokeDasharray="8 4" strokeLinecap="round" />
       <polyline points="60,250 200,250 280,250 480,80 600,50" fill="none" stroke="#2563eb" strokeWidth="3" strokeDasharray="6 3" strokeLinecap="round" />
 
-      {/* Live Moving Bus Markers */}
-      <g transform="translate(280,140)">
-        <circle r="14" fill="#0066ff" stroke="#ffffff" strokeWidth="2.5" />
-        <text x="-6" y="5" fontSize="11">🚌</text>
-      </g>
-      <g transform="translate(400,200)">
-        <circle r="14" fill="#0f172a" stroke="#ffffff" strokeWidth="2.5" />
-        <text x="-6" y="5" fontSize="11">🚌</text>
-      </g>
-      <g transform="translate(380,100)">
-        <circle r="14" fill="#0066ff" stroke="#ffffff" strokeWidth="2.5" />
-        <text x="-6" y="5" fontSize="11">🚌</text>
-      </g>
-      <g transform="translate(540,140)">
-        <circle r="14" fill="#0f172a" stroke="#ffffff" strokeWidth="2.5" />
-        <text x="-6" y="5" fontSize="11">🚌</text>
-      </g>
+      {/* Dynamic Markers for Dispatches */}
+      {dispatches.length > 0 ? (
+        dispatches.slice(0, 5).map((d, i) => {
+          const coords = [
+            [280, 140],
+            [400, 200],
+            [380, 100],
+            [540, 140],
+            [180, 190],
+          ][i % 5];
+          return (
+            <g key={d.id || i} transform={`translate(${coords[0]},${coords[1]})`}>
+              <circle r="14" fill={d.status === "On Route" ? "#0066ff" : "#0f172a"} stroke="#ffffff" strokeWidth="2.5" />
+              <text x="-6" y="5" fontSize="11">🚌</text>
+            </g>
+          );
+        })
+      ) : (
+        <>
+          <g transform="translate(280,140)">
+            <circle r="14" fill="#0066ff" stroke="#ffffff" strokeWidth="2.5" />
+            <text x="-6" y="5" fontSize="11">🚌</text>
+          </g>
+          <g transform="translate(400,200)">
+            <circle r="14" fill="#0f172a" stroke="#ffffff" strokeWidth="2.5" />
+            <text x="-6" y="5" fontSize="11">🚌</text>
+          </g>
+        </>
+      )}
 
       {/* Map Legend */}
       <rect x="10" y="254" width="12" height="4" rx="2" fill="#0066ff" />
-      <text x="26" y="260" fontSize="10" fill="#0f172a" fontWeight="700">R-04 Chandkheda (Live)</text>
+      <text x="26" y="260" fontSize="10" fill="#0f172a" fontWeight="700">R-04 Fatehgunj (Live)</text>
       <rect x="160" y="254" width="12" height="4" rx="2" fill="#0f172a" />
-      <text x="176" y="260" fontSize="10" fill="#0f172a" fontWeight="700">R-02 Maninagar</text>
+      <text x="176" y="260" fontSize="10" fill="#0f172a" fontWeight="700">R-02 Sayajigunj</text>
       <rect x="290" y="254" width="12" height="4" rx="2" fill="#2563eb" />
-      <text x="306" y="260" fontSize="10" fill="#0f172a" fontWeight="700">R-01 SG Highway</text>
+      <text x="306" y="260" fontSize="10" fill="#0f172a" fontWeight="700">R-01 Alkapuri</text>
     </svg>
     <div className="adb-map-overlay">
       <span className="adb-live-pill">
         <span className="adb-beacon" />
-        28 Active Trips Live
+        {dispatches.length > 0 ? `${dispatches.length} Active Trips Live` : "Live Fleet Telemetry"}
       </span>
     </div>
   </div>
@@ -75,192 +88,263 @@ const FleetMap = () => (
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { students, auditLogs, emergencies = [], buses = [] } = useTransit();
+  const { authFetch, emergencies = [] } = useTransit();
+
+  const [loading, setLoading] = useState(true);
+  const [kpis, setKpis] = useState({
+    students: "4,250",
+    buses: "85",
+    drivers: "92",
+    routes: "34",
+    activeTrips: "28",
+    pendingFees: "₹3.6L",
+    pendingAccounts: "530",
+    maintenance: "6",
+    complaints: "12",
+  });
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [dispatches, setDispatches] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [kpiRes, actRes, dispRes] = await Promise.allSettled([
+          authFetch("/admin/kpis"),
+          authFetch("/admin/activity-log"),
+          authFetch("/admin/dispatches/today"),
+        ]);
+
+        if (isMounted) {
+          if (kpiRes.status === "fulfilled" && kpiRes.value?.kpis) {
+            const k = kpiRes.value.kpis;
+            setKpis({
+              students: k.students !== undefined ? k.students.toLocaleString() : "4,250",
+              buses: k.buses !== undefined ? String(k.buses) : "85",
+              drivers: k.drivers !== undefined ? String(k.drivers) : "92",
+              routes: k.routes !== undefined ? String(k.routes) : "34",
+              activeTrips: k.activeTrips !== undefined ? String(k.activeTrips) : "28",
+              pendingFees: k.pendingFeesFormatted || "₹3.6L",
+              pendingAccounts: k.pendingAccounts !== undefined ? String(k.pendingAccounts) : "530",
+              maintenance: k.maintenance !== undefined ? String(k.maintenance) : "6",
+              complaints: k.complaints !== undefined ? String(k.complaints) : "12",
+            });
+          }
+
+          if (actRes.status === "fulfilled" && actRes.value?.activityLog) {
+            setActivityLogs(actRes.value.activityLog);
+          }
+
+          if (dispRes.status === "fulfilled" && dispRes.value?.dispatches) {
+            setDispatches(dispRes.value.dispatches);
+          }
+        }
+      } catch (err) {
+        console.warn("[AdminDashboard] Error fetching live data:", err.message);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+    return () => {
+      isMounted = false;
+    };
+  }, [authFetch]);
 
   return (
     <div className="adb-view">
       {/* ── 8 TOP LEVEL STAT KPI CARDS ───────────────────────── */}
       <section className="adb-stats-grid" aria-label="Super Admin KPIs">
-              {[
-                { label: "Students", value: students ? students.length.toLocaleString() : "4,250", sub: "Registered", path: "/admin/students", icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" },
-                { label: "Buses", value: "85", sub: "Total Fleet", path: "/admin/fleet", icon: "M3 12h18M3 6h18M3 18h18" },
-                { label: "Drivers", value: "92", sub: "Licensed Roster", path: "/admin/drivers", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" },
-                { label: "Routes", value: "34", sub: "Active Corridors", path: "/admin/routes", icon: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" },
-                { label: "Active Trips", value: "28", sub: "On-Route Now", path: "/admin/tracking", icon: "M5 3l14 9-14 9V3z", isLive: true },
-                { label: "Pending Fees", value: "₹3.6L", sub: "530 Accounts", path: "/admin/finance", icon: "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM12 6v6l4 2" },
-                { label: "Maintenance", value: "6", sub: "Under Service", path: "/admin/maintenance", icon: "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" },
-                { label: "Complaints", value: "12", sub: "3 Pending", path: "/admin/complaints", icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" },
-              ].map((s) => (
-                <div
-                  key={s.label}
-                  className="adb-stat-card"
-                  onClick={() => navigate(s.path)}
-                >
-                  <div className="adb-stat-inner">
-                    <div className="adb-stat-text-wrap">
-                      <p className="adb-stat-label">{s.label}</p>
-                      <h3 className="adb-stat-val">{s.value}</h3>
-                      <p className="adb-stat-sub">{s.sub}</p>
-                    </div>
-                    <div className={`adb-stat-icon-wrap ${s.isLive ? "adb-stat-icon-wrap--live" : ""}`}>
-                      <Icon d={s.icon} size={20} stroke="#0066ff" />
-                    </div>
-                  </div>
+        {[
+          { label: "Students", value: kpis.students, sub: "Registered", path: "/admin/students", icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" },
+          { label: "Buses", value: kpis.buses, sub: "Total Fleet", path: "/admin/fleet", icon: "M3 12h18M3 6h18M3 18h18" },
+          { label: "Drivers", value: kpis.drivers, sub: "Licensed Roster", path: "/admin/drivers", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" },
+          { label: "Routes", value: kpis.routes, sub: "Active Corridors", path: "/admin/routes", icon: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" },
+          { label: "Active Trips", value: kpis.activeTrips, sub: "On-Route Now", path: "/admin/tracking", icon: "M5 3l14 9-14 9V3z", isLive: true },
+          { label: "Pending Fees", value: kpis.pendingFees, sub: `${kpis.pendingAccounts || 530} Accounts`, path: "/admin/finance", icon: "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM12 6v6l4 2" },
+          { label: "Maintenance", value: kpis.maintenance, sub: "Under Service", path: "/admin/maintenance", icon: "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" },
+          { label: "Complaints", value: kpis.complaints, sub: "Active Grievances", path: "/admin/complaints", icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" },
+        ].map((s) => (
+          <div
+            key={s.label}
+            className="adb-stat-card"
+            onClick={() => navigate(s.path)}
+          >
+            <div className="adb-stat-inner">
+              <div className="adb-stat-text-wrap">
+                <p className="adb-stat-label">{s.label}</p>
+                <h3 className="adb-stat-val">{loading ? "..." : s.value}</h3>
+                <p className="adb-stat-sub">{s.sub}</p>
+              </div>
+              <div className={`adb-stat-icon-wrap ${s.isLive ? "adb-stat-icon-wrap--live" : ""}`}>
+                <Icon d={s.icon} size={20} stroke="#0066ff" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      {/* ── ACTIVE INCIDENT ALERT BANNER (IF ACTIVE) ─────────── */}
+      {emergencies.some((e) => e.status === "ACTIVE" || e.status === "MONITORING" || e.status === "DISPATCHED") && (
+        <div className="adb-emergency-banner">
+          <div className="adb-emergency-left">
+            <span className="adb-emergency-emoji">🚨</span>
+            <div>
+              <h4 className="adb-emergency-title">
+                Active Incident Alert: {emergencies[0].type || "Emergency SOS Signal"} ({emergencies[0].busId || "BUS-Alert"})
+              </h4>
+              <p className="adb-emergency-desc">
+                {emergencies[0].notes || emergencies[0].description || "Immediate security response required"} · Location: {emergencies[0].location || "Campus Perimeter"}
+              </p>
+            </div>
+          </div>
+          <button
+            className="adb-emergency-action-btn"
+            onClick={() => navigate("/admin/emergencies")}
+          >
+            View Incident & SOS Logs →
+          </button>
+        </div>
+      )}
+
+      {/* ── FLEET MAP & AUDIT TRAIL ROW ─────────────────────── */}
+      <div className="adb-mid-row">
+        {/* Fleet Map */}
+        <div className="ad-card adb-map-card">
+          <div className="ad-card-header">
+            <div>
+              <h2 className="ad-card-title">Live Campus Fleet Telemetry Map</h2>
+              <p className="adb-card-sub">Real-time GPS locations & corridor dispatches</p>
+            </div>
+            <button className="ad-btn-secondary" onClick={() => navigate("/admin/tracking")}>
+              Open Live Console
+            </button>
+          </div>
+          <FleetMap dispatches={dispatches} />
+        </div>
+
+        {/* System Audit Activity */}
+        <div className="ad-card adb-audit-card">
+          <div className="ad-card-header">
+            <div>
+              <h2 className="ad-card-title">System Activity Log</h2>
+              <p className="adb-card-sub">Recent operator & driver actions</p>
+            </div>
+            <span className="ad-badge ad-badge--green">Live Feed</span>
+          </div>
+          <ul className="adb-activity-list">
+            {(activityLogs.length > 0 ? activityLogs : [
+              { user: "Super Admin", details: "Published Term 1 Bus Schedules", timestamp: "10 mins ago" },
+              { user: "Driver DRV-102", details: "Completed Route R-04 Morning Trip", timestamp: "25 mins ago" },
+              { user: "System", details: "Automated GPS Telemetry Health Check OK", timestamp: "1 hour ago" },
+            ]).map((a, i) => (
+              <li key={i} className="adb-activity-row">
+                <div className="adb-act-icon">
+                  <Icon d="M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4 12 14.01l-3-3" size={15} stroke="#0066ff" />
                 </div>
+                <div className="adb-act-body">
+                  <p className="adb-act-text"><strong>{a.user}</strong>: {a.details}</p>
+                  <p className="adb-act-time">{a.timestamp}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* ── TODAY'S FLEET DISPATCHES TABLE ──────────────────── */}
+      <div className="ad-card adb-table-card">
+        <div className="ad-card-header">
+          <div>
+            <h2 className="ad-card-title">Today's Fleet Dispatches</h2>
+            <p className="adb-card-sub">Real-time GPS telemetry, onboard passengers, speed & ETA</p>
+          </div>
+          <button className="ad-btn-primary" onClick={() => navigate("/admin/fleet")}>
+            Manage Full Fleet
+          </button>
+        </div>
+
+        <div className="ad-table-wrap">
+          <table className="ad-table">
+            <thead>
+              <tr>
+                <th className="ad-th">Bus ID</th>
+                <th className="ad-th">Registration</th>
+                <th className="ad-th">Route</th>
+                <th className="ad-th">Driver</th>
+                <th className="ad-th">Occupancy</th>
+                <th className="ad-th">Speed</th>
+                <th className="ad-th">ETA</th>
+                <th className="ad-th">Status</th>
+                <th className="ad-th">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(dispatches.length > 0 ? dispatches : [
+                { id: "BUS-104", regNo: "GJ-06-AB-1004", route: "R-04 Fatehgunj", driver: "Mahesh Patel", occupied: 38, capacity: 52, speed: "42 km/h", eta: "6 mins", status: "On Route" },
+                { id: "BUS-108", regNo: "GJ-06-CD-1008", route: "R-02 Sayajigunj", driver: "Ramesh Shah", occupied: 28, capacity: 44, speed: "18 km/h", eta: "12 mins", status: "Delayed" },
+                { id: "BUS-101", regNo: "GJ-06-EF-1001", route: "R-01 Alkapuri", driver: "Suresh Joshi", occupied: 42, capacity: 48, speed: "36 km/h", eta: "4 mins", status: "On Route" },
+              ]).map((b) => (
+                <tr key={b.id} className="ad-tr">
+                  <td className="ad-td adb-bus-id">{b.id}</td>
+                  <td className="ad-td">{b.regNo}</td>
+                  <td className="ad-td"><strong>{b.route}</strong></td>
+                  <td className="ad-td">{b.driver}</td>
+                  <td className="ad-td">{b.occupied || 0} / {b.capacity || 52} seats</td>
+                  <td className="ad-td">{b.speed}</td>
+                  <td className="ad-td">{b.eta}</td>
+                  <td className="ad-td">
+                    <span className={`ad-badge ${b.status === "On Route" || b.status === "ON_ROUTE" ? "ad-badge--green" : b.status === "Delayed" || b.status === "DELAYED" ? "ad-badge--yellow" : "ad-badge--red"}`}>
+                      ● {b.status}
+                    </span>
+                  </td>
+                  <td className="ad-td">
+                    <button
+                      className="adb-track-action-btn"
+                      onClick={() => navigate("/admin/tracking")}
+                    >
+                      Live Track
+                    </button>
+                  </td>
+                </tr>
               ))}
-            </section>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-            {/* ── ACTIVE INCIDENT ALERT BANNER (IF ACTIVE) ─────────── */}
-            {emergencies.some((e) => e.status === "ACTIVE" || e.status === "MONITORING") && (
-              <div className="adb-emergency-banner">
-                <div className="adb-emergency-left">
-                  <span className="adb-emergency-emoji">🚨</span>
-                  <div>
-                    <h4 className="adb-emergency-title">
-                      Active Incident Alert: {emergencies[0].type} ({emergencies[0].busId})
-                    </h4>
-                    <p className="adb-emergency-desc">
-                      {emergencies[0].notes} · Location: {emergencies[0].location}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  className="adb-emergency-action-btn"
-                  onClick={() => navigate("/admin/emergencies")}
-                >
-                  View Incident & SOS Logs →
-                </button>
+      {/* ── FAST COMMAND ACTION GRID ────────────────────────── */}
+      <div className="adb-quick-section">
+        <h3 className="adb-quick-title">Quick Administration Actions</h3>
+        <div className="adb-quick-grid">
+          {[
+            { label: "Register New Bus", icon: "M3 12h18M3 6h18M3 18h18", path: "/admin/fleet" },
+            { label: "Assign Driver to Route", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z", path: "/admin/drivers" },
+            { label: "Create Route / Timetable", icon: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z", path: "/admin/routes" },
+            { label: "Finance & Fee Audit", icon: "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM12 6v6l4 2", path: "/admin/finance" },
+            { label: "Broadcast Emergency Alert", icon: "M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01", path: "/admin/emergencies" },
+            { label: "System Roles & Permissions", icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", path: "/admin/users" },
+          ].map((action) => (
+            <button
+              key={action.label}
+              className="adb-quick-btn"
+              onClick={() => navigate(action.path)}
+            >
+              <div className="adb-quick-icon">
+                <Icon d={action.icon} size={20} stroke="#0066ff" />
               </div>
-            )}
+              <span className="adb-quick-label">{action.label}</span>
+              <Icon d="M9 18l6-6-6-6" size={16} stroke="#94a3b8" />
+            </button>
+          ))}
+        </div>
+      </div>
 
-            {/* ── FLEET MAP & AUDIT TRAIL ROW ─────────────────────── */}
-            <div className="adb-mid-row">
-              {/* Fleet Map */}
-              <div className="ad-card adb-map-card">
-                <div className="ad-card-header">
-                  <div>
-                    <h2 className="ad-card-title">Live Campus Fleet Telemetry Map</h2>
-                    <p className="adb-card-sub">Real-time GPS locations & corridor dispatches</p>
-                  </div>
-                  <button className="ad-btn-secondary" onClick={() => navigate("/admin/tracking")}>
-                    Open Live Console
-                  </button>
-                </div>
-                <FleetMap />
-              </div>
-
-              {/* System Audit Activity */}
-              <div className="ad-card adb-audit-card">
-                <div className="ad-card-header">
-                  <div>
-                    <h2 className="ad-card-title">System Activity Log</h2>
-                    <p className="adb-card-sub">Recent operator actions</p>
-                  </div>
-                  <span className="ad-badge ad-badge--green">Live Feed</span>
-                </div>
-                <ul className="adb-activity-list">
-                  {auditLogs.map((a, i) => (
-                    <li key={i} className="adb-activity-row">
-                      <div className="adb-act-icon">
-                        <Icon d="M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4 12 14.01l-3-3" size={15} stroke="#0066ff" />
-                      </div>
-                      <div className="adb-act-body">
-                        <p className="adb-act-text"><strong>{a.user}</strong>: {a.details}</p>
-                        <p className="adb-act-time">{a.timestamp}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* ── TODAY'S FLEET DISPATCHES TABLE ──────────────────── */}
-            <div className="ad-card adb-table-card">
-              <div className="ad-card-header">
-                <div>
-                  <h2 className="ad-card-title">Today's Fleet Dispatches</h2>
-                  <p className="adb-card-sub">Real-time GPS telemetry, onboard passengers, speed & ETA</p>
-                </div>
-                <button className="ad-btn-primary" onClick={() => navigate("/admin/fleet")}>
-                  Manage Full Fleet
-                </button>
-              </div>
-
-              <div className="ad-table-wrap">
-                <table className="ad-table">
-                  <thead>
-                    <tr>
-                      <th className="ad-th">Bus ID</th>
-                      <th className="ad-th">Registration</th>
-                      <th className="ad-th">Route</th>
-                      <th className="ad-th">Driver</th>
-                      <th className="ad-th">Occupancy</th>
-                      <th className="ad-th">Speed</th>
-                      <th className="ad-th">ETA</th>
-                      <th className="ad-th">Status</th>
-                      <th className="ad-th">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {buses.map((b) => (
-                      <tr key={b.id} className="ad-tr">
-                        <td className="ad-td adb-bus-id">{b.id}</td>
-                        <td className="ad-td">{b.regNo}</td>
-                        <td className="ad-td"><strong>{b.route}</strong></td>
-                        <td className="ad-td">{b.driver}</td>
-                        <td className="ad-td">{b.occupied} / {b.capacity} seats</td>
-                        <td className="ad-td">{b.speed}</td>
-                        <td className="ad-td">{b.eta}</td>
-                        <td className="ad-td">
-                          <span className={`ad-badge ${b.status === "On Route" ? "ad-badge--green" : b.status === "Delayed" ? "ad-badge--yellow" : "ad-badge--red"}`}>
-                            ● {b.status}
-                          </span>
-                        </td>
-                        <td className="ad-td">
-                          <button
-                            className="adb-track-action-btn"
-                            onClick={() => navigate("/admin/tracking")}
-                          >
-                            Live Track
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* ── FAST COMMAND ACTION GRID ────────────────────────── */}
-            <div className="adb-quick-section">
-              <h3 className="adb-quick-title">Quick Administration Actions</h3>
-              <div className="adb-quick-grid">
-                {[
-                  { label: "Register New Bus", icon: "M3 12h18M3 6h18M3 18h18", path: "/admin/fleet" },
-                  { label: "Assign Driver to Route", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z", path: "/admin/drivers" },
-                  { label: "Create Route / Timetable", icon: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z", path: "/admin/routes" },
-                  { label: "Finance & Fee Audit", icon: "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM12 6v6l4 2", path: "/admin/finance" },
-                  { label: "Broadcast Emergency Alert", icon: "M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01", path: "/admin/emergencies" },
-                  { label: "System Roles & Permissions", icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", path: "/admin/users" },
-                ].map((action) => (
-                  <button
-                    key={action.label}
-                    className="adb-quick-btn"
-                    onClick={() => navigate(action.path)}
-                  >
-                    <div className="adb-quick-icon">
-                      <Icon d={action.icon} size={20} stroke="#0066ff" />
-                    </div>
-                    <span className="adb-quick-label">{action.label}</span>
-                    <Icon d="M9 18l6-6-6-6" size={16} stroke="#94a3b8" />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <footer className="ad-footer">
-              <span>© 2026 GLOW Bus Management System · All rights reserved.</span>
-            </footer>
+      <footer className="ad-footer">
+        <span>© 2026 GLOW Bus Management System · All rights reserved.</span>
+      </footer>
     </div>
   );
 };

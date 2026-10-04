@@ -16,8 +16,8 @@ const PaymentVerification = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedSlip, setSelectedSlip] = useState(null);
 
-  const pendingVerifications = offlinePayments.filter((p) => p.status === "PENDING");
-  const processedVerifications = offlinePayments.filter((p) => p.status !== "PENDING");
+  const pendingVerifications = (offlinePayments || []).filter((p) => p.status === "PENDING");
+  const processedVerifications = (offlinePayments || []).filter((p) => p.status !== "PENDING");
 
   return (
     <div className="ad-wrapper">

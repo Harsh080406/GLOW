@@ -4,9 +4,13 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "npm --prefix frontend run dev",
+    "start": "node start.js",
+    "dev": "node start.js",
+    "dev:all": "node start.js",
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:backend": "npm --prefix backend run dev",
+    "server": "npm --prefix backend run dev",
+    "client": "npm --prefix frontend run dev",
     "db:seed": "npm --prefix backend run db:seed",
     "build": "npm --prefix frontend run build",
     "lint": "npm --prefix frontend run lint"

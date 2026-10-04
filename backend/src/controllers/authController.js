@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
@@ -209,24 +210,200 @@ export const logoutUser = async (req, res, next) => {
   }
 };
 
-// 4. POST /api/auth/google & GET /api/auth/google
-export const googleAuth = async (req, res, next) => {
+// 4. GET /api/v1/auth/google - Initiate Google OAuth 2.0 Authorization Flow
+export const initiateGoogleAuth = async (req, res, next) => {
   try {
-    const { email, idToken, googleId } = req.body;
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const frontendOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+    const callbackUrl =
+      process.env.GOOGLE_CALLBACK_URL || `${req.protocol}://${req.get("host")}/api/v1/auth/google/callback`;
 
-    const targetEmail = (email || "rahul.sharma@glowbus.edu").toLowerCase().trim();
-    const domain = targetEmail.split("@")[1];
-
-    // Validate domain / registered campus account
-    if (!ALLOWED_DOMAINS.includes(domain) && !targetEmail.endsWith(".edu")) {
-      return res.status(403).json({
-        error: {
-          code: "NOT_REGISTERED_CAMPUS_ACCOUNT",
-          message: `The account ${targetEmail} is not a registered campus account. Please use your official university email (@glowbus.edu).`,
-        },
-      });
+    if (!clientId) {
+      // In development / demo mode when Google Client ID is not yet configured,
+      // redirect to frontend login with a notice so developer/user knows
+      return res.redirect(`${frontendOrigin}/login?oauth_notice=GOOGLE_CLIENT_ID_REQUIRED`);
     }
 
+    const state = crypto.randomBytes(16).toString("hex");
+    res.cookie("oauth_state", state, { httpOnly: true, maxAge: 10 * 60 * 1000 });
+
+    const googleAuthUrl =
+      `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${encodeURIComponent(clientId)}&` +
+      `redirect_uri=${encodeURIComponent(callbackUrl)}&` +
+      `response_type=code&` +
+      `scope=${encodeURIComponent("openid email profile")}&` +
+      `state=${encodeURIComponent(state)}&` +
+      `access_type=offline&` +
+      `prompt=consent`;
+
+    return res.redirect(googleAuthUrl);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 5. GET /api/v1/auth/google/callback - Handle Google OAuth 2.0 Redirect Callback
+export const handleGoogleCallback = async (req, res, next) => {
+  const frontendOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+  try {
+    const { code, error } = req.query;
+
+    if (error || !code) {
+      return res.redirect(
+        `${frontendOrigin}/login?error=${encodeURIComponent(error || "OAuth login was cancelled.")}`
+      );
+    }
+
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const callbackUrl =
+      process.env.GOOGLE_CALLBACK_URL || `${req.protocol}://${req.get("host")}/api/v1/auth/google/callback`;
+
+    // Exchange authorization code for tokens
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: callbackUrl,
+        grant_type: "authorization_code",
+      }),
+    });
+
+    const tokenData = await tokenRes.json();
+    if (!tokenRes.ok || !tokenData.access_token) {
+      return res.redirect(
+        `${frontendOrigin}/login?error=${encodeURIComponent(tokenData.error_description || "Token exchange failed.")}`
+      );
+    }
+
+    // Fetch user profile from Google UserInfo
+    const userinfoRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+    const profile = await userinfoRes.json();
+
+    if (!profile || !profile.email) {
+      return res.redirect(`${frontendOrigin}/login?error=FAILED_TO_RETRIEVE_GOOGLE_PROFILE`);
+    }
+
+    const targetEmail = profile.email.toLowerCase().trim();
+
+    // Domain check: currently kept open for any domain per user specification
+    let user = await User.findOne({ email: targetEmail });
+
+    if (!user) {
+      const role = targetEmail.includes("admin")
+        ? "super_admin"
+        : targetEmail.includes("finance")
+        ? "finance_admin"
+        : targetEmail.includes("driver")
+        ? "driver"
+        : targetEmail.includes("transport")
+        ? "transport_manager"
+        : "student";
+
+      const name = profile.name || targetEmail.split("@")[0];
+      user = await User.create({
+        id: `UNI${Date.now().toString().slice(-8)}`,
+        name,
+        email: targetEmail,
+        role,
+        googleId: profile.id,
+        avatar: profile.picture || name.slice(0, 2).toUpperCase(),
+        department: "University Transit Community",
+      });
+    } else if (!user.googleId) {
+      user.googleId = profile.id;
+      if (profile.picture && !user.avatar) user.avatar = profile.picture;
+      await user.save();
+    }
+
+    const { accessToken, refreshToken } = generateTokens(user);
+    user.refreshTokenHash = await bcrypt.hash(refreshToken, 10);
+    await user.save();
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.redirect(
+      `${frontendOrigin}/oauth/callback?token=${encodeURIComponent(accessToken)}&role=${encodeURIComponent(user.role)}`
+    );
+  } catch (error) {
+    console.error("Google OAuth callback error:", error);
+    return res.redirect(`${frontendOrigin}/login?error=${encodeURIComponent(error.message || "Authentication failed")}`);
+  }
+};
+
+// 6. POST /api/v1/auth/google - Direct OAuth / ID Token / Demo SSO Endpoint
+export const googleAuth = async (req, res, next) => {
+  try {
+    const { email, idToken, googleId, code } = req.body;
+
+    let targetEmail = email ? email.toLowerCase().trim() : null;
+    let targetName = null;
+    let targetGoogleId = googleId;
+    let targetAvatar = null;
+
+    // 1. If an ID Token is provided by Google SDK, verify it
+    if (idToken) {
+      try {
+        const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+        if (verifyRes.ok) {
+          const payload = await verifyRes.json();
+          targetEmail = payload.email?.toLowerCase().trim();
+          targetName = payload.name;
+          targetGoogleId = payload.sub;
+          targetAvatar = payload.picture;
+        }
+      } catch (err) {
+        console.warn("Google ID token verification skipped:", err.message);
+      }
+    }
+
+    // 2. If an authorization code is provided
+    if (code && process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+      try {
+        const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            code,
+            client_id: process.env.GOOGLE_CLIENT_ID,
+            client_secret: process.env.GOOGLE_CLIENT_SECRET,
+            redirect_uri: process.env.GOOGLE_CALLBACK_URL || "postmessage",
+            grant_type: "authorization_code",
+          }),
+        });
+        if (tokenRes.ok) {
+          const tokenData = await tokenRes.json();
+          const userinfoRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+            headers: { Authorization: `Bearer ${tokenData.access_token}` },
+          });
+          if (userinfoRes.ok) {
+            const profile = await userinfoRes.json();
+            targetEmail = profile.email?.toLowerCase().trim();
+            targetName = profile.name;
+            targetGoogleId = profile.id;
+            targetAvatar = profile.picture;
+          }
+        }
+      } catch (err) {
+        console.warn("Google Code exchange failed:", err.message);
+      }
+    }
+
+    // Default email if none provided
+    targetEmail = (targetEmail || "student@glowbus.edu").toLowerCase().trim();
+
+    // Domain check: kept open for any domain as requested
     let user = await User.findOne({ email: targetEmail });
 
     // Auto-provision user record on first login if not found
@@ -241,7 +418,7 @@ export const googleAuth = async (req, res, next) => {
         ? "transport_manager"
         : "student";
 
-      const namePart = targetEmail.split("@")[0].replace(".", " ");
+      const namePart = targetName || targetEmail.split("@")[0].replace(".", " ");
       const name = namePart.charAt(0).toUpperCase() + namePart.slice(1);
 
       user = await User.create({
@@ -249,10 +426,14 @@ export const googleAuth = async (req, res, next) => {
         name,
         email: targetEmail,
         role,
-        googleId: googleId || `google_${Date.now()}`,
-        avatar: name.slice(0, 2).toUpperCase(),
-        department: "University Student Mobility",
+        googleId: targetGoogleId || `google_${Date.now()}`,
+        avatar: targetAvatar || name.slice(0, 2).toUpperCase(),
+        department: "University Transit Community",
       });
+    } else {
+      if (targetGoogleId && !user.googleId) user.googleId = targetGoogleId;
+      if (targetAvatar && !user.avatar) user.avatar = targetAvatar;
+      await user.save();
     }
 
     const { accessToken, refreshToken } = generateTokens(user);

@@ -50,8 +50,8 @@ const StudentEmergency = () => {
   const startSos = () => {
     setSosCountdown(3);
 
-    // Get live geolocation coordinates with fallback
-    let currentCoords = { lat: 23.0982, lng: 72.5784 };
+    // Get live geolocation coordinates with fallback (Vadodara GSFC Corridor)
+    let currentCoords = { lat: 22.3412, lng: 73.1710 };
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -205,10 +205,10 @@ const StudentEmergency = () => {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[
-              { role: "University Security Control Room", phone: "+91 79 2397 7000", desc: "Main Campus Gate & Security", icon: "🛡️" },
-              { role: "Transport Fleet Manager Hotline", phone: "+91 98765 00000", desc: "Breakdown & Route Reroute Desk", icon: "🚌" },
-              { role: "Campus Medical / Ambulance", phone: "+91 79 2397 7108", desc: "First Aid & Paramedic Dispatch", icon: "🚑" },
-              { role: "Police Emergency Hotline", phone: "112", desc: "National Emergency Service", icon: "👮" },
+              { role: "GSFC University Security & Vigilance", phone: "+91 265 3093753", desc: "Fertilizernagar Main Campus Security", icon: "🛡️" },
+              { role: "GSFC University Transport Fleet Desk", phone: "+91 265 3093750", desc: "Vigyan Bhavan Transit Dispatch Cell", icon: "🚌" },
+              { role: "GSFC Hospital Emergency Care", phone: "+91 265 3092400", desc: "Fertilizernagar Medical Centre", icon: "🚑" },
+              { role: "Chhani / Vadodara Police Hotline", phone: "112", desc: "Vadodara City Police Control", icon: "👮" },
             ].map((contact, i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", background: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0" }}>
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>

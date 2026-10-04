@@ -64,7 +64,7 @@ const FinanceRefunds = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {refundRequests.map((r) => (
+                    {(refundRequests || []).map((r) => (
                       <tr key={r.id} className="ad-tr">
                         <td className="ad-td" style={{ fontWeight: 700 }}>{r.id}</td>
                         <td className="ad-td">

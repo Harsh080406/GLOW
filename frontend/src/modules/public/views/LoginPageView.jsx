@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import GlowLogo from "../../../shared/assets/GlowLogo";
 import studentsBannerImg from "../../../shared/assets/glow-students-banner.jpg";
 import { useTransit } from "../../../shared/context/TransitContext";
@@ -69,14 +69,30 @@ const API_BASE_URL = "http://localhost:5000/api/v1";
 
 const LoginPageView = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { setActiveRole, setIsAuthenticated, setAccessToken } = useTransit();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [oauthNotice, setOauthNotice] = useState("");
+  const [customEmail, setCustomEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showGoogleModal, setShowGoogleModal] = useState(false);
+
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    const noticeParam = searchParams.get("oauth_notice");
+    if (errorParam) {
+      setError(errorParam);
+    }
+    if (noticeParam === "GOOGLE_CLIENT_ID_REQUIRED") {
+      setOauthNotice(
+        "Google OAuth Client ID is not yet configured in backend/.env. You can use the One-Click Google SSO options below for instant authentication with any email domain."
+      );
+    }
+  }, [searchParams]);
 
   // Map server role to dashboard path
   const getRoleDashboardPath = (role) => {
@@ -163,13 +179,14 @@ const LoginPageView = () => {
   const handleGoogleSelect = async (account) => {
     setIsLoading(true);
     setShowGoogleModal(false);
+    setError("");
 
     try {
       // Call Real Google OAuth / Demo Endpoint
       const res = await fetch(`${API_BASE_URL}/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: account.email }),
+        body: JSON.stringify({ email: account.email, name: account.name }),
       });
 
       const data = await res.json();
@@ -178,22 +195,23 @@ const LoginPageView = () => {
         throw new Error(data?.error?.message || "Google authentication failed.");
       }
 
+      localStorage.setItem("glow_access_token", data.accessToken);
+      localStorage.setItem("glow_token", data.accessToken);
+      localStorage.setItem("glow_active_role", data.user.role);
+
       setIsAuthenticated(true);
       setAccessToken(data.accessToken);
       setActiveRole(data.user.role);
       navigate(getRoleDashboardPath(data.user.role));
     } catch (err) {
-      // Dev Fallback
-      if (import.meta.env.DEV) {
-        setIsAuthenticated(true);
-        setActiveRole(account.roleId);
-        navigate(account.path);
-      } else {
-        setError(err.message || "Could not authenticate Google account.");
-      }
+      setError(err.message || "Could not authenticate Google account.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDirectOAuth = () => {
+    window.location.href = `${API_BASE_URL}/auth/google`;
   };
 
   return (
@@ -236,6 +254,23 @@ const LoginPageView = () => {
           {error && (
             <div className="login-error-badge" role="alert">
               {error}
+            </div>
+          )}
+
+          {oauthNotice && (
+            <div
+              style={{
+                background: "#eff6ff",
+                border: "1px solid #bfdbfe",
+                color: "#1e40af",
+                borderRadius: 10,
+                padding: "10px 14px",
+                fontSize: 12.5,
+                lineHeight: 1.4,
+                marginBottom: 16,
+              }}
+            >
+              ℹ️ {oauthNotice}
             </div>
           )}
 
@@ -333,8 +368,87 @@ const LoginPageView = () => {
               <GoogleIcon />
               <div>
                 <h3 className="google-modal-title">Sign in with Google</h3>
-                <p className="google-modal-sub">Choose a registered campus account to continue</p>
+                <p className="google-modal-sub">Official OAuth 2.0 or Instant Campus Single Sign-On</p>
               </div>
+            </div>
+
+            {/* Direct Google OAuth 2.0 Launch Button */}
+            <div style={{ padding: "0 16px 14px" }}>
+              <button
+                type="button"
+                onClick={handleDirectOAuth}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10,
+                  padding: "12px 16px",
+                  borderRadius: 12,
+                  border: "1.5px solid #2563eb",
+                  background: "#eff6ff",
+                  color: "#1d4ed8",
+                  fontWeight: 700,
+                  fontSize: 13.5,
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <GoogleIcon />
+                <span>Launch Google OAuth 2.0 Consent Screen</span>
+              </button>
+            </div>
+
+            {/* Custom Google Email Login (Open to Any Domain) */}
+            <div style={{ padding: "0 16px 14px" }}>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (customEmail.trim()) {
+                    handleGoogleSelect({
+                      email: customEmail.trim(),
+                      name: customEmail.trim().split("@")[0],
+                    });
+                  }
+                }}
+                style={{ display: "flex", gap: 8 }}
+              >
+                <input
+                  type="email"
+                  placeholder="Or enter any custom email (e.g. user@gmail.com)..."
+                  value={customEmail}
+                  onChange={(e) => setCustomEmail(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: "9px 12px",
+                    borderRadius: 10,
+                    border: "1px solid #cbd5e1",
+                    fontSize: 13,
+                    outline: "none",
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={!customEmail.trim()}
+                  style={{
+                    padding: "9px 16px",
+                    borderRadius: 10,
+                    background: "#0f172a",
+                    color: "#fff",
+                    border: "none",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    opacity: customEmail.trim() ? 1 : 0.6,
+                  }}
+                >
+                  Sign In
+                </button>
+              </form>
+            </div>
+
+            <div style={{ padding: "0 16px 8px", fontSize: 11.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5 }}>
+              Or choose a quick demo campus profile:
             </div>
 
             <div className="google-accounts-list">

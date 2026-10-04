@@ -876,7 +876,83 @@ body {
   box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.12);
 }
 
+/* ════════════════════════════════════════════════════════════
+   RESPONSIVE MOBILE & TABLET STYLES (< 768px)
+   ════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  .ad-content {
+    padding: 16px 14px;
+    gap: 16px;
+  }
+
+  .ad-topbar-title {
+    font-size: 15px;
+  }
+  .ad-topbar-subtitle {
+    display: none;
+  }
+
+  /* Collapse wide tables to responsive card lists */
+  .ad-table-wrap {
+    overflow-x: visible;
+    border: none;
+    background: transparent;
+  }
+
+  .ad-table, 
+  .ad-table thead, 
+  .ad-table tbody, 
+  .ad-table th, 
+  .ad-table td, 
+  .ad-table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .ad-table {
+    min-width: 0 !important;
+  }
+
+  .ad-table thead {
+    display: none; /* Hide wide table header row on small screens */
+  }
+
+  .ad-table .ad-tr {
+    margin-bottom: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 14px 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .ad-table .ad-td {
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: right;
+    font-size: 12.5px;
+  }
+
+  .ad-table .ad-td:last-child {
+    border-bottom: none;
+    padding-top: 10px;
+    justify-content: flex-end;
+  }
+
+  /* Tracking map touch gestures on mobile / tablet */
+  .ad-tracking-map,
+  .adb-map-wrap {
+    touch-action: pan-x pan-y pinch-zoom !important;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 @media (max-width: 600px) {
   .ad-topbar-title { font-size: 15px; }
   .ad-topbar-subtitle { display: none; }
 }
+

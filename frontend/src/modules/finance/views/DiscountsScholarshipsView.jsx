@@ -82,7 +82,7 @@ const DiscountsScholarships = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {discounts.map((d) => (
+                    {(discounts || []).map((d) => (
                       <tr key={d.id} className="ad-tr">
                         <td className="ad-td" style={{ fontWeight: 700 }}>{d.id}</td>
                         <td className="ad-td"><strong>{d.name}</strong></td>

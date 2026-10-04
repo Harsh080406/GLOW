@@ -60,33 +60,33 @@ const runSeed = async () => {
       { zone: "C", amount: 14000, semester: "Fall 2026" },
     ]);
 
-    // 3. Seed Routes (34 Corridors)
-    console.log("🗺️ Seeding 34 Transit Corridors & Stops...");
+    // 3. Seed Routes (34 Vadodara Corridors to GSFC University)
+    console.log("🗺️ Seeding 34 Vadodara Transit Corridors to GSFC University...");
     const routeDocs = [];
     const routeNames = [
-      "SG Highway Express", "Maninagar Circle", "Bopal South", "University → Chandkheda",
-      "Gandhinagar Sector 21", "Navrangpura Ring", "Vastrapur Campus Line", "Satellite Shuttle",
-      "Ghatlodiya Direct", "Prahlad Nagar Flyer", "Naroda Corridor", "Asarwa Metro Link",
-      "Isanpur Connect", "Sabarmati Route", "Science City Shuttle", "C.G. Road Express",
-      "Law Garden Line", "Naranpura Shuttle", "Memnagar Route", "Paldi Circle",
-      "Usmanpura Connector", "Shahibaug Express", "Bodakdev Shuttle", "Gurukul Line",
-      "Shyamal Cross Connector", "Jodhpur Tekra Shuttle", "Sola Road Express", "Bhadaj Line",
-      "Gota Junction Flyer", "Sarkhej Link", "Juhapura Route", "Vastral Metro Shuttle",
-      "Ohav Industrial Express", "Nikol Ring Line"
+      "Fatehgunj Express", "Alkapuri - RC Dutt Road", "Akota - Old Padra Road", "Sayajigunj Station Corridor",
+      "Manjalpur - Makarpura Line", "Karelibaug Water Tank", "Amit Nagar Circle - Sama", "Waghodia Road Parivar",
+      "Ajwa Road - Sardar Estate", "Gotri - Sevasi Canal", "Vasna - Bhayli Road", "Subhanpura High Tension",
+      "Gorwa - BIDC Industrial", "Nizampura - Chhani Jakat Naka", "Sama-Savli Abacus Circle", "Harni Airport Express",
+      "Tarsali - Susen Circle", "Kalali - Vadsar Ring", "Atladara Sun Pharma Road", "Ellora Park Race Course",
+      "OP Road - Chakli Circle", "Pratapnagar Dabhoi Line", "Panigate Mandvi Heritage", "Warasia Ring Road Link",
+      "New VIP Road Khodiyar", "Bapod Gurukul Line", "Kapurai NH-48 Connect", "Laxmipura Gorwa Link",
+      "Chhani Fertilizernagar Direct", "Bajwa Koyali Petrochem", "Ranoli Dashrath Industrial", "Undera Karachiya Shuttle",
+      "Sindhwai Mata Pratapgunj", "Dandia Bazar Rajmahal Road"
     ];
 
     for (let i = 1; i <= 34; i++) {
       const name = routeNames[i - 1] || `Route R-${i < 10 ? '0' + i : i}`;
       routeDocs.push({
         name: `Route R-${i < 10 ? '0' + i : i} (${name})`,
-        origin: `Terminal ${i}`,
-        destination: "University Main Campus",
-        distanceKm: Math.floor(8 + (i * 0.5)),
-        durationMin: Math.floor(20 + (i * 0.8)),
+        origin: `Terminal ${i} - ${name.split(" ")[0]}`,
+        destination: "GSFC University Main Campus",
+        distanceKm: Math.floor(10 + (i * 0.4)),
+        durationMin: Math.floor(22 + (i * 0.7)),
         stops: [
-          { name: `Stop A - ${name}`, orderIndex: 1, etaOffsetMin: 0, lat: 23.0225, lng: 72.5714 },
-          { name: `Stop B - ${name}`, orderIndex: 2, etaOffsetMin: 12, lat: 23.0450, lng: 72.5830 },
-          { name: "University Main Campus", orderIndex: 3, etaOffsetMin: 30, lat: 23.0780, lng: 72.5920 },
+          { name: `Stop A - ${name.split(" ")[0]} Terminal`, orderIndex: 1, etaOffsetMin: 0, lat: 22.3100 + (i * 0.002), lng: 73.1700 + (i * 0.002) },
+          { name: `Stop B - Chhani / Bajwa Hub`, orderIndex: 2, etaOffsetMin: 14, lat: 22.3480, lng: 73.1680 },
+          { name: "GSFC University Main Campus", orderIndex: 3, etaOffsetMin: 32, lat: 22.3615, lng: 73.1550 },
         ],
       });
     }
@@ -109,7 +109,7 @@ const runSeed = async () => {
         email: "admin@glowbus.edu",
         passwordHash: defaultPasswordHash,
         role: "super_admin",
-        department: "University Transportation Cell",
+        department: "GSFC University Transportation Cell, Vigyan Bhavan",
         phone: "+91 98250 99999",
         avatar: "AP",
       },
@@ -118,7 +118,7 @@ const runSeed = async () => {
         email: "finance@glowbus.edu",
         passwordHash: defaultPasswordHash,
         role: "finance_admin",
-        department: "Finance & Accounts Division",
+        department: "Finance & Accounts Division, GSFC University",
         phone: "+91 98765 22334",
         avatar: "RD",
       },
@@ -160,15 +160,15 @@ const runSeed = async () => {
     const createdDriverUsers = await User.insertMany(driverUsersDocs);
     const allDriverUsers = [driverUser, ...createdDriverUsers];
 
-    // 6. Seed 85 Buses
-    console.log("🚍 Seeding 85 Fleet Vehicles...");
+    // 6. Seed 85 Buses (Vadodara RTO GJ-06)
+    console.log("🚍 Seeding 85 Fleet Vehicles (Vadodara RTO GJ-06)...");
     const busDocs = [];
     const models = ["Tata Starbus Ultra AC", "Volvo B11R AC Luxury", "Eicher Skyline Pro EV", "Ashok Leyland Oyster"];
 
     for (let i = 1; i <= 85; i++) {
       const busIdNum = 100 + i;
       busDocs.push({
-        registrationNumber: `GJ-05-AB-${1000 + i}`,
+        registrationNumber: `GJ-06-AB-${1000 + i}`,
         capacity: i % 2 === 0 ? 52 : 45,
         occupancy: Math.floor(Math.random() * 40),
         fuelLevel: Math.floor(60 + Math.random() * 40),
@@ -181,7 +181,7 @@ const runSeed = async () => {
     // Link Drivers to Buses
     const driverDocs = allDriverUsers.map((dUser, idx) => ({
       userId: dUser._id,
-      licenseNumber: `GJ-01-2015-${100000 + idx}`,
+      licenseNumber: `GJ-06-2015-${100000 + idx}`,
       assignedBusId: createdBuses[idx % createdBuses.length]._id,
       shiftTiming: "07:00 AM - 06:30 PM",
       safetyRating: 4.8,
@@ -197,7 +197,7 @@ const runSeed = async () => {
         email: `student${i}@glowbus.edu`,
         passwordHash: defaultPasswordHash,
         role: "student",
-        department: i % 3 === 0 ? "Computer Science" : i % 2 === 0 ? "Electrical Eng" : "Mechanical Eng",
+        department: i % 3 === 0 ? "Computer Science" : i % 2 === 0 ? "Chemical Eng" : "Mechanical Eng",
         phone: `+91 98000 ${10000 + (i % 90000)}`,
       });
     }
@@ -209,7 +209,7 @@ const runSeed = async () => {
       enrollmentId: `UNI2026${(1000 + idx).toString()}`,
       branch: sUser.department || "Computer Science",
       semester: `${(idx % 8) + 1}th Semester`,
-      assignedStopId: "Chandkheda Bus Stop",
+      assignedStopId: "Fatehgunj Bus Stop",
       routeId: createdRoutes[idx % createdRoutes.length]._id,
       guardianContact: "+91 98765 00000",
     }));

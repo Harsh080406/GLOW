@@ -21,13 +21,13 @@ const FinancePayments = () => {
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [selectedReceiptTxn, setSelectedReceiptTxn] = useState(null);
 
-  const filteredTxns = transactions.filter((t) => {
+  const filteredTxns = (transactions || []).filter((t) => {
     const matchesSearch =
-      t.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.refNo.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesMethod = methodFilter === "ALL" || t.method.includes(methodFilter);
+      t.studentName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.studentId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.refNo?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesMethod = methodFilter === "ALL" || (t.method && t.method.includes(methodFilter));
     return matchesSearch && matchesMethod;
   });
 

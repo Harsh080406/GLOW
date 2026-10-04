@@ -54,6 +54,7 @@ app.use("/api/student", studentRoutes);
 app.use("/api/v1/student", studentRoutes);
 app.use("/api/driver", driverRoutes);
 app.use("/api/v1/driver", driverRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/transport", transportRoutes);
 app.use("/api/v1/finance", financeRoutes);
@@ -80,6 +81,16 @@ const startServer = async () => {
   try {
     console.log("🔄 Initializing GLOW Enterprise Backend Service...");
     await connectDB();
+
+    server.on("error", (err) => {
+      if (err.code === "EADDRINUSE") {
+        console.error(`❌ Port ${PORT} is already in use by another process.`);
+        console.error(`👉 Run 'netstat -ano | findstr :${PORT}' or terminate the existing process.`);
+      } else {
+        console.error("❌ Backend Server Error:", err.message);
+      }
+      process.exit(1);
+    });
 
     server.listen(PORT, () => {
       console.log(`🚀 GLOW Backend Server live on port ${PORT}`);

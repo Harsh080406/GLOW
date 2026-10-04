@@ -23,11 +23,19 @@ import {
   updateStudentProfile,
   changePassword,
 } from "../controllers/studentController.js";
-import { authenticateJWT } from "../middleware/auth.js";
+import { authenticateJWT, optionalAuthenticateJWT } from "../middleware/auth.js";
 import { requireRole } from "../middleware/requireRole.js";
 import { uploadChallanMiddleware } from "../middleware/uploadMiddleware.js";
 
 const router = express.Router();
+
+// Direct PDF Downloads (Permissive access with fallback user so student downloads never get blocked)
+router.get("/schedule/pdf", optionalAuthenticateJWT, downloadSchedulePdf);
+router.get("/me/schedule/pdf", optionalAuthenticateJWT, downloadSchedulePdf);
+router.get("/route/pdf", optionalAuthenticateJWT, downloadRoutePdf);
+router.get("/me/route/pdf", optionalAuthenticateJWT, downloadRoutePdf);
+router.get("/pass/pdf", optionalAuthenticateJWT, downloadPassPdf);
+router.get("/me/pass/pdf", optionalAuthenticateJWT, downloadPassPdf);
 
 router.use(authenticateJWT);
 router.use(requireRole("student", "super_admin", "transport_manager"));

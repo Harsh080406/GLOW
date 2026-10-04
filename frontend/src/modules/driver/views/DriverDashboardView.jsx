@@ -37,6 +37,45 @@ const NAV_ITEMS = [
   { id: "emergency", label: "Emergency / SOS", icon: "M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01" },
 ];
 
+const DRIVER_TAB_TITLES = {
+  dashboard: {
+    title: "Driver Command Cockpit",
+    subtitle: "Real-Time Bus Telematics, Live Trip Controls & Passenger Roster",
+  },
+  trip_mgmt: {
+    title: "Trip & Shift Controls",
+    subtitle: "Real-Time Trip Dispatch, Pause, Progression & Route Verification",
+  },
+  boarding: {
+    title: "Passenger Boarding Roster",
+    subtitle: "Live QR Validation, Student Headcount & Check-in Records",
+  },
+  mybus: {
+    title: "Bus Fitness & Inspection",
+    subtitle: "Vehicle Telematics, Health Checklist, Odometer & Fuel Level",
+  },
+  route: {
+    title: "Route & Geographic GPS Map",
+    subtitle: "Scheduled Bus Stops, Progression Line & Commuter ETAs",
+  },
+  profile: {
+    title: "Driver Profile & Credentials",
+    subtitle: "Shift Allocation, Licensing Documents, Contact & Performance",
+  },
+  edit_profile: {
+    title: "Edit Driver Credentials",
+    subtitle: "Update Contact Information, Shift Preference & License Docs",
+  },
+  report_problem: {
+    title: "Vehicle & Route Issue Report",
+    subtitle: "Direct Mechanical, Traffic or Infrastructure Grievance Dispatch",
+  },
+  emergency: {
+    title: "Driver Emergency & Safety SOS",
+    subtitle: "High-Priority Alert Dispatch to Admin & Security Control Room",
+  },
+};
+
 const DriverDashboardView = () => {
   const navigate = useNavigate();
   const {
@@ -84,7 +123,7 @@ const DriverDashboardView = () => {
   // Modals & form state
   const [showDelayModal, setShowDelayModal] = useState(false);
   const [delayMins, setDelayMins] = useState(10);
-  const [delayReason, setDelayReason] = useState("Traffic congestion on SG Highway");
+  const [delayReason, setDelayReason] = useState("Traffic congestion near Chhani Jakat Naka");
   const [scanInput, setScanInput] = useState("");
   const [scanMessage, setScanMessage] = useState(null);
 
@@ -95,7 +134,7 @@ const DriverDashboardView = () => {
     name: currentDriver?.name || "Mahesh Patel",
     phone: currentDriver?.phone || "+91 98765 11111",
     email: currentDriver?.email || "mahesh.patel@glowbus.edu",
-    address: currentDriver?.address || "A-12, Green Park Society, Chandkheda, Ahmedabad - 382424",
+    address: currentDriver?.address || "B-14, Shanti Nagar, Nizampura, Vadodara - 390002",
     emergencyContact: currentDriver?.emergencyContact || "+91 98765 00000 (Wife)",
     bloodGroup: currentDriver?.bloodGroup || "B+",
   });
@@ -548,19 +587,83 @@ const DriverDashboardView = () => {
   };
 
   const routeStops = [
-    { index: 0, name: "Chandkheda Stop", scheduled: "07:30 AM", actual: "07:31 AM", students: 12, status: "departed" },
-    { index: 1, name: "Visat Circle", scheduled: "07:42 AM", actual: "07:44 AM", students: 8, status: "departed" },
-    { index: 2, name: "Motera Crossroads", scheduled: "07:54 AM", actual: "On Time (2 min)", students: 11, status: "approaching" },
-    { index: 3, name: "Ranip Bus Port", scheduled: "08:04 AM", actual: "Estimated 08:05 AM", students: 5, status: "upcoming" },
-    { index: 4, name: "Koba Circle", scheduled: "08:14 AM", actual: "Estimated 08:15 AM", students: 2, status: "upcoming" },
-    { index: 5, name: "University Main Bay", scheduled: "08:20 AM", actual: "Estimated 08:20 AM", students: 0, status: "destination" },
+    { index: 0, name: "Fatehgunj Stop", scheduled: "07:30 AM", actual: "07:31 AM", students: 12, status: "departed" },
+    { index: 1, name: "Nizampura Char Rasta", scheduled: "07:42 AM", actual: "07:44 AM", students: 8, status: "departed" },
+    { index: 2, name: "Chhani Jakat Naka", scheduled: "07:54 AM", actual: "On Time (2 min)", students: 11, status: "approaching" },
+    { index: 3, name: "Bajwa Crossing", scheduled: "08:04 AM", actual: "Estimated 08:05 AM", students: 5, status: "upcoming" },
+    { index: 4, name: "Fertilizernagar Gate", scheduled: "08:14 AM", actual: "Estimated 08:15 AM", students: 2, status: "upcoming" },
+    { index: 5, name: "GSFC University Main Bay", scheduled: "08:20 AM", actual: "Estimated 08:20 AM", students: 0, status: "destination" },
   ];
+
+  const driverRouteId = currentDriver?.assignedRoute || currentDriver?.routeId || activeTrip?.routeId || "R-04";
+
+  const defaultStudents = [
+    { id: "UNI20260125", name: "Rahul Sharma", enrollmentId: "UNI20260125", pickupStop: "Chhani Jakat Naka", stopName: "Chhani Jakat Naka", pickupTime: "07:54 AM", boardedToday: true, passStatus: "ACTIVE" },
+    { id: "UNI20260142", name: "Priya Patel", enrollmentId: "UNI20260142", pickupStop: "Fatehgunj Stop", stopName: "Fatehgunj Stop", pickupTime: "07:30 AM", boardedToday: true, passStatus: "ACTIVE" },
+    { id: "UNI20260188", name: "Ananya Desai", enrollmentId: "UNI20260188", pickupStop: "Nizampura Char Rasta", stopName: "Nizampura Char Rasta", pickupTime: "07:42 AM", boardedToday: true, passStatus: "ACTIVE" },
+    { id: "UNI20260210", name: "Siddharth Joshi", enrollmentId: "UNI20260210", pickupStop: "Chhani Jakat Naka", stopName: "Chhani Jakat Naka", pickupTime: "07:54 AM", boardedToday: false, passStatus: "ACTIVE" },
+    { id: "UNI20260235", name: "Kavita Shah", enrollmentId: "UNI20260235", pickupStop: "Bajwa Crossing", stopName: "Bajwa Crossing", pickupTime: "08:04 AM", boardedToday: false, passStatus: "ACTIVE" },
+    { id: "UNI20260280", name: "Rohan Dave", enrollmentId: "UNI20260280", pickupStop: "Fatehgunj Stop", stopName: "Fatehgunj Stop", pickupTime: "07:30 AM", boardedToday: true, passStatus: "ACTIVE" },
+    { id: "UNI20260312", name: "Aarav Mehta", enrollmentId: "UNI20260312", pickupStop: "Fertilizernagar Gate", stopName: "Fertilizernagar Gate", pickupTime: "08:14 AM", boardedToday: false, passStatus: "ACTIVE" },
+    { id: "UNI20260340", name: "Isha Nair", enrollmentId: "UNI20260340", pickupStop: "Nizampura Char Rasta", stopName: "Nizampura Char Rasta", pickupTime: "07:42 AM", boardedToday: true, passStatus: "ACTIVE" },
+  ];
+
+  const matchedStudents = (students && students.length > 0)
+    ? students.filter((s) => s.busId === currentDriver?.assignedBus || s.routeId === driverRouteId || s.route === driverRouteId)
+    : [];
+
+  const assignedBusStudents = matchedStudents.length > 0 ? matchedStudents : defaultStudents;
+
+  const [boardedStudentsState, setBoardedStudentsState] = useState(() => {
+    const initial = {};
+    defaultStudents.forEach((s) => {
+      initial[s.id] = !!s.boardedToday;
+    });
+    return initial;
+  });
+
+  const toggleStudentBoarded = (studentId) => {
+    setBoardedStudentsState((prev) => ({
+      ...prev,
+      [studentId]: !prev[studentId],
+    }));
+  };
+
+  const effectiveStudents = assignedBusStudents.map((s) => ({
+    ...s,
+    boardedToday: boardedStudentsState[s.id] !== undefined ? boardedStudentsState[s.id] : !!s.boardedToday,
+  }));
+  const effectiveBoardedCount = effectiveStudents.filter((s) => s.boardedToday).length;
+
+  const currentStopIndex = typeof activeTrip?.currentStopIndex === "number" ? activeTrip.currentStopIndex : 2;
+  const currentApproachingStop = routeStops[currentStopIndex] || routeStops[2];
+  const nextStopStudentsRaw = effectiveStudents.filter(
+    (s) => s.pickupStop === currentApproachingStop.name || s.stopName === currentApproachingStop.name
+  );
+  const nextStopStudents = nextStopStudentsRaw.length > 0 ? nextStopStudentsRaw : effectiveStudents.slice(0, 3);
 
   const dynamicNavItems = NAV_ITEMS.map((item) =>
     item.id === "boarding"
-      ? { ...item, badge: `${boardedCount}/${assignedBusStudents.length}` }
+      ? { ...item, badge: `${effectiveBoardedCount}/${effectiveStudents.length}` }
       : item
   );
+
+  const driverName = currentDriver?.name || "Mahesh Patel";
+  const driverAssignedBusId = currentDriver?.assignedBus || activeTrip?.busId || "BUS-104";
+  const driverInitials = currentDriver?.avatar ||
+    driverName
+      .trim()
+      .split(" ")
+      .filter(Boolean)
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "MP";
+
+  const currentTabMeta = DRIVER_TAB_TITLES[activeNav] || {
+    title: "Driver Command Cockpit",
+    subtitle: "Real-Time Bus Telematics, Live Trip Controls & Passenger Roster",
+  };
 
   return (
     <div className="dd-wrapper">
@@ -579,8 +682,8 @@ const DriverDashboardView = () => {
             </div>
             {!isCollapsed && (
               <div className="dd-brand-text">
-                <div className="dd-brand-name">GLOW BUS</div>
-                <div className="dd-brand-sub">Driver Portal</div>
+                <div className="dd-brand-name">TRANSIT</div>
+                <div className="dd-brand-sub">Driver Cockpit</div>
               </div>
             )}
           </button>
@@ -616,18 +719,18 @@ const DriverDashboardView = () => {
 
           <div
             className="dd-driver-info"
-            title={isCollapsed ? `${currentDriver.name} (${currentDriver.id})` : undefined}
+            title={isCollapsed ? `${driverName} (${currentDriver?.id || "DRV-104"})` : undefined}
             onClick={() => {
               setActiveNav("profile");
               setSidebarOpen(false);
             }}
             style={{ cursor: "pointer" }}
           >
-            <div className="dd-driver-avatar">{currentDriver.avatar}</div>
+            <div className="dd-driver-avatar">{driverInitials}</div>
             {!isCollapsed && (
               <div className="dd-driver-text" style={{ flex: 1 }}>
-                <p className="dd-driver-name">{currentDriver.name}</p>
-                <p className="dd-driver-id">{currentDriver.id}</p>
+                <p className="dd-driver-name">{driverName}</p>
+                <p className="dd-driver-id">{currentDriver?.id || "DRV-104"}</p>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
                   <span className="dd-duty-badge">● On Duty</span>
                   <button
@@ -675,23 +778,31 @@ const DriverDashboardView = () => {
               <Icon d="M3 12h18M3 6h18M3 18h18" size={22} />
             </button>
             <div className="dd-topbar-info">
-              <span className="dd-topbar-greeting">Driver Cockpit</span>
-              <h1 className="dd-topbar-name">{currentDriver.name} 👋</h1>
+              <h1 className="dd-topbar-title">{currentTabMeta.title}</h1>
+              <p className="dd-topbar-subtitle">{currentTabMeta.subtitle}</p>
             </div>
             <div className="dd-topbar-right">
-              <span className={`dd-trip-status ${activeTrip.status === "ON_ROUTE" ? "dd-trip-status--active" : "dd-trip-status--idle"}`}>
-                {activeTrip.status === "ON_ROUTE" ? "● Trip Active" : activeTrip.status === "PAUSED" ? "⏸ Trip Paused" : "● Idle / Base"}
+              <span className={`dd-trip-status ${activeTrip?.status === "ON_ROUTE" ? "dd-trip-status--active" : "dd-trip-status--idle"}`}>
+                {activeTrip?.status === "ON_ROUTE" ? "● Trip Active" : activeTrip?.status === "PAUSED" ? "⏸ Trip Paused" : "○ Standby / Base"}
               </span>
-              <button className="dd-notif-btn" aria-label="Emergency" onClick={() => setActiveNav("emergency")}>
-                <span style={{ fontSize: 16 }}>🚨</span>
+              <button
+                className="dd-sos-btn"
+                aria-label="Emergency SOS"
+                onClick={() => setActiveNav("emergency")}
+                title="Trigger Emergency SOS"
+              >
+                🚨 SOS
               </button>
               <div
-                className="dd-avatar"
-                title={`${currentDriver.name} (${currentDriver.id})`}
+                className="dd-topbar-profile"
+                title={`${driverName} (${currentDriver?.id || "DRV-104"}) — Click to view Profile`}
                 onClick={() => setActiveNav("profile")}
-                style={{ cursor: "pointer" }}
               >
-                {currentDriver.avatar}
+                <div className="dd-avatar">{driverInitials}</div>
+                <div className="dd-avatar-info">
+                  <span className="dd-avatar-name">{driverName}</span>
+                  <span className="dd-avatar-role">Bus Pilot · {driverAssignedBusId}</span>
+                </div>
               </div>
             </div>
           </header>
@@ -699,7 +810,7 @@ const DriverDashboardView = () => {
           <main className="dd-content">
             {/* ── 1. DRIVER HOME ────────────────────────────────────── */}
             {activeNav === "dashboard" && (
-              <div className="dd-cockpit-wrapper">
+              <div className="dd-cockpit-wrapper" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                 {broadcastFeedback && (
                   <div style={{
                     padding: "12px 18px",
@@ -714,214 +825,379 @@ const DriverDashboardView = () => {
                   </div>
                 )}
 
-                {/* Cockpit Layout: single column stack on <768px, 2-column on >=768px */}
-                <div className="dd-cockpit-layout">
-                  {/* Speed Gauge Column (<768px order: 1, >=768px col: 1) */}
-                  <div className="dd-cockpit-speed-col">
-                    <div className="dd-speed-card">
-                      <div className="dd-speed-header">
-                        <span className="dd-speed-badge">
-                          <span className="dd-pulse-dot" /> LIVE TELEMETRY GAUGE
-                        </span>
-                        <button
-                          type="button"
-                          onClick={handleToggleDeviceGps}
-                          className="ad-badge ad-badge--blue"
-                          style={{ cursor: "pointer", border: "none" }}
-                          title="Toggle Phone / Route Telemetry GPS"
-                        >
-                          GPS: {isDeviceGpsActive ? "Device GPS (Live)" : "Bus Sensor"}
-                        </button>
-                      </div>
+                {/* 1. MISSION COMMAND HERO BANNER */}
+                <div className="dd-mission-card">
+                  <div className="dd-mission-top">
+                    <div className="dd-mission-badges">
+                      <span className="ad-badge ad-badge--blue" style={{ fontSize: 12, padding: "5px 12px" }}>
+                        🚌 Vehicle: {currentDriver?.assignedBus || "BUS-104"}
+                      </span>
+                      <span className="ad-badge ad-badge--gray" style={{ fontSize: 12, padding: "5px 12px" }}>
+                        Route {driverRouteId}
+                      </span>
+                      <span className={`ad-badge ${activeTrip?.status === "ON_ROUTE" ? "ad-badge--green" : "ad-badge--yellow"}`} style={{ fontSize: 12, padding: "5px 12px" }}>
+                        {activeTrip?.status === "ON_ROUTE" ? "● Cruising on Route" : activeTrip?.status === "PAUSED" ? "⏸ Trip Paused" : "○ Standby / Base"}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleToggleDeviceGps}
+                      className="dd-sensor-btn"
+                      title="Toggle between Device GPS and Bus Hardware Telematics"
+                    >
+                      <span className="dd-pulse-dot" />
+                      GPS: {isDeviceGpsActive ? "Device GPS (Live)" : "Bus Sensor Active"}
+                    </button>
+                  </div>
 
-                      <div className="dd-speed-gauge-wrap">
-                        <div className="dd-speed-dial">
-                          <span className="dd-speed-number">
+                  <div className="dd-mission-body">
+                    {/* Left: Route Corridor */}
+                    <div className="dd-mission-info">
+                      <span className="dd-mission-eyebrow">ASSIGNED TRANSIT CORRIDOR</span>
+                      <h2 className="dd-mission-title">{currentDriver?.routeName || "GSFC University ↔ Fatehgunj Corridor"}</h2>
+                      <p className="dd-mission-desc">
+                        Pilot: <strong>{driverName}</strong> · Morning Shift · <strong>{effectiveStudents.length} Students Allocated</strong> · 6 Scheduled Stops
+                      </p>
+                    </div>
+
+                    {/* Center: Live Telematics Mini HUD */}
+                    <div className="dd-mission-hud">
+                      <div className="dd-hud-item">
+                        <span className="dd-hud-label">LIVE SPEED</span>
+                        <div className="dd-hud-val-wrap">
+                          <strong className="dd-hud-speed">
                             {liveBusTelemetry?.[currentDriver?.assignedBus]?.speed ?? liveBusTelemetry?.speed ?? activeTrip?.speed ?? activeTrip?.currentSpeed ?? 42}
-                          </span>
-                          <span className="dd-speed-unit">KM/H</span>
+                          </strong>
+                          <span className="dd-hud-unit">KM/H</span>
                         </div>
-                        <div className="dd-speed-meta">
-                          <div className="dd-speed-limit">
-                            <span>Corridor Limit:</span>
-                            <strong style={{ color: "#0f172a", fontSize: 13 }}>50 KM/H</strong>
-                          </div>
-                          <div className="dd-speed-limit">
-                            <span>Status:</span>
-                            <strong style={{ color: "#16a34a", fontSize: 13 }}>Cruising Route {driverRouteId}</strong>
-                          </div>
-                          <div className="dd-speed-limit">
-                            <span>Telemetry:</span>
-                            <strong style={{ color: "#0066ff", fontSize: 13 }}>3s Sync Active</strong>
-                          </div>
-                        </div>
+                        <span className="dd-hud-sub">Limit: 50 KM/H · Safe</span>
                       </div>
-
-                      <div className="dd-speed-footer">
-                        <div className="dd-speed-mini-stat">
-                          <span className="dd-speed-mini-label">Boarded</span>
-                          <strong className="dd-speed-mini-val">{boardedCount} / {assignedBusStudents.length}</strong>
-                        </div>
-                        <div className="dd-speed-mini-stat">
-                          <span className="dd-speed-mini-label">Next Stop</span>
-                          <strong className="dd-speed-mini-val">Motera Crossroads</strong>
-                        </div>
-                        <div className="dd-speed-mini-stat">
-                          <span className="dd-speed-mini-label">Pre-Trip Vitals</span>
-                          <strong className="dd-speed-mini-val" style={{ color: "#16a34a" }}>✓ Passed (6/6)</strong>
-                        </div>
+                      <div className="dd-hud-divider" />
+                      <div className="dd-hud-item">
+                        <span className="dd-hud-label">NEXT STOP</span>
+                        <strong className="dd-hud-stop">{currentApproachingStop.name}</strong>
+                        <span className="dd-hud-sub">ETA: 07:58 AM (2 min)</span>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Trip Card Column (<768px order: 2, >=768px col: 2) */}
-                  <div className="dd-cockpit-trip-col">
-                    <div className="dd-hero-banner" style={{ margin: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                      <div className="dd-hero-left">
-                        <div className="dd-hero-icon-box">
-                          <BusIcon size={30} color="#ffffff" />
-                        </div>
-                        <div>
-                          <span className="dd-hero-badge">TODAY'S VEHICLE & ROUTE ASSIGNMENT</span>
-                          <h2 className="dd-hero-title">Bus: {currentDriver?.assignedBus} &nbsp;·&nbsp; Route: {currentDriver?.assignedRoute}</h2>
-                          <p className="dd-hero-sub">
-                            {currentDriver?.routeName || "University → Chandkheda"} &nbsp;·&nbsp; Passengers: <strong>{assignedBusStudents.length} Students</strong> &nbsp;·&nbsp; Status: <span className="dd-hero-status-pill">{activeTrip?.status}</span>
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="dd-hero-actions" style={{ marginTop: 16, display: "flex", gap: 8, width: "100%" }}>
-                        {activeTrip?.status !== "ON_ROUTE" ? (
+                    {/* Right: Trip Controls */}
+                    <div className="dd-mission-actions">
+                      {activeTrip?.status !== "ON_ROUTE" ? (
+                        <button
+                          onClick={handleStartTrip}
+                          disabled={isStartingTrip}
+                          className="dd-action-btn dd-action-btn--primary"
+                        >
+                          ▶ {isStartingTrip ? "STARTING..." : "START MORNING SHIFT"}
+                        </button>
+                      ) : (
+                        <>
                           <button
-                            onClick={handleStartTrip}
-                            disabled={isStartingTrip}
-                            className="dd-btn-start"
-                            style={{ flex: 1, minHeight: 48 }}
+                            onClick={handlePauseTrip}
+                            disabled={isPausingTrip}
+                            className="dd-action-btn dd-action-btn--outline"
                           >
-                            <span>▶</span> {isStartingTrip ? "STARTING..." : "START TRIP"}
+                            {activeTrip?.status === "PAUSED" ? "▶ RESUME" : "⏸ PAUSE"}
                           </button>
-                        ) : (
-                          <>
-                            <button
-                              onClick={handlePauseTrip}
-                              disabled={isPausingTrip}
-                              className="dd-btn-pause"
-                              style={{ flex: 1, minHeight: 48 }}
-                            >
-                              {activeTrip?.status === "PAUSED" ? "▶ RESUME" : "⏸ PAUSE"}
-                            </button>
-                            <button
-                              onClick={handleNextStop}
-                              className="dd-btn-next-stop"
-                              style={{ flex: 1, minHeight: 48 }}
-                            >
-                              ⏭ NEXT STOP
-                            </button>
-                            <button
-                              onClick={handleEndTrip}
-                              disabled={isCompletingTrip}
-                              className="dd-btn-end"
-                              style={{ flex: 1, minHeight: 48 }}
-                            >
-                              ✓ COMPLETE
-                            </button>
-                          </>
-                        )}
-                      </div>
+                          <button
+                            onClick={handleNextStop}
+                            className="dd-action-btn dd-action-btn--primary"
+                          >
+                            ⏭ NEXT STOP
+                          </button>
+                          <button
+                            onClick={handleEndTrip}
+                            disabled={isCompletingTrip}
+                            className="dd-action-btn dd-action-btn--dark"
+                          >
+                            ✓ COMPLETE
+                          </button>
+                        </>
+                      )}
                     </div>
-                  </div>
-
-                  {/* Action Buttons (<768px order: 3, >=768px col: 1 / -1) */}
-                  <div className="dd-cockpit-actions">
-                    <button
-                      type="button"
-                      className="dd-btn-touch dd-btn-touch-scan"
-                      onClick={() => {
-                        setScanResult(null);
-                        setScannerMode("camera");
-                        setShowScannerModal(true);
-                      }}
-                    >
-                      <div className="dd-btn-touch-icon">📷</div>
-                      <div className="dd-btn-touch-text">
-                        <strong>Scan Passenger QR Pass</strong>
-                        <small>Live camera validator & sub-2s HMAC check</small>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="dd-btn-touch dd-btn-touch-sos"
-                      onClick={handleDriverSos}
-                      disabled={isSosLoading}
-                    >
-                      <div className="dd-btn-touch-icon">🚨</div>
-                      <div className="dd-btn-touch-text">
-                        <strong>{isSosLoading ? "Broadcasting SOS..." : "DRIVER SOS EMERGENCY"}</strong>
-                        <small>Instant priority dispatch to security & admin</small>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="dd-btn-touch dd-btn-touch-delay"
-                      onClick={() => setShowDelayModal(true)}
-                    >
-                      <div className="dd-btn-touch-icon">📢</div>
-                      <div className="dd-btn-touch-text">
-                        <strong>Broadcast Delay Notice</strong>
-                        <small>Push 5, 10, or 15m alert to route commuters</small>
-                      </div>
-                    </button>
                   </div>
                 </div>
 
-                {/* Telemetry Metric Cards */}
-                <section className="dd-stats" style={{ marginTop: 8 }}>
-                  <div className="dd-stat-card" onClick={() => setActiveNav("boarding")}>
-                    <div className="dd-stat-body">
-                      <p className="dd-stat-label">Boarded Passengers</p>
-                      <h3 className="dd-stat-value">{boardedCount} / {assignedBusStudents.length}</h3>
-                      <p className="dd-stat-sub">{assignedBusStudents.length - boardedCount} remaining on Route {driverRouteId}</p>
+                {/* 2. FOUR KPI METRIC CARDS */}
+                <div className="dd-kpi-grid">
+                  <div className="dd-kpi-card" onClick={() => setActiveNav("boarding")}>
+                    <div className="dd-kpi-top">
+                      <span className="dd-kpi-label">Boarded Passengers</span>
+                      <div className="dd-kpi-icon dd-kpi-icon--blue">
+                        <Icon d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" size={20} stroke="#0066ff" />
+                      </div>
                     </div>
-                    <div className="dd-stat-icon">
-                      <Icon d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" size={22} stroke="#0066ff" />
-                    </div>
-                  </div>
-
-                  <div className="dd-stat-card" onClick={() => setActiveNav("route")}>
-                    <div className="dd-stat-body">
-                      <p className="dd-stat-label">Next Scheduled Stop</p>
-                      <h3 className="dd-stat-value" style={{ fontSize: 17 }}>Motera Crossroads</h3>
-                      <p className="dd-stat-sub">ETA: 07:58 AM (2 min)</p>
-                    </div>
-                    <div className="dd-stat-icon">
-                      <Icon d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" size={22} stroke="#0066ff" />
+                    <div className="dd-kpi-main">
+                      <h3 className="dd-kpi-val">{effectiveBoardedCount} / {effectiveStudents.length}</h3>
+                      <div className="dd-kpi-progress-bar">
+                        <div className="dd-kpi-progress-fill" style={{ width: `${Math.round((effectiveBoardedCount / effectiveStudents.length) * 100)}%` }} />
+                      </div>
+                      <p className="dd-kpi-sub">{effectiveStudents.length - effectiveBoardedCount} commuters remaining on Route</p>
                     </div>
                   </div>
 
-                  <div className="dd-stat-card" onClick={() => setActiveNav("trip_mgmt")}>
-                    <div className="dd-stat-body">
-                      <p className="dd-stat-label">Telemetry Speed</p>
-                      <h3 className="dd-stat-value">{activeTrip?.speed || "42 km/h"}</h3>
-                      <p className="dd-stat-sub">GPS refreshed 2s ago</p>
+                  <div className="dd-kpi-card" onClick={() => setActiveNav("route")}>
+                    <div className="dd-kpi-top">
+                      <span className="dd-kpi-label">Approaching Stop</span>
+                      <div className="dd-kpi-icon dd-kpi-icon--blue">
+                        <Icon d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" size={20} stroke="#0066ff" />
+                      </div>
                     </div>
-                    <div className="dd-stat-icon">
-                      <Icon d="M13 10V3L4 14h7v7l9-11h-7z" size={22} stroke="#0066ff" />
+                    <div className="dd-kpi-main">
+                      <h3 className="dd-kpi-val" style={{ fontSize: 17 }}>{currentApproachingStop.name}</h3>
+                      <p className="dd-kpi-sub">Stop #{currentStopIndex + 1} of {routeStops.length} · ETA 07:58 AM (2 min)</p>
                     </div>
                   </div>
 
-                  <div className="dd-stat-card" onClick={() => setActiveNav("mybus")}>
-                    <div className="dd-stat-body">
-                      <p className="dd-stat-label">Bus Pre-Trip Check</p>
-                      <h3 className="dd-stat-value" style={{ color: "#16a34a" }}>✓ Passed</h3>
-                      <p className="dd-stat-sub">{currentDriver?.assignedBus} · 6/6 vitals verified</p>
+                  <div className="dd-kpi-card" onClick={() => setActiveNav("trip_mgmt")}>
+                    <div className="dd-kpi-top">
+                      <span className="dd-kpi-label">Corridor Speed</span>
+                      <div className="dd-kpi-icon dd-kpi-icon--blue">
+                        <Icon d="M13 10V3L4 14h7v7l9-11h-7z" size={20} stroke="#0066ff" />
+                      </div>
                     </div>
-                    <div className="dd-stat-icon">
-                      <Icon d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" size={22} stroke="#0066ff" />
+                    <div className="dd-kpi-main">
+                      <h3 className="dd-kpi-val">{activeTrip?.speed || "42 km/h"}</h3>
+                      <p className="dd-kpi-sub">Limit 50 km/h · 3s telemetry active</p>
                     </div>
                   </div>
-                </section>
+
+                  <div className="dd-kpi-card" onClick={() => setActiveNav("mybus")}>
+                    <div className="dd-kpi-top">
+                      <span className="dd-kpi-label">Bus Pre-Trip Check</span>
+                      <div className="dd-kpi-icon dd-kpi-icon--green">
+                        <Icon d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" size={20} stroke="#16a34a" />
+                      </div>
+                    </div>
+                    <div className="dd-kpi-main">
+                      <h3 className="dd-kpi-val" style={{ color: "#16a34a" }}>✓ Passed</h3>
+                      <p className="dd-kpi-sub">6/6 vitals verified · Fuel 78% · OK</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. REFINED QUICK ACTION CARDS (Clean SaaS Design) */}
+                <div className="dd-quick-grid">
+                  <div
+                    className="dd-quick-item"
+                    onClick={() => {
+                      setScanResult(null);
+                      setScannerMode("camera");
+                      setShowScannerModal(true);
+                    }}
+                  >
+                    <div className="dd-quick-icon-wrap dd-quick-icon-wrap--blue">
+                      <Icon d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" size={22} stroke="#0066ff" />
+                    </div>
+                    <div className="dd-quick-content">
+                      <h4 className="dd-quick-title">Scan Passenger QR Pass</h4>
+                      <p className="dd-quick-sub">Live camera validator & sub-2s HMAC check</p>
+                    </div>
+                    <span className="dd-quick-arrow">→</span>
+                  </div>
+
+                  <div
+                    className="dd-quick-item"
+                    onClick={() => setShowDelayModal(true)}
+                  >
+                    <div className="dd-quick-icon-wrap dd-quick-icon-wrap--amber">
+                      <Icon d="M11 5.882V19.24a1.76 1.76 0 0 1-3.417.592l-2.147-6.15M18 8a3 3 0 0 1 0 6M11 5.882A3 3 0 0 0 9 3H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h4a3 3 0 0 0 2-2.882" size={22} stroke="#d97706" />
+                    </div>
+                    <div className="dd-quick-content">
+                      <h4 className="dd-quick-title">Broadcast Delay Notice</h4>
+                      <p className="dd-quick-sub">Push 5, 10, or 15m alert to route commuters</p>
+                    </div>
+                    <span className="dd-quick-arrow">→</span>
+                  </div>
+
+                  <div
+                    className="dd-quick-item dd-quick-item--sos"
+                    onClick={handleDriverSos}
+                  >
+                    <div className="dd-quick-icon-wrap dd-quick-icon-wrap--red">
+                      <Icon d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01" size={22} stroke="#dc2626" />
+                    </div>
+                    <div className="dd-quick-content">
+                      <h4 className="dd-quick-title" style={{ color: "#dc2626" }}>
+                        {isSosLoading ? "Transmitting..." : "Driver Emergency SOS"}
+                      </h4>
+                      <p className="dd-quick-sub">Instant priority dispatch to security & admin</p>
+                    </div>
+                    <span className="dd-quick-arrow" style={{ color: "#dc2626" }}>→</span>
+                  </div>
+                </div>
+
+                {/* 4. TWO-COLUMN OPERATIONS CORE */}
+                <div className="dd-operational-split">
+                  {/* Left Column: Live Route Stop Progression */}
+                  <div className="dd-card dd-timeline-card">
+                    <div className="dd-card-header">
+                      <div>
+                        <h3 className="dd-card-title">Live Route Progression & Timetable</h3>
+                        <p style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Route {driverRouteId} · Stop by stop commuter schedule & status</p>
+                      </div>
+                      <span className="ad-badge ad-badge--blue">
+                        Current: Stop #{currentStopIndex + 1} of {routeStops.length}
+                      </span>
+                    </div>
+
+                    <div className="dd-stops-timeline">
+                      {routeStops.map((stop, i) => {
+                        const isCompleted = i < currentStopIndex;
+                        const isCurrent = i === currentStopIndex;
+
+                        return (
+                          <div
+                            key={stop.index}
+                            className={`dd-timeline-item ${isCurrent ? "dd-timeline-item--current" : ""} ${isCompleted ? "dd-timeline-item--completed" : ""}`}
+                          >
+                            <div className="dd-timeline-indicator">
+                              <div className={`dd-timeline-dot ${isCurrent ? "dd-timeline-dot--current" : isCompleted ? "dd-timeline-dot--done" : "dd-timeline-dot--pending"}`}>
+                                {isCompleted ? "✓" : i + 1}
+                              </div>
+                              {i < routeStops.length - 1 && (
+                                <div className={`dd-timeline-connector ${isCompleted ? "dd-timeline-connector--done" : ""}`} />
+                              )}
+                            </div>
+
+                            <div className="dd-timeline-body">
+                              <div className="dd-timeline-main-row">
+                                <div className="dd-timeline-title-wrap">
+                                  <h4 className="dd-timeline-stop-name">{stop.name}</h4>
+                                  <span className={`ad-badge ${isCompleted ? "ad-badge--green" : isCurrent ? "ad-badge--blue" : "ad-badge--gray"}`}>
+                                    {isCompleted ? "Departed" : isCurrent ? "Approaching (2 min)" : "Upcoming"}
+                                  </span>
+                                </div>
+                                <span className="dd-timeline-time">{stop.scheduled}</span>
+                              </div>
+
+                              <div className="dd-timeline-sub-row">
+                                <span className="dd-timeline-detail">
+                                  {isCompleted ? `Departed at ${stop.actual}` : isCurrent ? `Live ETA: ${stop.actual}` : `Estimated: ${stop.actual}`}
+                                </span>
+                                <span className="dd-timeline-students">
+                                  👥 {stop.students} Students Scheduled
+                                </span>
+                              </div>
+
+                              {isCurrent && activeTrip?.status === "ON_ROUTE" && (
+                                <div className="dd-timeline-arrival-box">
+                                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <span className="dd-pulse-dot" />
+                                    <span style={{ fontSize: 12.5, fontWeight: 700, color: "#0066ff" }}>
+                                      Approaching Nizampura Char Rasta · Ready to board students
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={handleNextStop}
+                                    className="dd-confirm-arrival-btn"
+                                  >
+                                    Confirm Arrival & Advance Stop ⏭
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Right Column: Passengers at Next Stop & Vehicle Telematics */}
+                  <div className="dd-side-stack">
+                    {/* Next Stop Passengers Manifest */}
+                    <div className="dd-card">
+                      <div className="dd-card-header">
+                        <div>
+                          <h3 className="dd-card-title">Next Stop Commuters</h3>
+                          <p style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{currentApproachingStop.name} pickup list</p>
+                        </div>
+                        <button
+                          className="ad-badge ad-badge--blue"
+                          style={{ cursor: "pointer", border: "none" }}
+                          onClick={() => setActiveNav("boarding")}
+                        >
+                          View All ({effectiveStudents.length})
+                        </button>
+                      </div>
+
+                      <div className="dd-commuter-list">
+                        {nextStopStudents.map((st) => (
+                          <div key={st.id} className="dd-commuter-row">
+                            <div className="dd-commuter-avatar">
+                              {st.name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+                            </div>
+                            <div className="dd-commuter-info">
+                              <h5 className="dd-commuter-name">{st.name}</h5>
+                              <p className="dd-commuter-id">{st.id} · Route {driverRouteId}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => toggleStudentBoarded(st.id)}
+                              className={`dd-board-btn ${st.boardedToday ? "dd-board-btn--boarded" : "dd-board-btn--pending"}`}
+                            >
+                              {st.boardedToday ? "✓ Boarded" : "Check In"}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Vehicle Telematics Diagnostics */}
+                    <div className="dd-card">
+                      <div className="dd-card-header">
+                        <div>
+                          <h3 className="dd-card-title">Vehicle Diagnostics</h3>
+                          <p style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Bus {currentDriver?.assignedBus || "BUS-104"} Telemetry</p>
+                        </div>
+                        <span className="ad-badge ad-badge--green">All Systems OK</span>
+                      </div>
+
+                      <div className="dd-diagnostics-grid">
+                        <div className="dd-diagnostic-item">
+                          <div className="dd-diag-top">
+                            <span className="dd-diag-label">Fuel Level</span>
+                            <span className="dd-diag-val" style={{ color: "#16a34a" }}>78%</span>
+                          </div>
+                          <div className="dd-diag-bar">
+                            <div className="dd-diag-fill" style={{ width: "78%", background: "#16a34a" }} />
+                          </div>
+                        </div>
+
+                        <div className="dd-diagnostic-item">
+                          <div className="dd-diag-top">
+                            <span className="dd-diag-label">Engine Temp</span>
+                            <span className="dd-diag-val">88°C</span>
+                          </div>
+                          <div className="dd-diag-bar">
+                            <div className="dd-diag-fill" style={{ width: "45%", background: "#0066ff" }} />
+                          </div>
+                        </div>
+
+                        <div className="dd-diagnostic-item">
+                          <div className="dd-diag-top">
+                            <span className="dd-diag-label">Tire Pressure</span>
+                            <span className="dd-diag-val">34 PSI</span>
+                          </div>
+                          <div className="dd-diag-bar">
+                            <div className="dd-diag-fill" style={{ width: "85%", background: "#0066ff" }} />
+                          </div>
+                        </div>
+
+                        <div className="dd-diagnostic-item">
+                          <div className="dd-diag-top">
+                            <span className="dd-diag-label">GPS Latency</span>
+                            <span className="dd-diag-val">42 ms</span>
+                          </div>
+                          <div className="dd-diag-bar">
+                            <div className="dd-diag-fill" style={{ width: "95%", background: "#16a34a" }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -997,8 +1273,8 @@ const DriverDashboardView = () => {
                       <tbody>
                         <tr className="ad-tr">
                           <td className="ad-td"><strong>Trip #1 (Morning Drop)</strong></td>
-                          <td className="ad-td">R-04 Chandkheda</td>
-                          <td className="ad-td">Chandkheda Stop → University Campus</td>
+                          <td className="ad-td">R-04 Fatehgunj</td>
+                          <td className="ad-td">Fatehgunj Stop → GSFC University Campus</td>
                           <td className="ad-td">07:30 AM - 08:20 AM</td>
                           <td className="ad-td">
                             <span className="ad-badge ad-badge--green">● {activeTrip.status}</span>
@@ -1006,8 +1282,8 @@ const DriverDashboardView = () => {
                         </tr>
                         <tr className="ad-tr">
                           <td className="ad-td"><strong>Trip #2 (Evening Return)</strong></td>
-                          <td className="ad-td">R-04 Chandkheda</td>
-                          <td className="ad-td">University Campus → Chandkheda Stop</td>
+                          <td className="ad-td">R-04 Fatehgunj</td>
+                          <td className="ad-td">GSFC University Campus → Fatehgunj Stop</td>
                           <td className="ad-td">05:00 PM - 05:50 PM</td>
                           <td className="ad-td">
                             <span className="ad-badge ad-badge--gray">⏳ Scheduled</span>
@@ -1027,7 +1303,7 @@ const DriverDashboardView = () => {
                   <div>
                     <h2 className="dd-card-title">Allocated Route Passenger Roster</h2>
                     <p style={{ fontSize: 12.5, color: "#64748b" }}>
-                      Bus: <strong>{currentDriver.assignedBus}</strong> &nbsp;·&nbsp; Route: <strong>{driverRouteId} ({currentDriver.routeName || "Chandkheda"})</strong> &nbsp;·&nbsp; {boardedCount} of {assignedBusStudents.length} passengers boarded
+                      Bus: <strong>{currentDriver.assignedBus}</strong> &nbsp;·&nbsp; Route: <strong>{driverRouteId} ({currentDriver.routeName || "Fatehgunj - GSFC"})</strong> &nbsp;·&nbsp; {boardedCount} of {assignedBusStudents.length} passengers boarded
                     </p>
                   </div>
                   <button className="dd-btn-primary" onClick={() => setShowScannerModal(true)}>
@@ -1052,7 +1328,7 @@ const DriverDashboardView = () => {
                         <tr key={s.id} className="ad-tr">
                           <td className="ad-td"><strong>{s.name}</strong></td>
                           <td className="ad-td">{s.id}</td>
-                          <td className="ad-td">{s.pickupStop || s.boarding || "Chandkheda"}</td>
+                          <td className="ad-td">{s.pickupStop || s.boarding || "Fatehgunj Stop"}</td>
                           <td className="ad-td">{s.pickupTime || "07:45 AM"}</td>
                           <td className="ad-td">
                             <span className={`ad-badge ${(s.pass || s.passStatus || "").toUpperCase() === "ACTIVE" ? "ad-badge--green" : "ad-badge--yellow"}`}>
@@ -1103,14 +1379,14 @@ const DriverDashboardView = () => {
 
                     <div style={{ background: "#f8fafc", padding: "16px", borderRadius: 12, border: "1px solid #e2e8f0" }}>
                       <p style={{ fontSize: 12, color: "#64748b", fontWeight: 600, textTransform: "uppercase" }}>Registration Plate</p>
-                      <h3 style={{ fontSize: 20, fontWeight: 900, color: "#0f172a", marginTop: 4 }}>{currentDriver.busReg || "GJ-05-AB-1234"}</h3>
+                      <h3 style={{ fontSize: 20, fontWeight: 900, color: "#0f172a", marginTop: 4 }}>{currentDriver.busReg || "GJ-06-AB-1004"}</h3>
                       <span style={{ fontSize: 12, color: "#16a34a" }}>✓ Fitness Valid (Aug 2027)</span>
                     </div>
 
                     <div style={{ background: "#f8fafc", padding: "16px", borderRadius: 12, border: "1px solid #e2e8f0" }}>
                       <p style={{ fontSize: 12, color: "#64748b", fontWeight: 600, textTransform: "uppercase" }}>Assigned Route</p>
                       <h3 style={{ fontSize: 20, fontWeight: 900, color: "#0f172a", marginTop: 4 }}>{currentDriver.assignedRoute || "R-04"}</h3>
-                      <span style={{ fontSize: 12, color: "#64748b" }}>{currentDriver.routeName || "University → Chandkheda"}</span>
+                      <span style={{ fontSize: 12, color: "#64748b" }}>{currentDriver.routeName || "GSFC University ↔ Fatehgunj"}</span>
                     </div>
 
                     <div style={{ background: "#f8fafc", padding: "16px", borderRadius: 12, border: "1px solid #e2e8f0" }}>
@@ -1216,7 +1492,7 @@ const DriverDashboardView = () => {
                   <div className="dd-card-header">
                     <div>
                       <h2 className="dd-card-title">Live Navigation & Corridor Map</h2>
-                      <p style={{ fontSize: 12.5, color: "#64748b" }}>Route R-04: Chandkheda ➔ University Campus (Distance: 24.8 km)</p>
+                      <p style={{ fontSize: 12.5, color: "#64748b" }}>Route R-04: Fatehgunj ➔ GSFC University Campus (Distance: 14.5 km)</p>
                     </div>
                     <span className="ad-badge ad-badge--blue">GPS Lock: 100% Signal (3m Accuracy)</span>
                   </div>
@@ -1254,12 +1530,12 @@ const DriverDashboardView = () => {
 
                       {/* Marked Stops */}
                       {[
-                        { x: 60, y: 240, name: "Chandkheda Stop" },
-                        { x: 140, y: 190, name: "Visat Circle" },
-                        { x: 260, y: 160, name: "Motera Crossroads (Next)" },
-                        { x: 380, y: 130, name: "Ranip Bus Port" },
-                        { x: 480, y: 90, name: "Koba Circle" },
-                        { x: 600, y: 60, name: "University Campus" },
+                        { x: 60, y: 240, name: "Fatehgunj Stop" },
+                        { x: 140, y: 190, name: "Nizampura Char Rasta" },
+                        { x: 260, y: 160, name: "Chhani Jakat Naka (Next)" },
+                        { x: 380, y: 130, name: "Bajwa Crossing" },
+                        { x: 480, y: 90, name: "Fertilizernagar Gate" },
+                        { x: 600, y: 60, name: "GSFC University" },
                       ].map((stop, idx) => (
                         <g key={idx}>
                           <circle
@@ -1704,7 +1980,7 @@ const DriverDashboardView = () => {
                   className="ad-input"
                   value={delayReason}
                   onChange={(e) => setDelayReason(e.target.value)}
-                  placeholder="e.g. Traffic congestion on SG Highway, road work"
+                  placeholder="e.g. Traffic congestion near Chhani Jakat Naka, road work"
                   required
                 />
               </div>

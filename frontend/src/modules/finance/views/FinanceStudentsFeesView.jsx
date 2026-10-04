@@ -30,7 +30,7 @@ const FinanceStudentsFees = () => {
       s.name?.toLowerCase().includes(searchTerm.trim().toLowerCase())
   ) || students[0];
 
-  const studentTxns = transactions.filter((t) => t.studentId === matchedStudent?.id);
+  const studentTxns = (transactions || []).filter((t) => t.studentId === matchedStudent?.id);
 
   const handleSendReminder = (student) => {
     setReminderSent(student.id);
@@ -49,7 +49,7 @@ const FinanceStudentsFees = () => {
       "Email": s.email || `${s.name.toLowerCase().replace(/\s+/g, ".")}@glowbus.edu`,
       "Department": s.dept || s.course || "Computer Science",
       "Route": s.routeName || s.route || "Route 4D",
-      "Pickup Stop": s.pickupStop || s.boarding || "Chandkheda",
+      "Pickup Stop": s.pickupStop || s.boarding || "Fatehgunj",
       "Total Fee (INR)": s.totalFee || 15000,
       "Paid Fee (INR)": s.paidFee || 0,
       "Pending Fee (INR)": s.pendingFee || 0,

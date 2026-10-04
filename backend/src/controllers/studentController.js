@@ -46,8 +46,8 @@ export const getStudentSummary = async (req, res, next) => {
           branch: student?.branch || "Computer Engineering",
           semester: student?.semester || "5th Sem",
           busId: bus?.registrationNumber || "BUS-104",
-          routeName: route?.name || "University → Chandkheda",
-          pickupStop: student?.assignedStopId || "Chandkheda Bus Stop",
+          routeName: route?.name || "GSFC University ↔ Fatehgunj",
+          pickupStop: student?.assignedStopId || "Fatehgunj Bus Stop",
           pickupTime: "07:45 AM",
           dropTime: "05:50 PM",
           passStatus: pass?.status || "ACTIVE",
@@ -58,9 +58,9 @@ export const getStudentSummary = async (req, res, next) => {
           busId: bus?.registrationNumber || "BUS-104",
           speed: 42,
           etaMinutes: 6,
-          currentLocation: "Near Motera Crossroads",
-          lat: 23.0982,
-          lng: 72.5784,
+          currentLocation: "Near Nizampura / Chhani Jakat Naka",
+          lat: 22.3412,
+          lng: 73.1710,
           occupancy: bus?.occupancy || 32,
           capacity: bus?.capacity || 45,
           driverName: "Mahesh Patel",
@@ -100,7 +100,7 @@ export const getStudentBus = async (req, res, next) => {
           name: driverUser.name,
           phone: driverUser.phone || "+91 98765 11111",
           email: driverUser.email,
-          licenseNo: "GJ-01-2015-008921",
+          licenseNo: "GJ-06-2015-008921",
           rating: 4.8,
         },
       },
@@ -119,15 +119,17 @@ export const getStudentRouteStops = async (req, res, next) => {
     return res.json({
       success: true,
       route: route || {
-        name: "Route R-04 (University → Chandkheda)",
-        origin: "Chandkheda Bus Stop",
-        destination: "University Main Campus",
+        name: "Route R-04 (GSFC University ↔ Fatehgunj)",
+        origin: "Fatehgunj Bus Stop",
+        destination: "GSFC University Main Campus",
         distanceKm: 14.5,
         durationMin: 35,
         stops: [
-          { name: "Chandkheda Bus Stop", orderIndex: 1, etaOffsetMin: 0, lat: 23.102, lng: 72.585 },
-          { name: "Motera Crossroads", orderIndex: 2, etaOffsetMin: 12, lat: 23.091, lng: 72.591 },
-          { name: "Main Campus Gate 1", orderIndex: 3, etaOffsetMin: 35, lat: 23.078, lng: 72.592 },
+          { name: "Fatehgunj Bus Stop", orderIndex: 1, etaOffsetMin: 0, lat: 22.3218, lng: 73.1876 },
+          { name: "Nizampura Char Rasta", orderIndex: 2, etaOffsetMin: 8, lat: 22.3335, lng: 73.1802 },
+          { name: "Chhani Jakat Naka", orderIndex: 3, etaOffsetMin: 16, lat: 22.3468, lng: 73.1725 },
+          { name: "Fertilizernagar Gate", orderIndex: 4, etaOffsetMin: 26, lat: 22.3590, lng: 73.1580 },
+          { name: "GSFC University Main Campus", orderIndex: 5, etaOffsetMin: 35, lat: 22.3615, lng: 73.1550 },
         ],
       },
     });
@@ -143,7 +145,7 @@ export const createStopNotification = async (req, res, next) => {
     const stopNotif = await StopNotification.create({
       userId: req.user.id || req.user._id,
       routeId: routeId || (await Route.findOne())?._id,
-      stopName: stopName || "Motera Crossroads",
+      stopName: stopName || "Fatehgunj Bus Stop",
       minutesBefore: minutesBefore || 10,
     });
 
@@ -159,13 +161,33 @@ export const createStopNotification = async (req, res, next) => {
 
 export const downloadRoutePdf = async (req, res, next) => {
   try {
-    const student = await getStudentByUser(req.user);
-    const route = student?.routeId || (await Route.findOne());
+    let student = null;
+    try {
+      student = await getStudentByUser(req.user);
+    } catch {
+      student = null;
+    }
 
-    const pdfBuffer = await pdfService.generateRoutePdf(route || { name: "Route R-04" });
+    const route = student?.routeId || (await Route.findOne().catch(() => null)) || {
+      name: "Route R-04 (Fatehgunj Express)",
+      origin: "Fatehgunj Bus Stop",
+      destination: "GSFC University Campus Gate 1",
+      totalDistanceKm: 9.4,
+      estimatedDurationMin: 35,
+      stops: [
+        { name: "Fatehgunj Bus Stop", etaOffsetMin: 0 },
+        { name: "Nizampura Char Rasta", etaOffsetMin: 8 },
+        { name: "Chhani Jakat Naka", etaOffsetMin: 16 },
+        { name: "Fertilizernagar Gate", etaOffsetMin: 26 },
+        { name: "GSFC University Main Campus", etaOffsetMin: 35 },
+      ],
+    };
 
+    const pdfBuffer = await pdfService.generateRoutePdf(route);
+
+    const safeName = (route?.name || "Route_Schedule").replace(/[^a-zA-Z0-9_-]/g, "_");
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="GLOW_Route_${route?.name || 'Schedule'}.pdf"`);
+    res.setHeader("Content-Disposition", `attachment; filename="GLOW_${safeName}.pdf"`);
     return res.send(Buffer.from(pdfBuffer));
   } catch (error) {
     next(error);
@@ -180,13 +202,13 @@ export const getStudentSchedule = async (req, res, next) => {
     const schedule =
       type === "exam"
         ? [
-            { shift: "Exam Morning Shuttle", time: "08:00 AM", route: "R-04 SG Highway", status: "Exam Special" },
-            { shift: "Exam Afternoon Return", time: "01:30 PM", route: "R-04 SG Highway", status: "Exam Special" },
+            { shift: "Exam Morning Shuttle", time: "08:00 AM", route: "R-04 Fatehgunj - GSFC", status: "Exam Special" },
+            { shift: "Exam Afternoon Return", time: "01:30 PM", route: "R-04 Fatehgunj - GSFC", status: "Exam Special" },
           ]
         : [
-            { shift: "Morning Pickup", time: "07:30 AM", route: "R-04 SG Highway", status: "On Time" },
-            { shift: "Mid-Day Shuttle", time: "01:15 PM", route: "R-04 Shuttle", status: "Scheduled" },
-            { shift: "Evening Return", time: "05:15 PM", route: "R-04 SG Highway", status: "Scheduled" },
+            { shift: "Morning Pickup", time: "07:30 AM", route: "R-04 Fatehgunj - GSFC", status: "On Time" },
+            { shift: "Mid-Day Shuttle", time: "01:15 PM", route: "R-04 GSFC Shuttle", status: "Scheduled" },
+            { shift: "Evening Return", time: "05:15 PM", route: "R-04 Fatehgunj - GSFC", status: "Scheduled" },
           ];
 
     return res.json({ success: true, scheduleType: type || "regular", schedule });
@@ -201,7 +223,7 @@ export const downloadSchedulePdf = async (req, res, next) => {
     const pdfBuffer = await pdfService.generateSchedulePdf(req.user, type || "regular");
 
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="GLOW_Timetable_${type || 'Regular'}.pdf"`);
+    res.setHeader("Content-Disposition", `attachment; filename="GSFC_Timetable_${type || 'Regular'}.pdf"`);
     return res.send(Buffer.from(pdfBuffer));
   } catch (error) {
     next(error);
@@ -239,7 +261,7 @@ export const getStudentPass = async (req, res, next) => {
         studentName: req.user.name || "Rahul Sharma",
         studentId: req.user.id || "UNI20260125",
         zone: "Zone B",
-        routeName: "University → Chandkheda Corridor",
+        routeName: "GSFC University ↔ Fatehgunj Corridor",
       },
     });
   } catch (error) {
@@ -251,6 +273,7 @@ export const downloadPassPdf = async (req, res, next) => {
   try {
     const student = await getStudentByUser(req.user);
     const pass = await TransportPass.findOne({ studentId: student?._id });
+    const route = student?.routeId || (await Route.findOne());
 
     const rawData = `GLOW|${req.user.id || 'UNI20260125'}|${Date.now()}`;
     const hmacSig = crypto.createHmac("sha256", HMAC_SECRET).update(rawData).digest("hex").slice(0, 16);
@@ -259,15 +282,16 @@ export const downloadPassPdf = async (req, res, next) => {
       passCode: pass?.passCode || "PASS-STU-2026-0125",
       studentName: req.user.name || "Rahul Sharma",
       studentId: req.user.id || "UNI20260125",
-      routeName: "University → Chandkheda Corridor",
+      routeName: (route?.name || "GSFC University - Fatehgunj Corridor").replace(/→/g, "->"),
       zone: "Zone B",
-      status: "ACTIVE",
+      status: pass?.status || "ACTIVE",
       expiryDate: "31 May 2027",
       signedPayload: `PASS-${req.user.id || 'UNI20260125'}|R-04|ZONE-B|SIG_${hmacSig}`,
     });
 
+    const safeId = (req.user.id || "STU").replace(/[^a-zA-Z0-9_-]/g, "_");
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="GLOW_Digital_Pass_${req.user.id || 'STU'}.pdf"`);
+    res.setHeader("Content-Disposition", `attachment; filename="GSFC_Digital_Pass_${safeId}.pdf"`);
     return res.send(Buffer.from(pdfBuffer));
   } catch (error) {
     next(error);
@@ -479,7 +503,7 @@ export const getStudentProfile = async (req, res, next) => {
         branch: student?.branch || "Computer Science",
         semester: student?.semester || "5th Sem",
         guardianContact: student?.guardianContact || "+91 98765 43210",
-        assignedStop: student?.assignedStopId || "Chandkheda Bus Stop",
+        assignedStop: student?.assignedStopId || "Fatehgunj Bus Stop",
       },
     });
   } catch (error) {

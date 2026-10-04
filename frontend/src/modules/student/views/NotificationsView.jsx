@@ -12,7 +12,7 @@ const INITIAL_NOTIFS = [
   {
     _id: "1",
     type: "service",
-    message: "Your assigned bus BUS-104 is approaching Motera Crossroads on Route R-04. Please be ready at Chandkheda Stop.",
+    message: "Your assigned bus BUS-104 is approaching Chhani Jakat Naka on Route R-04. Please be ready at Fatehgunj Stop.",
     read: false,
     createdAt: new Date().toISOString(),
   },

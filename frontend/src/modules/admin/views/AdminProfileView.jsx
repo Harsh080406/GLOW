@@ -1,6 +1,5 @@
-import { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import AdminSidebar from "../layout/AdminSidebar";
 import { useTransit } from "../../../shared/context/TransitContext";
 import "../layout/AdminLayout.css";
 import "./AdminProfile.css";
@@ -14,49 +13,121 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 
 const AdminProfile = () => {
   const navigate = useNavigate();
-  const { currentAdmin, setCurrentAdmin } = useTransit();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [savedSuccess, setSavedSuccess] = useState(false);
+  const { authFetch, currentAdmin, setCurrentAdmin } = useTransit();
 
-  // Form State
-  const [formData, setFormData] = useState({
-    name: currentAdmin?.name || "Dr. Arvind Patel",
-    email: currentAdmin?.email || "arvind.patel@glowbus.edu",
-    phone: currentAdmin?.phone || "+91 98250 99999",
-    department: currentAdmin?.department || "University Transportation Cell",
-    officeLocation: currentAdmin?.officeLocation || "Admin Block, 3rd Floor, Room 302",
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState({
+    name: "Dr. Arvind Patel",
+    email: "arvind.patel@glowbus.edu",
+    phone: "+91 98250 99999",
+    role: "Super Admin",
+    department: "University Transportation Cell",
+    officeLocation: "Admin Block, 3rd Floor, Room 302",
+    twoFactorEnabled: false,
   });
 
-  const handleSave = (e) => {
-    e.preventDefault();
-    const initials = (formData.name || "")
-      .trim()
-      .split(" ")
-      .filter(Boolean)
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "AP";
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [toastMsg, setToastMsg] = useState(null);
 
-    if (setCurrentAdmin) {
-      setCurrentAdmin((prev) => ({
-        ...prev,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        department: formData.department,
-        officeLocation: formData.officeLocation,
-        avatar: initials,
-      }));
-    }
+  // Edit Form State
+  const [formData, setFormData] = useState({ ...profile });
 
-    setShowEditModal(false);
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
+  // 2FA Enrollment State
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
+  const [totpSecret, setTotpSecret] = useState("");
+  const [verificationToken, setVerificationToken] = useState("");
+  const [verifying2FA, setVerifying2FA] = useState(false);
+
+  const showNotification = (msg) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3500);
   };
 
-  const avatarInitials = (formData.name || currentAdmin?.name || "AP")
+  const fetchProfile = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await authFetch("/admin/profile");
+      if (res && res.profile) {
+        setProfile(res.profile);
+        setFormData(res.profile);
+        if (setCurrentAdmin) {
+          setCurrentAdmin((prev) => ({
+            ...prev,
+            name: res.profile.name,
+            email: res.profile.email,
+            role: res.profile.role,
+          }));
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to load admin profile:", err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [authFetch, setCurrentAdmin]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await authFetch("/admin/profile", {
+        method: "PUT",
+        body: JSON.stringify(formData),
+      });
+      if (res && res.profile) {
+        setProfile(res.profile);
+      }
+      showNotification("✓ Administrator profile updated successfully!");
+      setShowEditModal(false);
+    } catch (err) {
+      alert("Error saving profile: " + err.message);
+    }
+  };
+
+  // Start 2FA Enrollment
+  const handleStart2FA = async () => {
+    try {
+      const res = await authFetch("/admin/2fa/generate", { method: "POST" });
+      if (res && res.qrCodeDataUrl) {
+        setQrCodeDataUrl(res.qrCodeDataUrl);
+        setTotpSecret(res.secret);
+        setVerificationToken("");
+        setShow2FAModal(true);
+      }
+    } catch (err) {
+      alert("Error generating 2FA QR code: " + err.message);
+    }
+  };
+
+  // Verify TOTP Code
+  const handleVerify2FA = async (e) => {
+    e.preventDefault();
+    if (!verificationToken.trim()) return;
+
+    try {
+      setVerifying2FA(true);
+      const res = await authFetch("/admin/2fa/verify", {
+        method: "POST",
+        body: JSON.stringify({ token: verificationToken.trim() }),
+      });
+
+      if (res && res.success) {
+        showNotification("✓ Two-Factor Authentication (TOTP) successfully activated!");
+        setShow2FAModal(false);
+        setProfile((prev) => ({ ...prev, twoFactorEnabled: true }));
+      }
+    } catch (err) {
+      alert("Verification failed: " + (err.message || "Invalid 6-digit TOTP code"));
+    } finally {
+      setVerifying2FA(false);
+    }
+  };
+
+  const avatarInitials = (profile.name || "AP")
     .trim()
     .split(" ")
     .filter(Boolean)
@@ -66,156 +137,117 @@ const AdminProfile = () => {
     .toUpperCase() || "AP";
 
   return (
-    <div className="ad-wrapper">
-      <div className="ad-root">
-        <AdminSidebar activeId="profile" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="view-container">
+      {toastMsg && (
+        <div style={{
+          background: "#ecfdf5", border: "1.5px solid #10b981", color: "#065f46",
+          borderRadius: 8, padding: "10px 16px", marginBottom: 16, fontWeight: 700, fontSize: 13,
+          boxShadow: "0 2px 8px rgba(16, 185, 129, 0.15)"
+        }}>
+          {toastMsg}
+        </div>
+      )}
 
-        <div className="ad-main">
-          {/* Topbar */}
-          <header className="ad-topbar">
-            <button
-              className="ad-hamburger"
-              onClick={() => setSidebarOpen(true)}
-              aria-label="Open menu"
-            >
-              <Icon d="M3 12h18M3 6h18M3 18h18" size={22} />
-            </button>
+      {/* Hero Profile Banner */}
+      <div className="ap-hero-card">
+        <div className="ap-hero-avatar-wrap">
+          <div className="ap-hero-avatar">{avatarInitials}</div>
+          <span className="ap-online-dot" />
+        </div>
 
-            <div className="ad-topbar-title-wrap">
-              <h1 className="ad-page-title">Admin Profile</h1>
-              <p className="ad-page-sub">Administrator credentials, profile settings & quick management options</p>
+        <div className="ap-hero-meta">
+          <div className="ap-hero-badge-row">
+            <span className="ad-badge ad-badge--purple">● {profile.role || "Super Admin"}</span>
+            <span className="ap-system-badge">System Root Access</span>
+          </div>
+          <h2 className="ap-hero-name">{profile.name}</h2>
+          <p className="ap-hero-dept">{profile.department} · {profile.officeLocation}</p>
+        </div>
+
+        <button
+          className="ap-edit-btn"
+          onClick={() => { setFormData({ ...profile }); setShowEditModal(true); }}
+        >
+          <Icon d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" size={16} stroke="#fff" />
+          Edit Profile
+        </button>
+      </div>
+
+      {/* Profile Details & Security Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
+        {/* Contact & Office Info */}
+        <div className="ad-card" style={{ padding: "20px 24px" }}>
+          <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>Official Credentials & Contact</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div>
+              <span style={{ fontSize: 12, color: "#64748b", display: "block" }}>Email ID</span>
+              <strong style={{ fontSize: 14 }}>{profile.email}</strong>
             </div>
-          </header>
-
-          {/* Main Content */}
-          <main className="ad-content">
-            <div className="ap-container">
-              {savedSuccess && (
-                <div className="ap-alert-success">
-                  <span>✓</span> Administrator profile details updated successfully!
-                </div>
-              )}
-
-              {/* ── PROFILE HERO CARD ────────────────────────────── */}
-              <div className="ap-hero-card">
-                <div className="ap-hero-left">
-                  <div className="ap-avatar-wrap">
-                    <div className="ap-avatar-circle">
-                      <span>{avatarInitials}</span>
-                    </div>
-                    <span className="ap-avatar-badge">Level 5</span>
-                  </div>
-
-                  <div className="ap-hero-info">
-                    <div className="ap-hero-name-row">
-                      <h2 className="ap-hero-name">{formData.name}</h2>
-                      <span className="ap-verified-tag">✓ Super Administrator</span>
-                    </div>
-                    <p className="ap-hero-role">{currentAdmin?.role || "Super Admin & Systems Director"}</p>
-                    <p className="ap-hero-id">Administrator ID: <strong>{currentAdmin?.id || "ADM-2026-001"}</strong></p>
-                    <p className="ap-hero-email">{formData.email}</p>
-                  </div>
-                </div>
-
-                <button
-                  className="ap-edit-btn"
-                  onClick={() => setShowEditModal(true)}
-                >
-                  <Icon d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" size={16} />
-                  Edit Profile
-                </button>
-              </div>
-
-              {/* ── ADMINISTRATOR DETAILS DISPLAY CARD ────────────── */}
-              <div className="ap-card">
-                <div className="ap-card-header">
-                  <div className="ap-card-icon">
-                    <Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" size={20} stroke="#0066ff" />
-                  </div>
-                  <div>
-                    <h3 className="ap-card-title">Administrator Details</h3>
-                    <p className="ap-card-sub">Official communication & department parameters</p>
-                  </div>
-                </div>
-
-                <div className="ap-info-list">
-                  <div className="ap-info-item">
-                    <span className="ap-info-label">Full Name</span>
-                    <span className="ap-info-val">{formData.name}</span>
-                  </div>
-                  <div className="ap-info-item">
-                    <span className="ap-info-label">Official Phone</span>
-                    <span className="ap-info-val">{formData.phone}</span>
-                  </div>
-                  <div className="ap-info-item">
-                    <span className="ap-info-label">Official Email</span>
-                    <span className="ap-info-val">{formData.email}</span>
-                  </div>
-                  <div className="ap-info-item">
-                    <span className="ap-info-label">Office Location</span>
-                    <span className="ap-info-val">{formData.officeLocation}</span>
-                  </div>
-                  <div className="ap-info-item">
-                    <span className="ap-info-label">Department</span>
-                    <span className="ap-info-val">{formData.department}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* ── 3 DEDICATED OPTIONS ───────────────────────────── */}
-              <div className="ap-actions-bar">
-                {/* 1. User Management */}
-                <div className="ap-action-card-btn" onClick={() => navigate("/admin/users")}>
-                  <div className="ap-action-card-left">
-                    <div className="ap-action-card-icon">
-                      <Icon d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" size={20} stroke="#0066ff" />
-                    </div>
-                    <div>
-                      <h4 className="ap-action-card-name">User Management</h4>
-                      <p className="ap-action-card-sub">Staff, manager, driver & student directory</p>
-                    </div>
-                  </div>
-                  <Icon d="M9 18l6-6-6-6" size={16} stroke="#94a3b8" />
-                </div>
-
-                {/* 2. Security and Audit Logs */}
-                <div className="ap-action-card-btn" onClick={() => navigate("/finance/audit")}>
-                  <div className="ap-action-card-left">
-                    <div className="ap-action-card-icon">
-                      <Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" size={20} stroke="#0066ff" />
-                    </div>
-                    <div>
-                      <h4 className="ap-action-card-name">Security & Audit Logs</h4>
-                      <p className="ap-action-card-sub">System security events & access trails</p>
-                    </div>
-                  </div>
-                  <Icon d="M9 18l6-6-6-6" size={16} stroke="#94a3b8" />
-                </div>
-
-                {/* 3. System Settings */}
-                <div className="ap-action-card-btn" onClick={() => navigate("/admin/settings")}>
-                  <div className="ap-action-card-left">
-                    <div className="ap-action-card-icon">
-                      <Icon d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" size={20} stroke="#0066ff" />
-                    </div>
-                    <div>
-                      <h4 className="ap-action-card-name">System Settings</h4>
-                      <p className="ap-action-card-sub">Application configurations & preferences</p>
-                    </div>
-                  </div>
-                  <Icon d="M9 18l6-6-6-6" size={16} stroke="#94a3b8" />
-                </div>
-              </div>
+            <div>
+              <span style={{ fontSize: 12, color: "#64748b", display: "block" }}>Phone Number</span>
+              <strong style={{ fontSize: 14 }}>{profile.phone}</strong>
             </div>
+            <div>
+              <span style={{ fontSize: 12, color: "#64748b", display: "block" }}>Office Location</span>
+              <strong style={{ fontSize: 14 }}>{profile.officeLocation}</strong>
+            </div>
+            <div>
+              <span style={{ fontSize: 12, color: "#64748b", display: "block" }}>Department Cell</span>
+              <strong style={{ fontSize: 14 }}>{profile.department}</strong>
+            </div>
+          </div>
+        </div>
 
-            <footer className="ad-footer">
-              <span>© 2026 GLOW Bus Management System · All rights reserved.</span>
-            </footer>
-          </main>
+        {/* Real 2FA Security Section */}
+        <div className="ad-card" style={{ padding: "20px 24px" }}>
+          <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: 6 }}>Security Clearance & 2FA (TOTP)</h3>
+          <p style={{ fontSize: 12.5, color: "#64748b", marginBottom: 16 }}>
+            Hardware & Authenticator-app based Time-based One-Time Password protocol (`otplib` & `qrcode`).
+          </p>
+
+          <div style={{
+            background: profile.twoFactorEnabled ? "#f0fdf4" : "#fef2f2",
+            border: `1.5px solid ${profile.twoFactorEnabled ? "#bbf7d0" : "#fecaca"}`,
+            borderRadius: 12, padding: "16px", marginBottom: 16
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <span style={{ fontSize: 14, fontWeight: 800, color: profile.twoFactorEnabled ? "#166534" : "#991b1b" }}>
+                  {profile.twoFactorEnabled ? "✓ 2FA Protection Active" : "⚠️ 2FA Disabled"}
+                </span>
+                <p style={{ fontSize: 12, color: profile.twoFactorEnabled ? "#15803d" : "#b91c1c", margin: "4px 0 0" }}>
+                  {profile.twoFactorEnabled
+                    ? "Your account requires a 6-digit TOTP code at login."
+                    : "Protect super admin credentials with an Authenticator app."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleStart2FA}
+                style={{
+                  padding: "8px 16px",
+                  background: profile.twoFactorEnabled ? "#fff" : "#2563eb",
+                  color: profile.twoFactorEnabled ? "#166534" : "#fff",
+                  border: `1.5px solid ${profile.twoFactorEnabled ? "#bbf7d0" : "#2563eb"}`,
+                  borderRadius: 8,
+                  fontWeight: 700,
+                  fontSize: 12,
+                  cursor: "pointer"
+                }}
+              >
+                {profile.twoFactorEnabled ? "Reconfigure 2FA" : "Enable 2FA (TOTP)"}
+              </button>
+            </div>
+          </div>
+
+          <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.6 }}>
+            <div><strong>Algorithm:</strong> SHA-1 RFC 6238 Standard (30-second window)</div>
+            <div><strong>Supported:</strong> Google Authenticator, Microsoft Authenticator, 1Password, Authy</div>
+          </div>
         </div>
       </div>
 
-      {/* ── EDIT PROFILE POPUP WINDOW MODAL (NO SCROLLING) ───────── */}
+      {/* Edit Profile Modal */}
       {showEditModal && (
         <div className="glow-modal-overlay" onClick={() => setShowEditModal(false)}>
           <div className="glow-modal-container" onClick={(e) => e.stopPropagation()}>
@@ -229,16 +261,10 @@ const AdminProfile = () => {
                   <p className="glow-modal-sub">Update official details and contact information</p>
                 </div>
               </div>
-              <button
-                className="glow-modal-close"
-                onClick={() => setShowEditModal(false)}
-                aria-label="Close modal"
-              >
-                ✕
-              </button>
+              <button className="glow-modal-close" onClick={() => setShowEditModal(false)}>✕</button>
             </div>
 
-            <form onSubmit={handleSave}>
+            <form onSubmit={handleSaveProfile}>
               <div className="glow-modal-body">
                 <div className="glow-modal-grid">
                   <div className="glow-modal-field">
@@ -259,17 +285,6 @@ const AdminProfile = () => {
                       className="glow-modal-input"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                  <div className="glow-modal-field">
-                    <label className="glow-modal-label">Official Email ID</label>
-                    <input
-                      type="email"
-                      className="glow-modal-input"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       required
                     />
                   </div>
@@ -299,18 +314,67 @@ const AdminProfile = () => {
               </div>
 
               <div className="glow-modal-footer">
-                <button
-                  type="button"
-                  className="ap-cancel-btn"
-                  onClick={() => setShowEditModal(false)}
-                >
-                  Cancel
-                </button>
+                <button type="button" className="ap-cancel-btn" onClick={() => setShowEditModal(false)}>Cancel</button>
+                <button type="submit" className="ap-save-btn">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Real TOTP 2FA Setup Modal with QR Code */}
+      {show2FAModal && (
+        <div className="ad-overlay" style={{ display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.55)" }}>
+          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 460, padding: "24px", textAlign: "center" }}>
+            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>
+              Set Up Two-Factor Authentication
+            </h3>
+            <p style={{ fontSize: 12.5, color: "#64748b", marginBottom: 16 }}>
+              Scan the QR code with Google Authenticator or your preferred TOTP app.
+            </p>
+
+            {qrCodeDataUrl ? (
+              <div style={{ display: "inline-block", padding: 12, background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0", marginBottom: 14 }}>
+                <img src={qrCodeDataUrl} alt="2FA QR Code" style={{ width: 180, height: 180, display: "block" }} />
+              </div>
+            ) : (
+              <p>Generating QR code...</p>
+            )}
+
+            <div style={{ background: "#f1f5f9", padding: "8px 12px", borderRadius: 6, fontSize: 11.5, fontFamily: "monospace", color: "#334155", marginBottom: 16, wordBreak: "break-all" }}>
+              Manual Key: <strong>{totpSecret}</strong>
+            </div>
+
+            <form onSubmit={handleVerify2FA}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>
+                  Enter 6-Digit Verification Code
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  placeholder="e.g. 123456"
+                  value={verificationToken}
+                  onChange={(e) => setVerificationToken(e.target.value)}
+                  required
+                  style={{ width: 160, textAlign: "center", fontSize: 20, letterSpacing: 4, fontWeight: 800, padding: "10px", borderRadius: 8, border: "2px solid #2563eb" }}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: 10 }}>
                 <button
                   type="submit"
-                  className="ap-save-btn"
+                  disabled={verifying2FA}
+                  style={{ flex: 1, padding: "12px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}
                 >
-                  Save Changes
+                  {verifying2FA ? "Verifying..." : "Verify & Enable 2FA"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShow2FAModal(false)}
+                  style={{ padding: "12px 18px", background: "#e2e8f0", color: "#334155", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}
+                >
+                  Cancel
                 </button>
               </div>
             </form>

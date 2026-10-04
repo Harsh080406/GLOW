@@ -129,12 +129,12 @@ const StudentTransport = () => {
                     onChange={(e) => setExportRouteFilter(e.target.value)}
                   >
                     <option value="ALL">All Routes ({students.length.toLocaleString()})</option>
-                    <option value="Route 2A">Route 2A (Navrangpura)</option>
-                    <option value="Route 3B">Route 3B (Memnagar)</option>
-                    <option value="Route 1C">Route 1C (Satellite)</option>
-                    <option value="Route 4D">Route 4D (Chandkheda)</option>
-                    <option value="Route 5E">Route 5E (Gandhinagar)</option>
-                    <option value="Route 6F">Route 6F (Maninagar)</option>
+                    <option value="Route 2A">Route 2A (Sayajigunj)</option>
+                    <option value="Route 3B">Route 3B (Akota)</option>
+                    <option value="Route 1C">Route 1C (Alkapuri)</option>
+                    <option value="Route 4D">Route 4D (Fatehgunj)</option>
+                    <option value="Route 5E">Route 5E (Karelibaug)</option>
+                    <option value="Route 6F">Route 6F (Manjalpur)</option>
                   </select>
                   <button
                     className="ad-btn-secondary"

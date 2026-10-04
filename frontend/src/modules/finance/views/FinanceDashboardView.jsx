@@ -25,7 +25,7 @@ const FinanceDashboard = () => {
   const [showRemindersModal, setShowRemindersModal] = useState(false);
   const [selectedReceiptTxn, setSelectedReceiptTxn] = useState(null);
 
-  const filteredTxns = transactions.filter(
+  const filteredTxns = (transactions || []).filter(
     (t) =>
       t.studentName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.studentId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -34,7 +34,7 @@ const FinanceDashboard = () => {
   );
 
   const handleExportTransactionsExcel = () => {
-    const dataToExport = transactions.map((t) => ({
+    const dataToExport = (transactions || []).map((t) => ({
       "Transaction ID": t.id,
       "Receipt No": t.receiptId || "REC-2026-0001",
       "Student Name": t.studentName,

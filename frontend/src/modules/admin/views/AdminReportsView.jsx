@@ -1,7 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTransit } from "../../../shared/context/TransitContext";
-import AdminSidebar from "../layout/AdminSidebar";
 import "../layout/AdminLayout.css";
 
 const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidth = 1.8 }) => (
@@ -12,14 +10,15 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 );
 
 /* Mini bar chart */
-const BarChart = ({ data, color = "#3b82f6", height = 80 }) => {
-  const max = Math.max(...data.map(d => d.value));
+const BarChart = ({ data = [], color = "#3b82f6", height = 80 }) => {
+  if (!data || data.length === 0) return null;
+  const max = Math.max(...data.map((d) => d.value || 1));
   return (
     <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height }}>
       {data.map((d, i) => (
         <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-          <div style={{ width: "100%", background: color + "22", borderRadius: 4, overflow: "hidden", height: height - 20 }}>
-            <div style={{ width: "100%", background: color, borderRadius: 4, height: `${(d.value / max) * 100}%`, marginTop: "auto", transition: "height 0.3s" }} />
+          <div style={{ width: "100%", background: color + "22", borderRadius: 4, overflow: "hidden", height: height - 20, display: "flex", alignItems: "flex-end" }}>
+            <div style={{ width: "100%", background: color, borderRadius: 4, height: `${((d.value || 0) / max) * 100}%`, transition: "height 0.3s" }} />
           </div>
           <span style={{ fontSize: 9, color: "#7c8494", textAlign: "center" }}>{d.label}</span>
         </div>
@@ -28,14 +27,15 @@ const BarChart = ({ data, color = "#3b82f6", height = 80 }) => {
   );
 };
 
-/* Mini line chart (SVG path) */
-const LineChart = ({ data, color = "#22c55e", width = 300, height = 80 }) => {
-  const max = Math.max(...data.map(d => d.value));
-  const min = Math.min(...data.map(d => d.value));
+/* Mini line chart */
+const LineChart = ({ data = [], color = "#22c55e", width = 300, height = 80 }) => {
+  if (!data || data.length < 2) return null;
+  const max = Math.max(...data.map((d) => d.value || 1));
+  const min = Math.min(...data.map((d) => d.value || 0));
   const range = max - min || 1;
   const pts = data.map((d, i) => {
     const x = (i / (data.length - 1)) * width;
-    const y = height - ((d.value - min) / range) * (height - 16) - 8;
+    const y = height - (((d.value || 0) - min) / range) * (height - 16) - 8;
     return `${x},${y}`;
   });
   return (
@@ -43,168 +43,218 @@ const LineChart = ({ data, color = "#22c55e", width = 300, height = 80 }) => {
       <polyline points={pts.join(" ")} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
       {data.map((d, i) => {
         const x = (i / (data.length - 1)) * width;
-        const y = height - ((d.value - min) / range) * (height - 16) - 8;
+        const y = height - (((d.value || 0) - min) / range) * (height - 16) - 8;
         return <circle key={i} cx={x} cy={y} r="3.5" fill={color} stroke="#fff" strokeWidth="1.5" />;
       })}
     </svg>
   );
 };
 
-const tripsData   = [{ label:"Jan",value:1820 },{ label:"Feb",value:1740 },{ label:"Mar",value:1950 },{ label:"Apr",value:1880 },{ label:"May",value:2100 },{ label:"Jun",value:2250 },{ label:"Jul",value:2180 },{ label:"Aug",value:2340 }];
-const studentsData= [{ label:"Jan",value:7640 },{ label:"Feb",value:7720 },{ label:"Mar",value:7800 },{ label:"Apr",value:7920 },{ label:"May",value:7980 },{ label:"Jun",value:8010 },{ label:"Jul",value:8024 },{ label:"Aug",value:8024 }];
-const onTimeData  = [{ label:"Jan",value:96 },{ label:"Feb",value:97 },{ label:"Mar",value:95 },{ label:"Apr",value:98 },{ label:"May",value:99 },{ label:"Jun",value:97 },{ label:"Jul",value:98 },{ label:"Aug",value:99.2 }];
-
-const ROUTE_PERF = [
-  { route: "Route 2A", trips: 620, onTime: 99, students: 142, delay: "0 min avg",  color: "#22c55e" },
-  { route: "Route 3B", trips: 540, onTime: 92, students: 98,  delay: "4 min avg",  color: "#f59e0b" },
-  { route: "Route 1C", trips: 580, onTime: 97, students: 120, delay: "1 min avg",  color: "#3b82f6" },
-  { route: "Route 4D", trips: 490, onTime: 98, students: 75,   delay: "1 min avg",  color: "#8b5cf6" },
-];
-
 const AdminReports = () => {
-  const navigate = useNavigate();
-  const { currentAdmin } = useTransit();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { authFetch } = useTransit();
+  const [analytics, setAnalytics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [exportMsg, setExportMsg] = useState(null);
 
-  const adminName = currentAdmin?.name || "Dr. Arvind Patel";
-  const adminRole = currentAdmin?.role || "Super Admin";
-  const adminInitials = currentAdmin?.avatar ||
-    adminName
-      .trim()
-      .split(" ")
-      .filter(Boolean)
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "AP";
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await authFetch("/admin/reports/analytics");
+      if (res) {
+        setAnalytics(res);
+      }
+    } catch (err) {
+      setError(err.message || "Failed to load reports");
+    } finally {
+      setLoading(false);
+    }
+  }, [authFetch]);
 
-  const handleExport = (type) => {
-    setExportMsg(`✓ Analytics report (${type}) exported successfully!`);
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
+
+  const totals = analytics?.totals || {
+    totalTrips: 1840,
+    totalKmDriven: 24500,
+    avgOnTimeRate: 98.4,
+    fuelConsumedLiters: 4820,
+  };
+
+  const chartTrips = analytics?.chartTrips || [
+    { label: "Mon", value: 180 }, { label: "Tue", value: 195 }, { label: "Wed", value: 190 },
+    { label: "Thu", value: 210 }, { label: "Fri", value: 205 }, { label: "Sat", value: 85 }, { label: "Sun", value: 40 }
+  ];
+
+  const chartOnTime = analytics?.chartOnTime || [
+    { label: "Mon", value: 98 }, { label: "Tue", value: 97 }, { label: "Wed", value: 99 },
+    { label: "Thu", value: 96 }, { label: "Fri", value: 98 }, { label: "Sat", value: 99 }, { label: "Sun", value: 100 }
+  ];
+
+  const routePerf = analytics?.routePerformance || [
+    { route: "Route 2A (Sayajigunj)", trips: 620, onTime: 99, students: 142, delay: "0 min avg", color: "#22c55e" },
+    { route: "Route 3B (Alkapuri)", trips: 540, onTime: 92, students: 98, delay: "4 min avg", color: "#f59e0b" },
+    { route: "Route 1C (Akota)", trips: 580, onTime: 97, students: 120, delay: "1 min avg", color: "#3b82f6" },
+    { route: "Route 4D (Fatehgunj)", trips: 490, onTime: 98, students: 75, delay: "1 min avg", color: "#8b5cf6" },
+  ];
+
+  const handleExportCSV = () => {
+    const csvContent = "data:text/csv;charset=utf-8," +
+      ["Metric,Value",
+       `Total Trips Completed,${totals.totalTrips}`,
+       `Total Kilometers Driven,${totals.totalKmDriven}`,
+       `Average On-Time Rate,${totals.avgOnTimeRate}%`,
+       `Fuel Consumed (Liters),${totals.fuelConsumedLiters}`
+      ].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `GLOW_Fleet_Daily_Rollup_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setExportMsg("✓ Precomputed Daily Rollup CSV report exported!");
     setTimeout(() => setExportMsg(null), 3000);
   };
 
   return (
-    <div className="ad-wrapper">
-      <div className="ad-root">
-        <AdminSidebar activeId="reports" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="view-container">
+      {exportMsg && (
+        <div style={{
+          background: "#ecfdf5", border: "1.5px solid #10b981", color: "#065f46",
+          borderRadius: 8, padding: "10px 16px", marginBottom: 16, fontWeight: 700, fontSize: 13,
+          boxShadow: "0 2px 8px rgba(16, 185, 129, 0.15)"
+        }}>
+          {exportMsg}
+        </div>
+      )}
 
-        <div className="ad-main">
-          <header className="ad-topbar">
-            <button className="ad-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
-              <Icon d="M3 12h18M3 6h18M3 18h18" size={22} />
-            </button>
-            <div>
-              <div className="ad-topbar-title">Analytics & Operations Reports</div>
-              <div className="ad-topbar-subtitle">System performance, ridership trends & reliability metrics</div>
-            </div>
-            <div className="ad-topbar-right">
-              <button className="ad-btn-primary" onClick={() => handleExport("PDF")}>
-                <Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" size={15} stroke="#fff" />Export PDF
-              </button>
-              <div
-                className="ad-topbar-profile"
-                onClick={() => navigate("/admin/profile")}
-                style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
-                title={`${adminName} (${adminRole}) — Click to view Profile`}
-              >
-                <div className="ad-avatar">{adminInitials}</div>
-                <div className="ad-avatar-info">
-                  <span className="ad-avatar-name">{adminName}</span>
-                  <span className="ad-avatar-role">{adminRole}</span>
-                </div>
-              </div>
-            </div>
-          </header>
+      {/* Page Header */}
+      <div className="ad-page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <h2 className="ad-page-title" style={{ fontSize: 20, fontWeight: 800 }}>Fleet Analytics & Precomputed Daily Rollups</h2>
+          <p className="ad-page-sub" style={{ color: "#64748b", fontSize: 13 }}>
+            Aggregated trip kilometers, fuel burn & punctuality SLA metrics stored in `DailyRollup`
+          </p>
+        </div>
+        <button className="ad-btn-primary" onClick={handleExportCSV} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <Icon d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" size={16} stroke="#fff" />
+          Export Rollup CSV
+        </button>
+      </div>
 
-          <main className="ad-content">
-            {exportMsg && (
-              <div style={{ padding: "12px 16px", background: "#f0fdf4", border: "1px solid #86efac", color: "#166534", borderRadius: 8, fontWeight: 700 }}>
-                {exportMsg}
-              </div>
-            )}
+      {loading && <p style={{ fontSize: 13, color: "#64748b" }}>Loading precomputed daily rollups...</p>}
+      {error && <div style={{ padding: 12, background: "#fef2f2", color: "#dc2626", borderRadius: 8, marginBottom: 16 }}>{error}</div>}
 
-            {/* Top Stats */}
-            <div className="ad-stats">
-              <div className="ad-stat-card">
-                <div className="ad-stat-body">
-                  <p className="ad-stat-label">Total Trips Dispatched</p>
-                  <p className="ad-stat-value">2,340</p>
-                  <p className="ad-stat-meta ad-stat-meta--green">↑ 7.3% this month</p>
-                </div>
-              </div>
-              <div className="ad-stat-card">
-                <div className="ad-stat-body">
-                  <p className="ad-stat-label">Overall On-Time Rate</p>
-                  <p className="ad-stat-value" style={{ color: "#16a34a" }}>99.2%</p>
-                  <p className="ad-stat-meta ad-stat-meta--green">Above target (95%)</p>
-                </div>
-              </div>
-              <div className="ad-stat-card">
-                <div className="ad-stat-body">
-                  <p className="ad-stat-label">Avg Daily Commuters</p>
-                  <p className="ad-stat-value">3,912</p>
-                  <p className="ad-stat-meta ad-stat-meta--green">92% Turnout</p>
-                </div>
-              </div>
-              <div className="ad-stat-card">
-                <div className="ad-stat-body">
-                  <p className="ad-stat-label">Reported Incidents</p>
-                  <p className="ad-stat-value">1</p>
-                  <p className="ad-stat-meta ad-stat-meta--green">Resolved</p>
-                </div>
-              </div>
-            </div>
+      {/* High-level Totals */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 24 }}>
+        <div className="ad-stat-card">
+          <div className="ad-stat-body">
+            <p className="ad-stat-label">Total Trips Logged</p>
+            <p className="ad-stat-value">{totals.totalTrips.toLocaleString()}</p>
+            <p className="ad-stat-meta ad-stat-meta--green">Fleet Dispatch Cycles</p>
+          </div>
+          <div className="ad-stat-icon" style={{ background: "#eff6ff" }}>
+            <Icon d="M5 3l14 9-14 9V3z" stroke="#3b82f6" />
+          </div>
+        </div>
 
-            {/* Charts Grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
-              <div className="ad-card">
-                <h3 className="ad-card-title" style={{ marginBottom: 14 }}>Monthly Trip Volume (2026)</h3>
-                <BarChart data={tripsData} color="#2563eb" height={130} />
-              </div>
+        <div className="ad-stat-card">
+          <div className="ad-stat-body">
+            <p className="ad-stat-label">Distance Covered</p>
+            <p className="ad-stat-value">{(totals.totalKmDriven || 24500).toLocaleString()} km</p>
+            <p className="ad-stat-meta ad-stat-meta--green">Cumulative Odometer</p>
+          </div>
+          <div className="ad-stat-icon" style={{ background: "#f0fdf4" }}>
+            <Icon d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="#22c55e" />
+          </div>
+        </div>
 
-              <div className="ad-card">
-                <h3 className="ad-card-title" style={{ marginBottom: 14 }}>On-Time Reliability Trend (%)</h3>
-                <LineChart data={onTimeData} color="#16a34a" width={340} height={130} />
-              </div>
-            </div>
+        <div className="ad-stat-card">
+          <div className="ad-stat-body">
+            <p className="ad-stat-label">Average On-Time Rate</p>
+            <p className="ad-stat-value">{totals.avgOnTimeRate}%</p>
+            <p className="ad-stat-meta ad-stat-meta--green">SLA Target &gt;95%</p>
+          </div>
+          <div className="ad-stat-icon" style={{ background: "#faf5ff" }}>
+            <Icon d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#a855f7" />
+          </div>
+        </div>
 
-            {/* Route Performance Table */}
-            <div className="ad-card">
-              <div className="ad-card-header">
-                <h3 className="ad-card-title">Route Efficiency & Punctuality</h3>
-              </div>
+        <div className="ad-stat-card">
+          <div className="ad-stat-body">
+            <p className="ad-stat-label">Total Fuel Burn</p>
+            <p className="ad-stat-value">{(totals.fuelConsumedLiters || 4820).toLocaleString()} L</p>
+            <p className="ad-stat-meta ad-stat-meta--red">Diesel / EV Equivalent</p>
+          </div>
+          <div className="ad-stat-icon" style={{ background: "#fef2f2" }}>
+            <Icon d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM12 6v6l4 2" stroke="#ef4444" />
+          </div>
+        </div>
+      </div>
 
-              <div className="ad-table-wrap">
-                <table className="ad-table">
-                  <thead>
-                    <tr>
-                      <th className="ad-th">Route</th>
-                      <th className="ad-th">Total Trips</th>
-                      <th className="ad-th">Punctuality</th>
-                      <th className="ad-th">Daily Students</th>
-                      <th className="ad-th">Avg Delay</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ROUTE_PERF.map(r => (
-                      <tr key={r.route} className="ad-tr">
-                        <td className="ad-td"><strong>{r.route}</strong></td>
-                        <td className="ad-td">{r.trips}</td>
-                        <td className="ad-td" style={{ fontWeight: 800, color: "#16a34a" }}>{r.onTime}%</td>
-                        <td className="ad-td">{r.students} Commuters</td>
-                        <td className="ad-td">{r.delay}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+      {/* Charts Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
+        <div className="ad-card">
+          <div className="ad-card-header">
+            <h3 className="ad-card-title">Daily Dispatched Trips</h3>
+            <span style={{ fontSize: 12, color: "#64748b" }}>Past 7 Days</span>
+          </div>
+          <div style={{ padding: "16px 20px" }}>
+            <BarChart data={chartTrips} color="#2563eb" height={120} />
+          </div>
+        </div>
 
-            <footer className="ad-footer">
-              <span>© 2026 GLOW Bus Development System.</span>
-            </footer>
-          </main>
+        <div className="ad-card">
+          <div className="ad-card-header">
+            <h3 className="ad-card-title">Punctuality SLA Trend (%)</h3>
+            <span style={{ fontSize: 12, color: "#16a34a", fontWeight: 700 }}>Avg: {totals.avgOnTimeRate}%</span>
+          </div>
+          <div style={{ padding: "16px 20px" }}>
+            <LineChart data={chartOnTime} color="#16a34a" width={340} height={120} />
+          </div>
+        </div>
+      </div>
+
+      {/* Route Performance Table */}
+      <div className="ad-card">
+        <div className="ad-card-header">
+          <h3 className="ad-card-title">Corridor Performance & Reliability Audit</h3>
+        </div>
+
+        <div className="ad-table-wrap">
+          <table className="ad-table">
+            <thead>
+              <tr>
+                <th className="ad-th">Corridor Name</th>
+                <th className="ad-th">Completed Trips</th>
+                <th className="ad-th">Punctuality Score</th>
+                <th className="ad-th">Daily Passengers</th>
+                <th className="ad-th">Average Delay</th>
+                <th className="ad-th">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {routePerf.map((r, i) => (
+                <tr key={i} className="ad-tr">
+                  <td className="ad-td"><strong>{r.route}</strong></td>
+                  <td className="ad-td">{r.trips} trips</td>
+                  <td className="ad-td" style={{ fontWeight: 700, color: r.onTime >= 95 ? "#16a34a" : "#d97706" }}>
+                    {r.onTime}%
+                  </td>
+                  <td className="ad-td">{r.students} students</td>
+                  <td className="ad-td">{r.delay}</td>
+                  <td className="ad-td">
+                    <span className={`ad-badge ${r.onTime >= 95 ? "ad-badge--green" : "ad-badge--yellow"}`}>
+                      ● {r.onTime >= 95 ? "Optimal" : "Requires Review"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

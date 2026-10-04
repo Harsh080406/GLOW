@@ -43,7 +43,7 @@ const FinanceLayout = ({ children, title: overrideTitle, subtitle: overrideSubti
 
   const adminName = currentFinanceAdmin?.name || "CMA Rajesh Dave";
   const adminRole = currentFinanceAdmin?.role || "Chief Finance Officer";
-  const adminInitials = currentFinanceAdmin?.avatar || "RD";
+  const avatarInitials = currentFinanceAdmin?.avatar || "RD";
 
   return (
     <div className="ad-wrapper">

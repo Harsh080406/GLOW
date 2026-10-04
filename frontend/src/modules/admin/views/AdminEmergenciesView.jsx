@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import AdminSidebar from "../layout/AdminSidebar";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTransit } from "../../../shared/context/TransitContext";
 import "../layout/AdminLayout.css";
 
@@ -12,184 +10,360 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 );
 
 const AdminEmergencies = () => {
-  const navigate = useNavigate();
-  const { currentAdmin, emergencies, resolveEmergency } = useTransit();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedEmergency, setSelectedEmergency] = useState(null);
-  const [resolutionNotes, setResolutionNotes] = useState("");
+  const { authFetch, sosAlerts = [], isWsConnected } = useTransit();
+  const [emergencies, setEmergencies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [toastMsg, setToastMsg] = useState(null);
 
-  const adminName = currentAdmin?.name || "Dr. Arvind Patel";
-  const adminRole = currentAdmin?.role || "Super Admin";
-  const adminInitials = currentAdmin?.avatar ||
-    adminName
-      .trim()
-      .split(" ")
-      .filter(Boolean)
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "AP";
+  // Broadcast Modal
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+  const [broadcastTitle, setBroadcastTitle] = useState("URGENT: Campus Perimeter Route Advisory");
+  const [broadcastMessage, setBroadcastMessage] = useState("Severe traffic gridlock near Chhani Jakat Naka. Fleet routes R-01 and R-04 delayed by 15 minutes.");
+  const [broadcastSeverity, setBroadcastSeverity] = useState("HIGH");
 
-  const activeList = emergencies.filter((e) => e.status === "ACTIVE" || e.status === "MONITORING");
-  const historyList = emergencies.filter((e) => e.status === "RESOLVED");
+  // Dispatch / Resolve Modal
+  const [selectedIncident, setSelectedIncident] = useState(null);
+  const [actionType, setActionType] = useState("DISPATCH"); // 'DISPATCH' | 'RESOLVE'
+  const [incidentNotes, setIncidentNotes] = useState("");
 
-  const handleResolve = (e) => {
+  const showNotification = (msg) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3500);
+  };
+
+  const fetchEmergencies = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await authFetch("/admin/emergencies");
+      if (res && res.emergencies) {
+        setEmergencies(res.emergencies);
+      }
+    } catch (err) {
+      setError(err.message || "Failed to load emergencies");
+    } finally {
+      setLoading(false);
+    }
+  }, [authFetch]);
+
+  useEffect(() => {
+    fetchEmergencies();
+  }, [fetchEmergencies]);
+
+  // Combine DB emergencies with real-time incoming WebSocket sosAlerts
+  const combinedAlerts = [...emergencies];
+  sosAlerts.forEach((wsAlert) => {
+    if (!combinedAlerts.some((e) => e.id === wsAlert.id || e._id === wsAlert.id)) {
+      combinedAlerts.unshift(wsAlert);
+    }
+  });
+
+  const activeList = combinedAlerts.filter((e) => e.status === "ACTIVE" || e.status === "MONITORING" || e.status === "DISPATCHED");
+  const historyList = combinedAlerts.filter((e) => e.status === "RESOLVED");
+
+  const handleBroadcastAlert = async (e) => {
     e.preventDefault();
-    if (!selectedEmergency) return;
-    resolveEmergency(selectedEmergency.id, resolutionNotes);
-    setSelectedEmergency(null);
-    setResolutionNotes("");
+    try {
+      await authFetch("/admin/emergencies/broadcast", {
+        method: "POST",
+        body: JSON.stringify({
+          title: broadcastTitle,
+          message: broadcastMessage,
+          severity: broadcastSeverity,
+        }),
+      });
+      showNotification("✓ Campus emergency broadcast pushed to all student & driver channels!");
+      setShowBroadcastModal(false);
+    } catch (err) {
+      alert("Error broadcasting alert: " + err.message);
+    }
+  };
+
+  const handleExecuteIncidentAction = async (e) => {
+    e.preventDefault();
+    if (!selectedIncident) return;
+
+    try {
+      const endpoint = actionType === "DISPATCH"
+        ? `/admin/emergencies/${selectedIncident._id || selectedIncident.id}/dispatch`
+        : `/admin/emergencies/${selectedIncident._id || selectedIncident.id}/resolve`;
+
+      await authFetch(endpoint, {
+        method: "POST",
+        body: JSON.stringify({
+          responderNotes: incidentNotes,
+          resolutionNotes: incidentNotes,
+        }),
+      });
+
+      showNotification(`✓ Emergency signal #${selectedIncident.id || selectedIncident._id} marked as ${actionType === "DISPATCH" ? "DISPATCHED" : "RESOLVED"}!`);
+      setSelectedIncident(null);
+      setIncidentNotes("");
+      fetchEmergencies();
+    } catch (err) {
+      alert("Error processing emergency action: " + err.message);
+    }
   };
 
   return (
-    <div className="ad-wrapper">
-      <div className="ad-root">
-        <AdminSidebar activeId="emergencies" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="view-container">
+      {toastMsg && (
+        <div style={{
+          background: "#ecfdf5", border: "1.5px solid #10b981", color: "#065f46",
+          borderRadius: 8, padding: "10px 16px", marginBottom: 16, fontWeight: 700, fontSize: 13,
+          boxShadow: "0 2px 8px rgba(16, 185, 129, 0.15)"
+        }}>
+          {toastMsg}
+        </div>
+      )}
 
-        <div className="ad-main">
-          <header className="ad-topbar">
-            <button className="ad-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
-              <Icon d="M3 12h18M3 6h18M3 18h18" size={22} />
-            </button>
-            <div>
-              <div className="ad-topbar-title">Emergency Response & SOS Command Center</div>
-              <div className="ad-topbar-subtitle">Real-time incident dispatch, vehicle accident monitoring & SOS alert coordination</div>
-            </div>
-            <div className="ad-topbar-right">
-              <div
-                className="ad-topbar-profile"
-                onClick={() => navigate("/admin/profile")}
-                style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
-                title={`${adminName} (${adminRole}) — Click to view Profile`}
-              >
-                <div className="ad-avatar">{adminInitials}</div>
-                <div className="ad-avatar-info">
-                  <span className="ad-avatar-name">{adminName}</span>
-                  <span className="ad-avatar-role">{adminRole}</span>
-                </div>
-              </div>
-            </div>
-          </header>
+      {/* Page Header */}
+      <div className="ad-page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <h2 className="ad-page-title" style={{ fontSize: 20, fontWeight: 800 }}>Emergencies & SOS Control Room</h2>
+          <p className="ad-page-sub" style={{ color: "#64748b", fontSize: 13 }}>
+            Live `sos:alerts` WebSocket feed, rapid security team dispatch & campus-wide notification broadcast
+          </p>
+        </div>
+        <button
+          className="ad-btn-primary"
+          onClick={() => setShowBroadcastModal(true)}
+          style={{ background: "#dc2626", borderColor: "#b91c1c", display: "flex", alignItems: "center", gap: 6 }}
+        >
+          <span style={{ fontSize: 16 }}>📢</span>
+          Broadcast Campus Alert
+        </button>
+      </div>
 
-          <main className="ad-content">
-            {/* ── ACTIVE INCIDENTS LIST ──────────────────────────────── */}
-            <div className="ad-card" style={{ marginBottom: 24, border: "2px solid #ef4444" }}>
-              <div className="ad-card-header">
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 24 }}>🚨</span>
-                  <h3 className="ad-card-title" style={{ color: "#dc2626" }}>Active Emergency Signals ({activeList.length})</h3>
-                </div>
-                <span className="ad-badge ad-badge--red">HIGH PRIORITY DISPATCH</span>
-              </div>
+      {/* Live SOS Channel Indicator */}
+      <div style={{ marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          background: isWsConnected ? "#fef2f2" : "#f1f5f9",
+          color: isWsConnected ? "#b91c1c" : "#64748b",
+          border: `1px solid ${isWsConnected ? "#fca5a5" : "#cbd5e1"}`,
+          padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 700
+        }}>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: isWsConnected ? "#ef4444" : "#94a3b8" }} />
+          Channel: sos:alerts ({isWsConnected ? "Live Listening" : "Offline"})
+        </span>
+      </div>
 
+      {/* Active Emergencies Section */}
+      <div className="ad-card" style={{ marginBottom: 24, border: "2px solid #ef4444" }}>
+        <div className="ad-card-header" style={{ background: "#fef2f2" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 24 }}>🚨</span>
+            <h3 className="ad-card-title" style={{ color: "#dc2626" }}>Active Emergency Signals ({activeList.length})</h3>
+          </div>
+          <span className="ad-badge ad-badge--red">Priority 1</span>
+        </div>
+
+        <div className="ad-table-wrap">
+          <table className="ad-table">
+            <thead>
+              <tr>
+                <th className="ad-th">Incident ID</th>
+                <th className="ad-th">Signal Type</th>
+                <th className="ad-th">Bus / Commuter</th>
+                <th className="ad-th">GPS Location</th>
+                <th className="ad-th">Reported Time</th>
+                <th className="ad-th">Status</th>
+                <th className="ad-th">Action Control</th>
+              </tr>
+            </thead>
+            <tbody>
               {activeList.length === 0 ? (
-                <p style={{ textAlign: "center", padding: "30px", color: "#166534", fontWeight: 700 }}>
-                  ✓ All clear. Zero active emergency alerts on campus network.
-                </p>
+                <tr>
+                  <td colSpan={7} style={{ padding: 24, textAlign: "center", color: "#16a34a", fontWeight: 700 }}>
+                    ✓ No active emergencies. All transit corridors operating nominally.
+                  </td>
+                </tr>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  {activeList.map((e) => (
-                    <div key={e.id} style={{ background: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: 12, padding: "18px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
-                        <div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <h4 style={{ fontSize: 16, fontWeight: 900, color: "#991b1b" }}>{e.type}</h4>
-                            <span className="ad-badge ad-badge--red">● {e.status}</span>
-                          </div>
-                          <p style={{ fontSize: 13, color: "#b91c1c", marginTop: 4 }}>
-                            Bus: <strong>{e.busId}</strong> &nbsp;·&nbsp; Route: <strong>{e.routeId}</strong> &nbsp;·&nbsp; Driver: <strong>{e.driver}</strong> &nbsp;·&nbsp; Passengers: <strong>{e.studentsOnboard || 38} Onboard</strong>
-                          </p>
-                          <p style={{ fontSize: 13, color: "#7f1d1d", marginTop: 4 }}>
-                            <strong>Coordinates / Location:</strong> {e.location}
-                          </p>
-                          <p style={{ fontSize: 13, color: "#7f1d1d", marginTop: 4 }}>
-                            <strong>Incident Description:</strong> {e.notes}
-                          </p>
-                        </div>
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <button
-                            onClick={() => {
-                              setSelectedEmergency(e);
-                              setResolutionNotes("");
-                            }}
-                            style={{ padding: "8px 16px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 8, fontWeight: 800, fontSize: 13, cursor: "pointer" }}
-                          >
-                            ✓ Mark Incident Resolved
-                          </button>
-                        </div>
+                activeList.map((e) => (
+                  <tr key={e._id || e.id} className="ad-tr" style={{ background: "#fff5f5" }}>
+                    <td className="ad-td" style={{ fontWeight: 800 }}>{e.id || e._id}</td>
+                    <td className="ad-td">
+                      <strong style={{ color: "#dc2626" }}>{e.type || "SOS PANIC"}</strong>
+                    </td>
+                    <td className="ad-td">{e.busId || e.driverName || "Fleet Unit"}</td>
+                    <td className="ad-td">{e.location || "Campus Perimeter"}</td>
+                    <td className="ad-td">{e.time || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
+                    <td className="ad-td">
+                      <span className="ad-badge ad-badge--red">● {e.status}</span>
+                    </td>
+                    <td className="ad-td">
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button
+                          onClick={() => { setSelectedIncident(e); setActionType("DISPATCH"); }}
+                          style={{ padding: "4px 10px", background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", borderRadius: 6, fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}
+                        >
+                          Dispatch Security Team
+                        </button>
+                        <button
+                          onClick={() => { setSelectedIncident(e); setActionType("RESOLVE"); }}
+                          style={{ padding: "4px 10px", background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0", borderRadius: 6, fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}
+                        >
+                          Resolve Emergency
+                        </button>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    </td>
+                  </tr>
+                ))
               )}
-            </div>
-
-            {/* ── HISTORICAL EMERGENCY LOG ────────────────────────────── */}
-            <div className="ad-card">
-              <div className="ad-card-header">
-                <h3 className="ad-card-title">Resolved Incident History & Log</h3>
-              </div>
-              <div className="ad-table-wrap">
-                <table className="ad-table">
-                  <thead>
-                    <tr>
-                      <th className="ad-th">Incident ID</th>
-                      <th className="ad-th">Type</th>
-                      <th className="ad-th">Bus ID</th>
-                      <th className="ad-th">Driver</th>
-                      <th className="ad-th">Location</th>
-                      <th className="ad-th">Time</th>
-                      <th className="ad-th">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {emergencies.map((e) => (
-                      <tr key={e.id} className="ad-tr">
-                        <td className="ad-td" style={{ fontWeight: 700 }}>{e.id}</td>
-                        <td className="ad-td"><strong>{e.type}</strong></td>
-                        <td className="ad-td">{e.busId}</td>
-                        <td className="ad-td">{e.driver}</td>
-                        <td className="ad-td">{e.location}</td>
-                        <td className="ad-td">{e.time}</td>
-                        <td className="ad-td">
-                          <span className={`ad-badge ${e.status === "RESOLVED" ? "ad-badge--green" : "ad-badge--red"}`}>
-                            ● {e.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <footer className="ad-footer"><span>© 2026 GLOW Bus Development System.</span></footer>
-          </main>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {selectedEmergency && (
-        <div className="ad-overlay" style={{ display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000 }}>
-          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 460, padding: "24px", position: "relative" }}>
-            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 12 }}>Resolve Emergency Incident</h3>
-            <form onSubmit={handleResolve}>
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, marginBottom: 4 }}>Resolution Summary & Actions Taken</label>
+      {/* Resolved Incidents History */}
+      <div className="ad-card">
+        <div className="ad-card-header">
+          <h3 className="ad-card-title">Resolved Incident History ({historyList.length})</h3>
+        </div>
+
+        <div className="ad-table-wrap">
+          <table className="ad-table">
+            <thead>
+              <tr>
+                <th className="ad-th">Incident ID</th>
+                <th className="ad-th">Signal Type</th>
+                <th className="ad-th">Bus / Reporter</th>
+                <th className="ad-th">Location</th>
+                <th className="ad-th">Resolution Notes</th>
+                <th className="ad-th">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historyList.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ padding: 20, textAlign: "center", color: "#64748b" }}>
+                    No previous incidents recorded.
+                  </td>
+                </tr>
+              ) : (
+                historyList.map((e) => (
+                  <tr key={e._id || e.id} className="ad-tr">
+                    <td className="ad-td" style={{ fontWeight: 700 }}>{e.id || e._id}</td>
+                    <td className="ad-td">{e.type}</td>
+                    <td className="ad-td">{e.busId || "Fleet Unit"}</td>
+                    <td className="ad-td">{e.location}</td>
+                    <td className="ad-td">{e.resolutionNotes || e.notes || "Resolved"}</td>
+                    <td className="ad-td">
+                      <span className="ad-badge ad-badge--green">✓ RESOLVED</span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Broadcast Campus Alert Modal */}
+      {showBroadcastModal && (
+        <div className="ad-overlay" style={{ display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.45)" }}>
+          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 460, padding: "24px" }}>
+            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 6, color: "#dc2626" }}>
+              📢 Broadcast Campus Emergency Alert
+            </h3>
+            <p style={{ fontSize: 12.5, color: "#64748b", marginBottom: 16 }}>
+              Fans out immediate push/WebSocket notifications to all students, drivers, and campus transit displays.
+            </p>
+
+            <form onSubmit={handleBroadcastAlert}>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, marginBottom: 4 }}>Broadcast Title</label>
+                <input
+                  type="text"
+                  value={broadcastTitle}
+                  onChange={(e) => setBroadcastTitle(e.target.value)}
+                  required
+                  style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1.5px solid #cbd5e1" }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, marginBottom: 4 }}>Severity Level</label>
+                <select
+                  value={broadcastSeverity}
+                  onChange={(e) => setBroadcastSeverity(e.target.value)}
+                  style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1.5px solid #cbd5e1", background: "#fff" }}
+                >
+                  <option value="HIGH">HIGH (Urgent Incident)</option>
+                  <option value="CRITICAL">CRITICAL (Campus Lockdown / Immediate Standstill)</option>
+                  <option value="MEDIUM">MEDIUM (Weather / Route Delay Advisory)</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, marginBottom: 4 }}>Broadcast Message Content</label>
                 <textarea
                   rows={4}
-                  value={resolutionNotes}
-                  onChange={(e) => setResolutionNotes(e.target.value)}
-                  placeholder="e.g. Police escort cleared detour. All 32 students safely dropped at campus bus bay."
+                  value={broadcastMessage}
+                  onChange={(e) => setBroadcastMessage(e.target.value)}
                   required
-                  style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1.5px solid #cbd5e1", fontSize: 13.5 }}
+                  style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1.5px solid #cbd5e1", resize: "vertical" }}
                 />
               </div>
 
               <div style={{ display: "flex", gap: 10 }}>
-                <button type="submit" style={{ flex: 1, padding: "12px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 8, fontWeight: 800, cursor: "pointer" }}>
-                  Confirm Incident Resolution
+                <button type="submit" style={{ flex: 1, padding: "12px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>
+                  Transmit Broadcast Now
                 </button>
-                <button type="button" onClick={() => setSelectedEmergency(null)} style={{ padding: "12px 18px", background: "#e2e8f0", color: "#334155", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>
+                <button type="button" onClick={() => setShowBroadcastModal(false)} style={{ padding: "12px 18px", background: "#e2e8f0", color: "#334155", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Incident Dispatch / Resolve Modal */}
+      {selectedIncident && (
+        <div className="ad-overlay" style={{ display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.45)" }}>
+          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 440, padding: "24px" }}>
+            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>
+              {actionType === "DISPATCH" ? "Dispatch Campus Security Team" : "Resolve Incident Signal"}
+            </h3>
+            <p style={{ fontSize: 12.5, color: "#64748b", marginBottom: 16 }}>
+              Incident: <strong>{selectedIncident.type || "SOS Signal"}</strong> on {selectedIncident.busId || "Fleet Unit"}.
+            </p>
+
+            <form onSubmit={handleExecuteIncidentAction}>
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, marginBottom: 4 }}>
+                  {actionType === "DISPATCH" ? "Security Team Instructions / Unit Dispatched" : "Incident Resolution Log Notes"}
+                </label>
+                <textarea
+                  rows={4}
+                  value={incidentNotes}
+                  onChange={(e) => setIncidentNotes(e.target.value)}
+                  placeholder={actionType === "DISPATCH" ? "e.g. Unit Sec-3 dispatched with medic kit..." : "e.g. Passenger cleared; route resumed."}
+                  required
+                  style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1.5px solid #cbd5e1" }}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  type="submit"
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    background: actionType === "DISPATCH" ? "#dc2626" : "#16a34a",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    fontWeight: 700,
+                    cursor: "pointer"
+                  }}
+                >
+                  {actionType === "DISPATCH" ? "Confirm Dispatch" : "Mark Resolved"}
+                </button>
+                <button type="button" onClick={() => setSelectedIncident(null)} style={{ padding: "12px 18px", background: "#e2e8f0", color: "#334155", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>
                   Cancel
                 </button>
               </div>

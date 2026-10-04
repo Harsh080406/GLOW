@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import AdminSidebar from "../layout/AdminSidebar";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTransit } from "../../../shared/context/TransitContext";
 import "../layout/AdminLayout.css";
 
@@ -11,188 +9,257 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
   </svg>
 );
 
+const DEPARTMENTS = [
+  "Transportation",
+  "Maintenance",
+  "Finance",
+  "Security",
+  "Administration",
+];
+
 const AdminComplaints = () => {
-  const navigate = useNavigate();
-  const { currentAdmin, complaints, resolveComplaint } = useTransit();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { authFetch } = useTransit();
+  const [complaints, setComplaints] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [toastMsg, setToastMsg] = useState(null);
+
+  // Resolution & Department Assignment Modal
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [responseText, setResponseText] = useState("");
+  const [assignedDept, setAssignedDept] = useState("Transportation");
+  const [resolutionStatus, setResolutionStatus] = useState("RESOLVED");
 
-  const adminName = currentAdmin?.name || "Dr. Arvind Patel";
-  const adminRole = currentAdmin?.role || "Super Admin";
-  const adminInitials = currentAdmin?.avatar ||
-    adminName
-      .trim()
-      .split(" ")
-      .filter(Boolean)
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "AP";
-
-  const filteredComplaints = complaints.filter((c) => {
-    if (statusFilter === "ALL") return true;
-    return c.status.toLowerCase() === statusFilter.toLowerCase();
-  });
-
-  const handleResolve = (e) => {
-    e.preventDefault();
-    if (!selectedComplaint || !responseText) return;
-
-    resolveComplaint(selectedComplaint.id, responseText, "Resolved");
-    setSelectedComplaint(null);
-    setResponseText("");
+  const showNotification = (msg) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3500);
   };
 
+  const fetchComplaints = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await authFetch("/admin/complaints");
+      if (res && res.complaints) {
+        setComplaints(res.complaints);
+      }
+    } catch (err) {
+      setError(err.message || "Failed to load complaints");
+    } finally {
+      setLoading(false);
+    }
+  }, [authFetch]);
+
+  useEffect(() => {
+    fetchComplaints();
+  }, [fetchComplaints]);
+
+  const handleOpenAction = (c) => {
+    setSelectedComplaint(c);
+    setResponseText(c.response || "");
+    setAssignedDept(c.department || "Transportation");
+    setResolutionStatus((c.status || "PENDING").toUpperCase() === "PENDING" ? "RESOLVED" : c.status);
+  };
+
+  const handleSaveResolution = async (e) => {
+    e.preventDefault();
+    if (!selectedComplaint) return;
+
+    try {
+      await authFetch(`/admin/complaints/${selectedComplaint._id || selectedComplaint.id}/resolve`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          response: responseText,
+          status: resolutionStatus,
+          department: assignedDept,
+        }),
+      });
+      showNotification(`✓ Grievance #${selectedComplaint.id || selectedComplaint._id} resolved & assigned to ${assignedDept}!`);
+      setSelectedComplaint(null);
+      fetchComplaints();
+    } catch (err) {
+      alert("Error saving complaint resolution: " + err.message);
+    }
+  };
+
+  const filtered = complaints.filter((c) => {
+    if (statusFilter === "ALL") return true;
+    return (c.status || "PENDING").toUpperCase() === statusFilter.toUpperCase();
+  });
+
   return (
-    <div className="ad-wrapper">
-      <div className="ad-root">
-        <AdminSidebar activeId="complaints" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="view-container">
+      {toastMsg && (
+        <div style={{
+          background: "#ecfdf5", border: "1.5px solid #10b981", color: "#065f46",
+          borderRadius: 8, padding: "10px 16px", marginBottom: 16, fontWeight: 700, fontSize: 13,
+          boxShadow: "0 2px 8px rgba(16, 185, 129, 0.15)"
+        }}>
+          {toastMsg}
+        </div>
+      )}
 
-        <div className="ad-main">
-          <header className="ad-topbar">
-            <button className="ad-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
-              <Icon d="M3 12h18M3 6h18M3 18h18" size={22} />
-            </button>
-            <div>
-              <div className="ad-topbar-title">Complaints & Grievance Resolution</div>
-              <div className="ad-topbar-subtitle">Investigate passenger feedback, assign fleet officers & dispatch corrective actions</div>
-            </div>
-            <div className="ad-topbar-right">
-              <div
-                className="ad-topbar-profile"
-                onClick={() => navigate("/admin/profile")}
-                style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
-                title={`${adminName} (${adminRole}) — Click to view Profile`}
-              >
-                <div className="ad-avatar">{adminInitials}</div>
-                <div className="ad-avatar-info">
-                  <span className="ad-avatar-name">{adminName}</span>
-                  <span className="ad-avatar-role">{adminRole}</span>
-                </div>
-              </div>
-            </div>
-          </header>
+      {/* Page Header */}
+      <div className="ad-page-header" style={{ marginBottom: 20 }}>
+        <h2 className="ad-page-title" style={{ fontSize: 20, fontWeight: 800 }}>Passenger Grievances & Service Support</h2>
+        <p className="ad-page-sub" style={{ color: "#64748b", fontSize: 13 }}>
+          Student and staff complaint resolution workflow, departmental SLA delegation & audit trails
+        </p>
+      </div>
 
-          <main className="ad-content">
-            {/* ── FILTER PILLS ───────────────────────────────────────── */}
-            <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-              {["ALL", "Open", "In Progress", "Resolved"].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setStatusFilter(s)}
-                  style={{
-                    padding: "8px 16px",
-                    borderRadius: 20,
-                    fontSize: 12.5,
-                    fontWeight: 700,
-                    border: `1.5px solid ${statusFilter === s ? "#2563eb" : "#e2e8f0"}`,
-                    background: statusFilter === s ? "#2563eb" : "#fff",
-                    color: statusFilter === s ? "#fff" : "#475569",
-                    cursor: "pointer",
-                  }}
-                >
-                  {s === "ALL" ? "All Complaints" : `${s} (${complaints.filter((c) => c.status.toLowerCase() === s.toLowerCase()).length})`}
-                </button>
-              ))}
-            </div>
+      {/* Filter Tabs */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+        {["ALL", "PENDING", "RESOLVED"].map((status) => (
+          <button
+            key={status}
+            onClick={() => setStatusFilter(status)}
+            style={{
+              padding: "7px 16px",
+              borderRadius: 20,
+              fontSize: 12.5,
+              fontWeight: 700,
+              border: `1.5px solid ${statusFilter === status ? "#2563eb" : "#e2e8f0"}`,
+              background: statusFilter === status ? "#2563eb" : "#fff",
+              color: statusFilter === status ? "#fff" : "#475569",
+              cursor: "pointer",
+            }}
+          >
+            {status === "ALL" ? "All Grievances" : status}
+          </button>
+        ))}
+      </div>
 
-            {/* ── COMPLAINTS TABLE ───────────────────────────────────── */}
-            <div className="ad-card">
-              <div className="ad-card-header">
-                <h3 className="ad-card-title">Student & Passenger Grievance Tickets ({filteredComplaints.length})</h3>
-              </div>
+      {/* Complaints Table */}
+      <div className="ad-card">
+        <div className="ad-card-header">
+          <h3 className="ad-card-title">Grievances Log ({filtered.length})</h3>
+          {loading && <span style={{ fontSize: 12, color: "#64748b" }}>Loading grievances...</span>}
+        </div>
 
-              <div className="ad-table-wrap">
-                <table className="ad-table">
-                  <thead>
-                    <tr>
-                      <th className="ad-th">Ticket ID</th>
-                      <th className="ad-th">Category</th>
-                      <th className="ad-th">Student</th>
-                      <th className="ad-th">Bus / Route</th>
-                      <th className="ad-th">Description</th>
-                      <th className="ad-th">Date</th>
-                      <th className="ad-th">Assigned To</th>
-                      <th className="ad-th">Status</th>
-                      <th className="ad-th">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredComplaints.map((c) => (
-                      <tr key={c.id} className="ad-tr">
-                        <td className="ad-td" style={{ fontWeight: 700 }}>{c.id}</td>
-                        <td className="ad-td"><strong>{c.category}</strong></td>
-                        <td className="ad-td">{c.studentName}</td>
-                        <td className="ad-td">{c.busId} ({c.routeId})</td>
-                        <td className="ad-td" style={{ maxWidth: 260 }}>{c.description}</td>
-                        <td className="ad-td">{c.date}</td>
-                        <td className="ad-td">{c.assignedTo}</td>
+        {error ? (
+          <div style={{ padding: 24, textAlign: "center", color: "#ef4444" }}>
+            <p>{error}</p>
+            <button className="ad-btn-secondary" onClick={fetchComplaints} style={{ marginTop: 8 }}>Retry</button>
+          </div>
+        ) : (
+          <div className="ad-table-wrap">
+            <table className="ad-table">
+              <thead>
+                <tr>
+                  <th className="ad-th">Ticket ID</th>
+                  <th className="ad-th">Complainant</th>
+                  <th className="ad-th">Category & Issue</th>
+                  <th className="ad-th">Assigned Department</th>
+                  <th className="ad-th">Status</th>
+                  <th className="ad-th">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ padding: 30, textAlign: "center", color: "#64748b" }}>
+                      {loading ? "Loading grievances..." : "No complaints found matching this filter."}
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((c) => {
+                    const isPending = (c.status || "PENDING").toUpperCase() === "PENDING";
+                    return (
+                      <tr key={c._id || c.id} className="ad-tr">
+                        <td className="ad-td" style={{ fontWeight: 800 }}>{c.id || c._id}</td>
                         <td className="ad-td">
-                          <span className={`ad-badge ${c.status === "Resolved" ? "ad-badge--green" : c.status === "In Progress" ? "ad-badge--blue" : "ad-badge--yellow"}`}>
-                            ● {c.status}
+                          <strong>{c.studentName || c.userId?.name || "Student Complainant"}</strong>
+                          <span style={{ fontSize: 11.5, color: "#64748b", display: "block" }}>{c.phone || c.userId?.phone}</span>
+                        </td>
+                        <td className="ad-td">
+                          <strong>{c.category || "Route Delay"}</strong>
+                          <p style={{ fontSize: 12, color: "#475569", margin: "2px 0 0" }}>{c.description || c.subject}</p>
+                        </td>
+                        <td className="ad-td">
+                          <span style={{ fontWeight: 700, color: "#2563eb" }}>
+                            {c.department || "Transportation"}
+                          </span>
+                        </td>
+                        <td className="ad-td">
+                          <span className={`ad-badge ${isPending ? "ad-badge--yellow" : "ad-badge--green"}`}>
+                            ● {c.status || "PENDING"}
                           </span>
                         </td>
                         <td className="ad-td">
                           <button
-                            onClick={() => {
-                              setSelectedComplaint(c);
-                              setResponseText(c.response || "");
-                            }}
-                            style={{ padding: "4px 10px", background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                            onClick={() => handleOpenAction(c)}
+                            style={{ padding: "5px 12px", background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", borderRadius: 6, fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}
                           >
-                            Resolve / Reply
+                            Resolve / Delegate
                           </button>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <footer className="ad-footer"><span>© 2026 GLOW Bus Development System.</span></footer>
-          </main>
-        </div>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
+      {/* Resolve / Assign Department Modal */}
       {selectedComplaint && (
-        <div className="ad-overlay" style={{ display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000 }}>
-          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 480, padding: "24px", position: "relative" }}>
-            <button
-              onClick={() => setSelectedComplaint(null)}
-              style={{ position: "absolute", top: 18, right: 18, background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#64748b" }}
-            >
-              ✕
-            </button>
-            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 10 }}>Resolve Ticket: {selectedComplaint.id}</h3>
-            <p style={{ fontSize: 13, color: "#334155", marginBottom: 12 }}>
-              <strong>Category:</strong> {selectedComplaint.category} &nbsp;·&nbsp; <strong>Student:</strong> {selectedComplaint.studentName} ({selectedComplaint.busId})
+        <div className="ad-overlay" style={{ display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.45)" }}>
+          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 480, padding: "24px" }}>
+            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>
+              Resolve Grievance #{selectedComplaint.id || selectedComplaint._id}
+            </h3>
+            <p style={{ fontSize: 12.5, color: "#64748b", marginBottom: 14 }}>
+              Assign to responsible university department and draft an official commuter response.
             </p>
-            <div style={{ background: "#f8fafc", padding: "12px", borderRadius: 8, fontSize: 13, color: "#475569", marginBottom: 16 }}>
-              {selectedComplaint.description}
-            </div>
 
-            <form onSubmit={handleResolve}>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, marginBottom: 4 }}>Official Helpdesk Resolution Response</label>
+            <form onSubmit={handleSaveResolution}>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, marginBottom: 4 }}>Assign to Department</label>
+                <select
+                  value={assignedDept}
+                  onChange={(e) => setAssignedDept(e.target.value)}
+                  style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1.5px solid #cbd5e1", background: "#fff" }}
+                >
+                  {DEPARTMENTS.map((dept) => (
+                    <option key={dept} value={dept}>{dept} Department</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, marginBottom: 4 }}>Resolution Status</label>
+                <select
+                  value={resolutionStatus}
+                  onChange={(e) => setResolutionStatus(e.target.value)}
+                  style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1.5px solid #cbd5e1", background: "#fff" }}
+                >
+                  <option value="RESOLVED">RESOLVED</option>
+                  <option value="IN_PROGRESS">IN_PROGRESS</option>
+                  <option value="PENDING">PENDING</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, marginBottom: 4 }}>Resolution Comments / Response to Student</label>
                 <textarea
                   rows={4}
                   value={responseText}
                   onChange={(e) => setResponseText(e.target.value)}
-                  placeholder="Enter resolution notes, actions taken with driver/fleet crew..."
+                  placeholder="Explain actions taken (e.g., Driver counselled regarding punctuality; replacement bus assigned)..."
                   required
-                  style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1.5px solid #cbd5e1", fontSize: 13.5, resize: "vertical" }}
+                  style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1.5px solid #cbd5e1", resize: "vertical" }}
                 />
               </div>
 
               <div style={{ display: "flex", gap: 10 }}>
-                <button type="submit" style={{ flex: 1, padding: "12px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 8, fontWeight: 800, cursor: "pointer" }}>
-                  Save & Mark Resolved
+                <button type="submit" style={{ flex: 1, padding: "12px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>
+                  Save & Dispatch Resolution
                 </button>
                 <button type="button" onClick={() => setSelectedComplaint(null)} style={{ padding: "12px 18px", background: "#e2e8f0", color: "#334155", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>
-                  Close
+                  Cancel
                 </button>
               </div>
             </form>
