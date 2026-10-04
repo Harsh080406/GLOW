@@ -12,6 +12,7 @@ import SosAlert from "../models/SosAlert.js";
 import User from "../models/User.js";
 import StopNotification from "../models/StopNotification.js";
 import { pdfService } from "../services/pdfService.js";
+import { generateSignedPassPayload } from "../utils/cryptoUtils.js";
 
 const HMAC_SECRET = process.env.JWT_SECRET || "glow_super_secret_jwt_access_key_2026";
 
@@ -236,10 +237,12 @@ export const getStudentPass = async (req, res, next) => {
     const student = await getStudentByUser(req.user);
     let pass = await TransportPass.findOne({ studentId: student?._id });
 
-    const rawData = `GLOW|${req.user.id || 'UNI20260125'}|${student?.branch || 'CS'}|${Date.now()}`;
-    const hmacSig = crypto.createHmac("sha256", HMAC_SECRET).update(rawData).digest("hex").slice(0, 16);
-
-    const signedPayload = `PASS-${req.user.id || 'UNI20260125'}|R-04|ZONE-B|SIG_${hmacSig}`;
+    const signedPayload = generateSignedPassPayload({
+      enrollmentId: student?.enrollmentId || req.user.id || "UNI20260125",
+      routeId: student?.routeId?.name?.split(" ")[0] || "R-04",
+      zone: "ZONE-B",
+      validUntil: Date.now() + 180 * 24 * 60 * 60 * 1000,
+    });
 
     if (!pass) {
       pass = {

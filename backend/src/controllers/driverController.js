@@ -9,8 +9,7 @@ import User from "../models/User.js";
 import SosAlert from "../models/SosAlert.js";
 import Notification from "../models/Notification.js";
 import { broadcastToWsChannel } from "../websocket/wsServer.js";
-
-const HMAC_SECRET = process.env.JWT_SECRET || "glow_super_secret_jwt_access_key_2026";
+import { verifySignedPassPayload } from "../utils/cryptoUtils.js";
 
 // Helper: Get driver by logged in user
 const findDriverByUser = async (user) => {
@@ -199,19 +198,25 @@ export const validatePass = async (req, res, next) => {
     let signatureValid = true;
 
     if (qrPayload) {
-      // Parse QR payload format: PASS-UNI20260125|R-04|ZONE-B|SIG_... or raw payload
-      const parts = qrPayload.split("|");
-      if (parts[0] && parts[0].includes("PASS-")) {
-        studentEnrollment = parts[0].replace("PASS-", "");
-      } else if (parts[0]) {
-        studentEnrollment = parts[0];
-      }
+      const verification = verifySignedPassPayload(qrPayload);
+      if (!verification.valid) {
+        const endTime = process.hrtime.bigint();
+        const latencyMs = Number(endTime - startTime) / 1e6;
+        res.setHeader("Server-Timing", `validation;dur=${latencyMs.toFixed(2)}`);
 
-      // If signature is present, verify HMAC
-      const sigPart = parts.find((p) => p.startsWith("SIG_"));
-      if (sigPart) {
-        signatureValid = true;
+        return res.status(400).json({
+          valid: false,
+          status: "REJECTED",
+          error: {
+            code: verification.error,
+            message: verification.reason,
+          },
+          latencyMs: Number(latencyMs.toFixed(2)),
+          timestamp: new Date().toISOString(),
+        });
       }
+      studentEnrollment = verification.enrollmentId;
+      signatureValid = true;
     }
 
     // Lookup student profile in DB
@@ -239,16 +244,34 @@ export const validatePass = async (req, res, next) => {
 
     res.setHeader("Server-Timing", `validation;dur=${latencyMs.toFixed(2)}`);
 
+    if (isPassBlocked) {
+      return res.status(200).json({
+        valid: false,
+        status: "BLOCKED",
+        message: "Pass has been blocked by Finance Division due to overdue fees.",
+        student: {
+          id: student?.enrollmentId || studentEnrollment || "UNI20260125",
+          name: studentUser?.name || "Rahul Sharma",
+          branch: student?.branch || "Computer Science",
+          photoUrl: "/assets/student-portrait.jpg",
+          passStatus: "BLOCKED",
+          routeMatch,
+        },
+        latencyMs: Number(latencyMs.toFixed(2)),
+        p95TargetMet: latencyMs < 2000,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     return res.json({
       valid: isPassActive && signatureValid,
-      status: isPassBlocked ? "BLOCKED" : pass.status,
-      message: isPassBlocked ? "Pass has been blocked by Finance Division due to overdue fees." : undefined,
+      status: pass.status,
       student: {
         id: student?.enrollmentId || studentEnrollment || "UNI20260125",
         name: studentUser?.name || "Rahul Sharma",
         branch: student?.branch || "Computer Science",
         photoUrl: "/assets/student-portrait.jpg",
-        passStatus: isPassBlocked ? "BLOCKED" : pass.status,
+        passStatus: pass.status,
         routeMatch,
       },
       latencyMs: Number(latencyMs.toFixed(2)),

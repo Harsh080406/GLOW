@@ -3,6 +3,8 @@ import XLSX from "xlsx";
 import QRCode from "qrcode";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import crypto from "crypto";
+import { generateSignedReceiptPayload } from "../utils/cryptoUtils.js";
+import { withTransaction } from "../utils/transactionUtils.js";
 
 import FeeLedger from "../models/FeeLedger.js";
 import FeeSlab from "../models/FeeSlab.js";
@@ -203,39 +205,49 @@ export const collectPayment = async (req, res, next) => {
     const payAmount = Number(amount);
     const refCode = txnRef || `TXN-COLLECT-${Date.now()}`;
 
-    // 1. Create Payment record
-    const payment = await Payment.create({
-      studentId,
-      amount: payAmount,
-      gateway,
-      status: "COMPLETED",
-      txnRef: refCode,
-      verifiedBy: req.user.id,
-      paymentDate: new Date(),
-    });
+    let payment;
+    let ledger;
 
-    // 2. Update FeeLedger balance
-    let ledger = await FeeLedger.findOne({
-      $or: [{ studentId }, { studentRef: studentId }],
-    });
+    await withTransaction(async (session) => {
+      // 1. Create Payment record
+      payment = new Payment({
+        studentId,
+        amount: payAmount,
+        gateway,
+        status: "COMPLETED",
+        txnRef: refCode,
+        verifiedBy: req.user.id,
+        paymentDate: new Date(),
+      });
+      await payment.save(session ? { session } : undefined);
 
-    if (ledger) {
-      ledger.paidAmount = (ledger.paidAmount || 0) + payAmount;
-      ledger.balanceDue = Math.max(0, (ledger.totalFee || 0) - ledger.paidAmount);
-      ledger.status = ledger.balanceDue === 0 ? "PAID" : "PARTIAL";
-      await ledger.save();
-    }
+      // 2. Update FeeLedger balance
+      ledger = await FeeLedger.findOne({
+        $or: [{ studentId }, { studentRef: studentId }],
+      }).session(session || null);
 
-    // 3. Update Student fee status & unblock pass if cleared
-    const student = await Student.findOne({ $or: [{ userId: studentId }, { _id: studentId }] });
-    if (student) {
-      student.feeStatus = ledger?.status === "PAID" ? "Paid" : "Pending";
-      if (ledger?.balanceDue === 0 && student.passStatus === "BLOCKED") {
-        student.passStatus = "ACTIVE";
-        await TransportPass.findOneAndUpdate({ studentId: student.userId }, { status: "ACTIVE" });
+      if (ledger) {
+        ledger.paidAmount = (ledger.paidAmount || 0) + payAmount;
+        ledger.balanceDue = Math.max(0, (ledger.totalFee || 0) - ledger.paidAmount);
+        ledger.status = ledger.balanceDue === 0 ? "PAID" : "PARTIAL";
+        await ledger.save(session ? { session } : undefined);
       }
-      await student.save();
-    }
+
+      // 3. Update Student fee status & unblock pass if cleared
+      const student = await Student.findOne({ $or: [{ userId: studentId }, { _id: studentId }] }).session(session || null);
+      if (student) {
+        student.feeStatus = ledger?.status === "PAID" ? "Paid" : "Pending";
+        if (ledger?.balanceDue === 0 && student.passStatus === "BLOCKED") {
+          student.passStatus = "ACTIVE";
+          await TransportPass.findOneAndUpdate(
+            { studentId: student.userId },
+            { status: "ACTIVE" },
+            session ? { session } : undefined
+          );
+        }
+        await student.save(session ? { session } : undefined);
+      }
+    });
 
     // 4. Send Confirmation Notification
     const user = await User.findById(studentId);
@@ -802,18 +814,21 @@ export const approveVerification = async (req, res, next) => {
       return res.status(404).json({ error: { code: "NOT_FOUND", message: "Deposit slip payment record not found." } });
     }
 
-    payment.status = "COMPLETED";
-    payment.verifiedBy = req.user.id;
-    await payment.save();
+    let ledger;
+    await withTransaction(async (session) => {
+      payment.status = "COMPLETED";
+      payment.verifiedBy = req.user.id;
+      await payment.save(session ? { session } : undefined);
 
-    // Transactionally update FeeLedger
-    const ledger = await FeeLedger.findOne({ studentId: payment.studentId });
-    if (ledger) {
-      ledger.paidAmount += payment.amount;
-      ledger.balanceDue = Math.max(0, ledger.totalFee - ledger.paidAmount);
-      ledger.status = ledger.balanceDue === 0 ? "PAID" : "PARTIAL";
-      await ledger.save();
-    }
+      // Transactionally update FeeLedger
+      ledger = await FeeLedger.findOne({ studentId: payment.studentId }).session(session || null);
+      if (ledger) {
+        ledger.paidAmount += payment.amount;
+        ledger.balanceDue = Math.max(0, ledger.totalFee - ledger.paidAmount);
+        ledger.status = ledger.balanceDue === 0 ? "PAID" : "PARTIAL";
+        await ledger.save(session ? { session } : undefined);
+      }
+    });
 
     // Notify student
     const studentUser = await User.findById(payment.studentId);
@@ -936,22 +951,24 @@ export const processRefund = async (req, res, next) => {
       return res.status(404).json({ error: { code: "NOT_FOUND", message: "Refund record not found." } });
     }
 
-    refund.status = status;
-    refund.remarks = remarks;
-    refund.processedBy = req.user.id;
-    refund.processedAt = new Date();
-    await refund.save();
+    await withTransaction(async (session) => {
+      refund.status = status;
+      refund.remarks = remarks;
+      refund.processedBy = req.user.id;
+      refund.processedAt = new Date();
+      await refund.save(session ? { session } : undefined);
 
-    // If approved, adjust ledger balance
-    if (status === "APPROVED") {
-      const ledger = await FeeLedger.findOne({ studentId: refund.studentId });
-      if (ledger) {
-        ledger.paidAmount = Math.max(0, ledger.paidAmount - refund.amount);
-        ledger.balanceDue = Math.max(0, ledger.totalFee - ledger.paidAmount);
-        ledger.status = ledger.paidAmount === 0 ? "OVERDUE" : "PARTIAL";
-        await ledger.save();
+      // If approved, adjust ledger balance
+      if (status === "APPROVED") {
+        const ledger = await FeeLedger.findOne({ studentId: refund.studentId }).session(session || null);
+        if (ledger) {
+          ledger.paidAmount = Math.max(0, ledger.paidAmount - refund.amount);
+          ledger.balanceDue = Math.max(0, ledger.totalFee - ledger.paidAmount);
+          ledger.status = ledger.paidAmount === 0 ? "OVERDUE" : "PARTIAL";
+          await ledger.save(session ? { session } : undefined);
+        }
       }
-    }
+    });
 
     return res.json({
       success: true,
@@ -1076,8 +1093,13 @@ export const downloadReceiptPdf = async (req, res, next) => {
       : new Date().toISOString().slice(0, 10);
     const receiptNo = `REC-${payment?._id?.toString().slice(-6).toUpperCase() || "2026-01"}`;
 
-    // Generate dynamic QR verification payload
-    const qrPayload = `GLOW-TAX-RECEIPT|${receiptNo}|INR-${pAmount}|${dateStr}|VERIFIED-GSFC-FINANCE|SHA256-${crypto.randomBytes(4).toString("hex")}`;
+    // Generate dynamic cryptographically signed QR verification payload (HMAC-SHA256)
+    const qrPayload = generateSignedReceiptPayload({
+      receiptId: receiptNo,
+      studentId: payment?.studentId?._id?.toString() || "STUDENT",
+      amount: pAmount,
+      paymentDate: dateStr,
+    });
     const qrDataUrl = await QRCode.toDataURL(qrPayload, { width: 140, margin: 1 });
     const qrPngBuffer = Buffer.from(qrDataUrl.split(",")[1], "base64");
 

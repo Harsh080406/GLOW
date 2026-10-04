@@ -25,7 +25,16 @@ import {
 } from "../controllers/studentController.js";
 import { authenticateJWT, optionalAuthenticateJWT } from "../middleware/auth.js";
 import { requireRole } from "../middleware/requireRole.js";
-import { uploadChallanMiddleware } from "../middleware/uploadMiddleware.js";
+import { uploadChallanMiddleware, scanUploadedFile } from "../middleware/uploadMiddleware.js";
+import { validateBody } from "../middleware/validate.js";
+import {
+  createStopNotificationSchema,
+  payStudentFeeSchema,
+  createComplaintSchema,
+  triggerSosSchema,
+  updateStudentProfileSchema,
+  changePasswordSchema,
+} from "../validators/schemas.js";
 
 const router = express.Router();
 
@@ -49,7 +58,7 @@ router.get("/me/bus", getStudentBus);
 
 router.get("/my-route", getStudentRouteStops);
 router.get("/me/route/stops", getStudentRouteStops);
-router.post("/me/stop-notifications", createStopNotification);
+router.post("/me/stop-notifications", validateBody(createStopNotificationSchema), createStopNotification);
 router.get("/me/route/pdf", downloadRoutePdf);
 
 router.get("/schedule", getStudentSchedule);
@@ -62,10 +71,20 @@ router.get("/me/pass/pdf", downloadPassPdf);
 
 router.get("/fees", getStudentFees);
 router.get("/me/fees", getStudentFees);
-router.post("/fees/pay", payStudentFee);
-router.post("/me/pay", payStudentFee);
-router.post("/fees/upload-challan", uploadChallanMiddleware.single("challan"), uploadChallan);
-router.post("/me/challan-upload", uploadChallanMiddleware.single("challan"), uploadChallan);
+router.post("/fees/pay", validateBody(payStudentFeeSchema), payStudentFee);
+router.post("/me/pay", validateBody(payStudentFeeSchema), payStudentFee);
+router.post(
+  "/fees/upload-challan",
+  uploadChallanMiddleware.single("challan"),
+  scanUploadedFile,
+  uploadChallan
+);
+router.post(
+  "/me/challan-upload",
+  uploadChallanMiddleware.single("challan"),
+  scanUploadedFile,
+  uploadChallan
+);
 
 router.get("/notifications", getNotifications);
 router.get("/me/notifications", getNotifications);
@@ -75,16 +94,16 @@ router.delete("/me/notifications/:id", deleteNotification);
 
 router.get("/complaints", getComplaints);
 router.get("/me/complaints", getComplaints);
-router.post("/complaints", createComplaint);
-router.post("/me/complaints", createComplaint);
+router.post("/complaints", validateBody(createComplaintSchema), createComplaint);
+router.post("/me/complaints", validateBody(createComplaintSchema), createComplaint);
 
-router.post("/me/sos", triggerSos);
+router.post("/me/sos", validateBody(triggerSosSchema), triggerSos);
 router.patch("/me/sos/:id/cancel", cancelSosAlert);
 
 router.get("/profile", getStudentProfile);
 router.get("/me/profile", getStudentProfile);
-router.put("/profile", updateStudentProfile);
-router.patch("/me/profile", updateStudentProfile);
-router.post("/me/change-password", changePassword);
+router.put("/profile", validateBody(updateStudentProfileSchema), updateStudentProfile);
+router.patch("/me/profile", validateBody(updateStudentProfileSchema), updateStudentProfile);
+router.post("/me/change-password", validateBody(changePasswordSchema), changePassword);
 
 export default router;
