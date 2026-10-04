@@ -144,6 +144,9 @@ const LoginPageView = () => {
       setIsAuthenticated(true);
       setAccessToken(data.accessToken);
       setActiveRole(data.user.role);
+      localStorage.setItem("glow_access_token", data.accessToken);
+      localStorage.setItem("glow_token", data.accessToken);
+      localStorage.setItem("glow_active_role", data.user.role);
       navigate(getRoleDashboardPath(data.user.role));
     } catch (err) {
       // 2. DEV Mode Fallback (If Backend API is unreachable or offline during local dev)
@@ -166,6 +169,7 @@ const LoginPageView = () => {
 
         setIsAuthenticated(true);
         setActiveRole(targetRole);
+        localStorage.setItem("glow_active_role", targetRole);
         navigate(getRoleDashboardPath(targetRole));
       } else {
         // Production Mode Error

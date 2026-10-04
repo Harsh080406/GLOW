@@ -16,8 +16,26 @@ export const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || "ws://localhost:5
 export const TransitProvider = ({ children }) => {
   // Authentication & Role State
   const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [accessToken, setAccessToken] = useState(() => localStorage.getItem("glow_access_token") || null);
-  const [activeRole, setActiveRole] = useState(() => localStorage.getItem("glow_active_role") || "student");
+  const [accessToken, setAccessTokenState] = useState(() => localStorage.getItem("glow_access_token") || null);
+  const [activeRole, setActiveRoleState] = useState(() => localStorage.getItem("glow_active_role") || "student");
+
+  const setAccessToken = useCallback((token) => {
+    setAccessTokenState(token);
+    if (token) {
+      localStorage.setItem("glow_access_token", token);
+      localStorage.setItem("glow_token", token);
+    } else {
+      localStorage.removeItem("glow_access_token");
+      localStorage.removeItem("glow_token");
+    }
+  }, []);
+
+  const setActiveRole = useCallback((role) => {
+    setActiveRoleState(role);
+    if (role) {
+      localStorage.setItem("glow_active_role", role);
+    }
+  }, []);
 
   // Loading, Error, and WebSocket Connection State
   const [isLoading, setIsLoading] = useState(true);
@@ -373,10 +391,12 @@ export const TransitProvider = ({ children }) => {
           setCurrentDriver((prev) => ({ ...prev, ...data.data.driver }));
         }
       } else if (activeRole === "super_admin" || activeRole === "transport_manager") {
-        const [dash, fleetRes, routeRes] = await Promise.allSettled([
+        const [dashRes, fleetRes, routeRes, stuRes, profRes] = await Promise.allSettled([
           authFetch("/admin/dashboard"),
           authFetch("/admin/fleet"),
           authFetch("/admin/routes"),
+          authFetch("/admin/students?limit=100"),
+          authFetch("/admin/profile"),
         ]);
 
         if (fleetRes.status === "fulfilled" && fleetRes.value?.buses) {
@@ -384,6 +404,15 @@ export const TransitProvider = ({ children }) => {
         }
         if (routeRes.status === "fulfilled" && routeRes.value?.routes) {
           setRoutes(routeRes.value.routes);
+        }
+        if (stuRes.status === "fulfilled" && stuRes.value?.students) {
+          setStudents(stuRes.value.students);
+        }
+        if (profRes.status === "fulfilled" && profRes.value?.profile) {
+          setCurrentAdmin((prev) => ({
+            ...prev,
+            ...profRes.value.profile,
+          }));
         }
       } else if (activeRole === "finance_admin") {
         const [dashRes, feeRes, stuRes, txnRes, verifRes, refRes, discRes, auditRes, profRes] = await Promise.allSettled([

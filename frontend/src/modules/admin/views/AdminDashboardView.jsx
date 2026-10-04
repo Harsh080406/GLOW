@@ -117,27 +117,32 @@ const AdminDashboard = () => {
         ]);
 
         if (isMounted) {
-          if (kpiRes.status === "fulfilled" && kpiRes.value?.kpis) {
-            const k = kpiRes.value.kpis;
+          const rawK = kpiRes.value?.data?.kpis || kpiRes.value?.kpis;
+          if (kpiRes.status === "fulfilled" && rawK) {
+            const extractVal = (item, fallback) => {
+              if (item === undefined || item === null) return fallback;
+              if (typeof item === "object" && item.value !== undefined) return String(item.value);
+              return typeof item === "number" ? item.toLocaleString() : String(item);
+            };
             setKpis({
-              students: k.students !== undefined ? k.students.toLocaleString() : "4,250",
-              buses: k.buses !== undefined ? String(k.buses) : "85",
-              drivers: k.drivers !== undefined ? String(k.drivers) : "92",
-              routes: k.routes !== undefined ? String(k.routes) : "34",
-              activeTrips: k.activeTrips !== undefined ? String(k.activeTrips) : "28",
-              pendingFees: k.pendingFeesFormatted || "₹3.6L",
-              pendingAccounts: k.pendingAccounts !== undefined ? String(k.pendingAccounts) : "530",
-              maintenance: k.maintenance !== undefined ? String(k.maintenance) : "6",
-              complaints: k.complaints !== undefined ? String(k.complaints) : "12",
+              students: extractVal(rawK.students, "4,250"),
+              buses: extractVal(rawK.buses, "85"),
+              drivers: extractVal(rawK.drivers, "92"),
+              routes: extractVal(rawK.routes, "34"),
+              activeTrips: extractVal(rawK.activeTrips, "28"),
+              pendingFees: extractVal(rawK.pendingFees, "₹3.6L"),
+              pendingAccounts: rawK.pendingFees?.sub ? rawK.pendingFees.sub.replace(/[^\d]/g, "") : (rawK.pendingAccounts || "530"),
+              maintenance: extractVal(rawK.maintenance, "6"),
+              complaints: extractVal(rawK.complaints, "12"),
             });
           }
 
-          if (actRes.status === "fulfilled" && actRes.value?.activityLog) {
-            setActivityLogs(actRes.value.activityLog);
+          if (actRes.status === "fulfilled" && (actRes.value?.logs || actRes.value?.activityLog)) {
+            setActivityLogs(actRes.value.logs || actRes.value.activityLog || []);
           }
 
-          if (dispRes.status === "fulfilled" && dispRes.value?.dispatches) {
-            setDispatches(dispRes.value.dispatches);
+          if (dispRes.status === "fulfilled" && (dispRes.value?.dispatches || dispRes.value?.data)) {
+            setDispatches(dispRes.value.dispatches || dispRes.value.data || []);
           }
         }
       } catch (err) {
