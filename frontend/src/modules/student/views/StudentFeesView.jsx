@@ -70,8 +70,8 @@ const StudentFees = () => {
 
       {/* ── ACTION BANNER ──────────────────────────────────────── */}
       {pendingFee > 0 ? (
-        <div style={{ background: "linear-gradient(135deg, #1e3a8a, #2563eb)", borderRadius: 16, padding: "24px 28px", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, marginBottom: 24, boxShadow: "0 8px 24px rgba(37,99,235,0.25)" }}>
-          <div>
+        <div style={{ background: "linear-gradient(135deg, #1e3a8a, #2563eb)", borderRadius: 16, padding: "clamp(16px, 4vw, 24px) clamp(16px, 4vw, 28px)", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, marginBottom: 24, boxShadow: "0 8px 24px rgba(37,99,235,0.25)" }}>
+          <div style={{ flex: "1 1 260px" }}>
             <div style={{ display: "inline-block", background: "rgba(255,255,255,0.18)", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700, marginBottom: 8 }}>
               ⚡ Payment Due Soon
             </div>
@@ -84,7 +84,7 @@ const StudentFees = () => {
               setSuccessTxn(null);
               setShowPayModal(true);
             }}
-            style={{ background: "#22c55e", color: "#fff", border: "none", borderRadius: 10, padding: "14px 28px", fontSize: 15, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 14px rgba(34,197,94,0.4)" }}
+            style={{ background: "#22c55e", color: "#fff", border: "none", borderRadius: 10, padding: "14px 28px", fontSize: 15, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 4px 14px rgba(34,197,94,0.4)", minHeight: 48, flex: "1 1 200px" }}
           >
             <Icon d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM12 6v6l4 2" size={18} stroke="#fff" />
             PAY ₹{pendingFee.toLocaleString()} NOW
@@ -164,8 +164,8 @@ const StudentFees = () => {
 
       {/* ── PAYMENT MODAL ──────────────────────────────────────── */}
       {showPayModal && (
-        <div className="ad-overlay" style={{ display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000 }}>
-          <div style={{ background: "#fff", borderRadius: 18, width: "100%", maxWidth: 480, padding: "28px", boxShadow: "0 20px 50px rgba(0,0,0,0.3)", position: "relative" }}>
+        <div className="ad-overlay" style={{ display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 12 }}>
+          <div style={{ background: "#fff", borderRadius: 18, width: "100%", maxWidth: 480, maxHeight: "calc(100vh - 24px)", overflowY: "auto", padding: "clamp(18px, 4vw, 28px)", boxShadow: "0 20px 50px rgba(0,0,0,0.3)", position: "relative" }}>
             <button
               onClick={() => setShowPayModal(false)}
               style={{ position: "absolute", top: 18, right: 18, background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#64748b" }}

@@ -71,7 +71,7 @@ const StudentComplaints = () => {
 
   return (
     <div className="student-view-wrap">
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
         {/* SUBMIT COMPLAINT FORM */}
         <div className="ad-card">
           <div className="ad-card-header">

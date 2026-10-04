@@ -342,9 +342,19 @@ const StudentTransportPass = () => {
             margin: 0 auto !important;
           }
         }
+
+        @media (max-width: 640px) {
+          .pass-grid-layout {
+            grid-template-columns: 1fr !important;
+          }
+          .printable-pass-card {
+            padding: 20px 16px !important;
+            border-radius: 16px !important;
+          }
+        }
       `}</style>
 
-      <div className="pass-grid-layout" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20, alignItems: "start" }}>
+      <div className="pass-grid-layout" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, alignItems: "start" }}>
 
         {/* ── THE PASS CARD (PRINTABLE) ────────────────────────── */}
         <div className="pass-card-print-wrapper">

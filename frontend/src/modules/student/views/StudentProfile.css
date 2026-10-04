@@ -385,3 +385,32 @@
     grid-column: span 1;
   }
 }
+
+@media (max-width: 640px) {
+  .sp-hero-card {
+    padding: 16px 14px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .sp-hero-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .sp-card {
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+  .sp-actions-bar {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .sp-form-actions {
+    flex-direction: column;
+  }
+  .sp-save-btn,
+  .sp-cancel-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

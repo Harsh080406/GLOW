@@ -490,7 +490,6 @@
   border-top: 1px solid #e2e8f0;
 }
 
-/* Responsive */
 @media (max-width: 900px) {
   .sdb-hero-card {
     grid-template-columns: 1fr;
@@ -500,5 +499,90 @@
   }
   .sdb-two-col {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .sdb-hero-card {
+    border-radius: 16px;
+    margin-bottom: 16px;
+  }
+  .sdb-hero-left {
+    padding: 18px 16px;
+    gap: 12px;
+  }
+  .sdb-hero-bus-id {
+    font-size: 22px;
+  }
+  .sdb-hero-route {
+    font-size: 12.5px;
+  }
+  .sdb-hero-times {
+    gap: 8px;
+  }
+  .sdb-time-chip {
+    padding: 6px 10px;
+    flex: 1 1 calc(50% - 8px);
+  }
+  .sdb-track-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+    font-size: 13px;
+  }
+  .sdb-hero-right {
+    min-height: 140px;
+  }
+  .sdb-status-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .sdb-status-card {
+    padding: 14px 16px;
+    border-radius: 14px;
+  }
+  .sdb-quick-section {
+    margin-bottom: 16px;
+  }
+  .sdb-quick-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .sdb-quick-btn {
+    padding: 10px 12px;
+    border-radius: 12px;
+    gap: 8px;
+  }
+  .sdb-quick-icon {
+    width: 30px;
+    height: 30px;
+  }
+  .sdb-quick-label {
+    font-size: 12px;
+  }
+  .sdb-two-col {
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .sdb-card {
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+  .sdb-footer {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    padding: 12px 0;
+  }
+}
+
+@media (max-width: 400px) {
+  .sdb-quick-grid {
+    grid-template-columns: 1fr;
+  }
+  .sdb-time-chip {
+    flex: 1 1 100%;
   }
 }
