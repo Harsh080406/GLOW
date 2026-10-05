@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { API_BASE_URL } from "../../../shared/context/TransitContext";
 import "../../admin/layout/AdminLayout.css";
 
 const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidth = 1.8 }) => (
@@ -20,12 +21,15 @@ const StudentMyRoute = () => {
   const [notifSuccess, setNotifSuccess] = useState(false);
 
   useEffect(() => {
-    fetch("/api/v1/student/me/route/stops", {
+    fetch(`${API_BASE_URL}/student/me/route/stops`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("glow_access_token") || ""}`,
       },
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load stops");
+        return res.json();
+      })
       .then((data) => {
         if (data?.route) {
           setRouteData(data.route);
@@ -35,7 +39,7 @@ const StudentMyRoute = () => {
   }, []);
 
   const handleSetNotification = (stopName) => {
-    fetch("/api/v1/student/me/stop-notifications", {
+    fetch(`${API_BASE_URL}/student/me/stop-notifications`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -205,18 +209,19 @@ const StudentMyRoute = () => {
 
     try {
       const token = localStorage.getItem("glow_access_token") || "";
-      const res = await fetch("/api/v1/student/me/route/pdf", {
+      const res = await fetch(`${API_BASE_URL}/student/me/route/pdf`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
-      if (res.ok) {
+      const contentType = res.headers.get("content-type") || "";
+      if (res.ok && contentType.includes("application/pdf")) {
         const blob = await res.blob();
         triggerDownload(blob, filename);
         setDownloadSuccessMsg("✓ Route Schedule PDF downloaded successfully");
         setTimeout(() => setDownloadSuccessMsg(null), 3500);
         return;
       }
-      throw new Error(`Server returned ${res.status}`);
+      throw new Error(`Server returned ${res.status} (${contentType || "non-pdf response"})`);
     } catch (err) {
       console.warn("Backend route PDF unavailable, synthesizing client PDF:", err);
       try {

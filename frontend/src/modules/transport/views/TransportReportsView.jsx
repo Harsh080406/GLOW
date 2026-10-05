@@ -65,7 +65,10 @@ const TransportReports = () => {
         },
       });
 
-      if (!res.ok) throw new Error("Server returned status " + res.status);
+      const contentType = res.headers.get("content-type") || "";
+      if (!res.ok || !contentType.includes("application/pdf")) {
+        throw new Error(`Server returned ${res.status} (${contentType || "non-pdf response"})`);
+      }
 
       const blob = await res.blob();
       const downloadUrl = window.URL.createObjectURL(blob);

@@ -361,11 +361,18 @@ export const TransitProvider = ({ children }) => {
           throw new Error(errData.error || errData.message || `API Error ${response.status}: ${response.statusText}`);
         }
         if (options.responseType === "blob") {
+          const contentType = response.headers.get("content-type") || "";
+          if (contentType.includes("text/html")) {
+            throw new Error(`Server returned HTML instead of binary data for ${endpoint}`);
+          }
           return await response.blob();
         }
         return await response.json();
       } catch (err) {
         console.warn(`[TransitContext] AuthFetch failed for ${endpoint}:`, err.message);
+        if (options.responseType === "blob") {
+          throw err;
+        }
         // Gracefully return null for network failure (cold starts, offline) to prevent component crashes
         return null;
       }

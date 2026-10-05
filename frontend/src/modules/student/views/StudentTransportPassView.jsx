@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import QRCode from "qrcode";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-import { useTransit } from "../../../shared/context/TransitContext";
+import { useTransit, API_BASE_URL } from "../../../shared/context/TransitContext";
 import "../../admin/layout/AdminLayout.css";
 
 const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidth = 1.8 }) => (
@@ -216,18 +216,19 @@ const StudentTransportPass = () => {
 
     try {
       const token = localStorage.getItem("glow_access_token") || "";
-      const res = await fetch("/api/v1/student/me/pass/pdf", {
+      const res = await fetch(`${API_BASE_URL}/student/me/pass/pdf`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
-      if (res.ok) {
+      const contentType = res.headers.get("content-type") || "";
+      if (res.ok && contentType.includes("application/pdf")) {
         const blob = await res.blob();
         triggerDownload(blob, filename);
         return;
       }
-      throw new Error(`Server returned ${res.status}`);
+      throw new Error(`Server returned non-PDF content (${contentType || res.status})`);
     } catch (err) {
-      console.warn("Backend PDF route unavailable, generating client pass PDF:", err);
+      console.warn("Backend PDF route unavailable or returned HTML, generating client pass PDF:", err);
       try {
         const clientBlob = await generateClientPdfBlob();
         triggerDownload(clientBlob, filename);

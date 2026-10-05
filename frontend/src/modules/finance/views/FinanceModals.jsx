@@ -301,6 +301,9 @@ export const ViewReceiptModal = ({ isOpen, onClose, transaction }) => {
       const recId = transaction.receiptId || transaction.id;
       // Fetch server-generated PDF with QR tag
       const blob = await authFetch(`/finance/receipts/${recId}/pdf`, { responseType: "blob" });
+      if (!blob || !(blob instanceof Blob)) {
+        throw new Error("Invalid receipt blob received");
+      }
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
