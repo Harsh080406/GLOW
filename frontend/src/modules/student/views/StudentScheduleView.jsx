@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { API_BASE_URL } from "../../../shared/context/TransitContext";
 import { OFFICIAL_GSFC_ROUTES_2026 } from "../../../shared/data/officialRoutes2026";
 import "../../admin/layout/AdminLayout.css";
 
@@ -290,18 +291,19 @@ const StudentSchedule = () => {
 
     try {
       const token = localStorage.getItem("glow_access_token") || "";
-      const res = await fetch(`/api/v1/student/me/schedule/pdf?type=${type}`, {
+      const res = await fetch(`${API_BASE_URL}/student/me/schedule/pdf?type=${type}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
-      if (res.ok) {
+      const contentType = res.headers.get("content-type") || "";
+      if (res.ok && contentType.includes("application/pdf")) {
         const blob = await res.blob();
         triggerDownload(blob, filename);
         setDownloadSuccessMsg(`✓ Timetable PDF (${type.toUpperCase()}) downloaded successfully`);
         setTimeout(() => setDownloadSuccessMsg(null), 3500);
         return;
       }
-      throw new Error(`Server returned ${res.status}`);
+      throw new Error(`Server returned ${res.status} (${contentType || "non-pdf response"})`);
     } catch (err) {
       console.warn("Backend schedule PDF route unreachable or mock mode, synthesizing client timetable PDF:", err);
       try {

@@ -55,6 +55,9 @@ const ReceiptsInvoices = () => {
     setDownloadingId(id);
     try {
       const blob = await authFetch(`/finance/receipts/${id}/pdf`, { responseType: "blob" });
+      if (!blob || !(blob instanceof Blob)) {
+        throw new Error("Invalid receipt blob received");
+      }
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;

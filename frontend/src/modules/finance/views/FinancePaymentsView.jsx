@@ -83,6 +83,9 @@ const FinancePayments = () => {
   const handlePrintInvoice = async (t) => {
     try {
       const blob = await authFetch(`/finance/payments/${t.id}/invoice-pdf`, { responseType: "blob" });
+      if (!blob || !(blob instanceof Blob)) {
+        throw new Error("Invalid invoice blob received");
+      }
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
