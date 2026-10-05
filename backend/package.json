@@ -6,7 +6,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
+    "dev": "node --watch-path=src --watch src/server.js",
     "test": "node --test tests/**/*.test.js",
     "db:seed": "node src/seed/seed.js"
   },

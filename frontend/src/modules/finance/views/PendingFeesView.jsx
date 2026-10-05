@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import FinanceSidebar from "../layout/FinanceSidebar";
 import RoleSwitcherBar from "../../../shared/components/RoleSwitcherBar";
 import { useTransit } from "../../../shared/context/TransitContext";
+import { INITIAL_MASTER_STUDENTS } from "../../../shared/data/studentsData";
 import { exportToExcel } from "../../../shared/utils/excelExport";
 import { SendBulkRemindersModal, RecordOfflinePaymentModal } from "./FinanceModals";
 import "../../admin/layout/AdminLayout.css";
@@ -33,11 +34,12 @@ const PendingFees = () => {
   const loadPendingDues = async () => {
     try {
       const res = await authFetch("/finance/pending");
-      if (res?.success && res?.pendingStudents) {
-        setPendingData(res.pendingStudents);
+      const list = res?.pendingStudents || res?.pendingList;
+      if (res?.success && list && list.length > 0) {
+        setPendingData(list);
         setPendingStats({
           totalOverdue: res.totalOverdue || 0,
-          totalPendingStudents: res.totalPendingStudents || 0,
+          totalPendingStudents: res.totalPendingStudents || list.length || 0,
           avgDuePerDefaulter: res.avgDuePerDefaulter || 0,
         });
       }
@@ -50,11 +52,12 @@ const PendingFees = () => {
     loadPendingDues();
   }, [authFetch]);
 
-  // Merge live pendingData or fallback to students from context
+  // Merge live pendingData or fallback to students from context / master dataset
+  const poolStudents = (students && students.length > 0) ? students : (INITIAL_MASTER_STUDENTS || []);
   const displayList = pendingData.length > 0
     ? pendingData
-    : (students || []).filter((s) => (s.pendingFee || 0) > 0).map((s) => ({
-        studentId: s.id,
+    : poolStudents.filter((s) => (s.pendingFee || 0) > 0).map((s) => ({
+        studentId: s.id || s.enrollmentId,
         name: s.name,
         dept: s.dept || s.course,
         route: s.routeName || s.route,

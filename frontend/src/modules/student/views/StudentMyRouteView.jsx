@@ -10,38 +10,8 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
   </svg>
 );
 
-const RouteMapSVG = () => (
-  <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #e8eaf0", position: "relative" }}>
-    <svg viewBox="0 0 680 160" style={{ width: "100%", height: "auto", display: "block" }}>
-      <rect width="680" height="160" fill="#f8fafc" />
-      <rect x="0" y="55" width="680" height="22" fill="#fff" opacity="0.7" />
-      <rect x="0" y="105" width="680" height="16" fill="#fff" opacity="0.6" />
-      {[
-        [8, 8, 85, 40], [130, 8, 100, 40], [265, 8, 100, 40], [400, 8, 100, 40], [535, 8, 130, 40],
-        [8, 85, 85, 14], [130, 85, 100, 14], [265, 85, 100, 14], [400, 85, 100, 14], [535, 85, 130, 14],
-        [8, 128, 85, 28], [130, 128, 100, 28], [265, 128, 100, 28], [400, 128, 100, 28], [535, 128, 130, 28],
-      ].map(([x, y, w, h], i) => (
-        <rect key={i} x={x} y={y} width={w} height={h} rx="4" fill="#e2e8f0" opacity="0.8" />
-      ))}
-      <line x1="50" y1="66" x2="630" y2="66" stroke="#0066ff" strokeWidth="3" strokeLinecap="round" />
-      {[50, 165, 295, 420, 558, 630].map((cx, i) => (
-        <circle key={i} cx={cx} cy="66" r={i === 0 || i === 5 ? 8 : i === 3 ? 10 : 6}
-          fill={i === 3 ? "#0066ff" : i === 0 ? "#0066ff" : i === 5 ? "#0f172a" : "#fff"}
-          stroke={i === 5 ? "#0f172a" : "#0066ff"} strokeWidth="2.5" />
-      ))}
-      <text x="50" y="88" textAnchor="middle" fontSize="9" fill="#0066ff" fontWeight="700">S</text>
-      <text x="165" y="88" textAnchor="middle" fontSize="9" fill="#374151" fontWeight="600">2</text>
-      <text x="295" y="88" textAnchor="middle" fontSize="9" fill="#374151" fontWeight="600">3</text>
-      <text x="420" y="88" textAnchor="middle" fontSize="9" fill="#0066ff" fontWeight="700">★4</text>
-      <text x="558" y="88" textAnchor="middle" fontSize="9" fill="#374151" fontWeight="600">5</text>
-      <text x="630" y="88" textAnchor="middle" fontSize="9" fill="#0f172a" fontWeight="700">E</text>
-      <text x="50" y="100" textAnchor="middle" fontSize="8" fill="#0066ff">Fatehgunj</text>
-      <text x="630" y="100" textAnchor="middle" fontSize="8" fill="#0f172a">GSFC Uni</text>
-      <rect x="390" y="40" width="62" height="16" rx="3" fill="#0066ff" opacity="0.9" />
-      <text x="421" y="52" textAnchor="middle" fontSize="9" fill="#fff" fontWeight="700">YOUR STOP</text>
-    </svg>
-  </div>
-);
+import RealMapView from "../../../shared/components/RealMapView";
+
 
 const StudentMyRoute = () => {
   const navigate = useNavigate();
@@ -319,7 +289,25 @@ const StudentMyRoute = () => {
             </button>
           </div>
         </div>
-        <RouteMapSVG />
+        <div style={{ marginTop: 14, borderRadius: 12, overflow: "hidden", border: "1px solid #e2e8f0" }}>
+          <RealMapView
+            routeStops={stops}
+            singleBus={{
+              busId: "BUS-104",
+              regNo: "BUS-104",
+              routeName: routeData?.name || "Route R-04 (Fatehgunj ↔ GSFC University)",
+              lat: 22.3485,
+              lng: 73.1710,
+              speed: 42,
+              status: "On Route",
+              nextStop: "Chhani Jakat Naka",
+              nextStopIndex: 2,
+              etaMinutes: 6,
+            }}
+            height="340px"
+            showControls={true}
+          />
+        </div>
       </div>
 
       {notifSuccess && (

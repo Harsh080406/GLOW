@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { OFFICIAL_GSFC_ROUTES_2026 } from "../../../shared/data/officialRoutes2026";
 import "../../admin/layout/AdminLayout.css";
 
 const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidth = 1.8 }) => (
@@ -10,7 +12,9 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 );
 
 const StudentSchedule = () => {
-  const [activeTab, setActiveTab] = useState("daily");
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("allRoutes");
+  const [routeSearch, setRouteSearch] = useState("");
   const [downloadSuccessMsg, setDownloadSuccessMsg] = useState(null);
 
   const weeklySchedule = [
@@ -343,7 +347,8 @@ const StudentSchedule = () => {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           {[
-            { id: "daily", label: "Today's Schedule" },
+            { id: "allRoutes", label: "Official 13 Routes (2026-27)" },
+            { id: "daily", label: "My Assigned Schedule" },
             { id: "weekly", label: "Weekly Schedule" },
             { id: "exam", label: "Special Exam Timings" },
           ].map((t) => (
@@ -377,6 +382,172 @@ const StudentSchedule = () => {
           {downloading ? "Downloading PDF..." : "Download Timetable PDF"}
         </button>
       </div>
+
+      {/* OFFICIAL 13 ROUTES (2026-27) */}
+      {activeTab === "allRoutes" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Official Document Banner */}
+          <div style={{
+            background: "#fef08a",
+            border: "1.5px solid #eab308",
+            borderRadius: 12,
+            padding: "14px 20px",
+            textAlign: "center",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.04)"
+          }}>
+            <h2 style={{ fontSize: 16, fontWeight: 900, color: "#713f12", letterSpacing: "1px", textTransform: "uppercase" }}>
+              GSFC UNIVERSITY STUDENTS ROUTES 2026-27
+            </h2>
+            <p style={{ fontSize: 12, color: "#854d0e", marginTop: 4, fontWeight: 600 }}>
+              Official Fleet Allocation & Corridor Timetable · Tap any bus to track its real-time GPS location
+            </p>
+          </div>
+
+          {/* Search Bar */}
+          <div className="ad-card" style={{ padding: "14px 18px" }}>
+            <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+              <span style={{ fontSize: 16 }}>🔍</span>
+              <input
+                type="text"
+                placeholder="Search by stop (e.g. Amit Nagar, Chhani, Polo Ground, Tulsidham, Earth Icon, Akshar Chowk) or Bus No..."
+                value={routeSearch}
+                onChange={(e) => setRouteSearch(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: "10px 14px",
+                  borderRadius: 8,
+                  border: "1px solid #cbd5e1",
+                  fontSize: 13.5,
+                  minWidth: 260,
+                  outline: "none"
+                }}
+              />
+              {routeSearch && (
+                <button
+                  onClick={() => setRouteSearch("")}
+                  style={{ background: "#e2e8f0", border: "none", padding: "8px 12px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 700 }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* 13 Routes Grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
+            {OFFICIAL_GSFC_ROUTES_2026
+              .filter((rt) => {
+                const q = routeSearch.toLowerCase();
+                if (!q) return true;
+                const matchName = rt.displayName.toLowerCase().includes(q);
+                const matchBus = rt.busNo.toLowerCase().includes(q);
+                const matchRouteNum = `route ${rt.routeNumber}`.includes(q);
+                const matchStops = rt.stops.some((s) => s.name.toLowerCase().includes(q));
+                return matchName || matchBus || matchRouteNum || matchStops;
+              })
+              .map((rt) => (
+                <div key={rt.routeId} className="ad-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 14 }}>
+                  <div>
+                    {/* Route Header */}
+                    <div style={{
+                      background: "#e0f2fe",
+                      border: "1px solid #bae6fd",
+                      borderRadius: 8,
+                      padding: "8px 12px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 10
+                    }}>
+                      <strong style={{ fontSize: 13, color: "#0369a1", fontWeight: 800 }}>
+                        ROUTE - {rt.routeNumber}
+                      </strong>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#16a34a" }}>
+                        ● On Route
+                      </span>
+                    </div>
+
+                    {/* Bus Reg & Details */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <div>
+                        <strong style={{ fontSize: 16, color: "#0f172a" }}>{rt.busNo}</strong>
+                        {rt.busTypeNote && (
+                          <span style={{ marginLeft: 8, fontSize: 10, background: "#fef3c7", color: "#92400e", padding: "2px 6px", borderRadius: 4, fontWeight: 800 }}>
+                            {rt.busTypeNote}
+                          </span>
+                        )}
+                      </div>
+                      <span style={{ fontSize: 11.5, color: "#64748b" }}>
+                        Driver: {rt.driverName}
+                      </span>
+                    </div>
+
+                    {/* Stops List */}
+                    <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: 10 }}>
+                      <p style={{ fontSize: 11, fontWeight: 800, color: "#64748b", textTransform: "uppercase", marginBottom: 8 }}>
+                        Corridor Checkpoints ({rt.stops.length} Stops)
+                      </p>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        {rt.stops.map((stop, sIdx) => {
+                          const isDest = stop.isDestination || sIdx === rt.stops.length - 1;
+                          const isMatched = routeSearch && stop.name.toLowerCase().includes(routeSearch.toLowerCase());
+                          return (
+                            <div
+                              key={sIdx}
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                fontSize: 12,
+                                padding: "4px 8px",
+                                borderRadius: 6,
+                                background: isMatched ? "#fef08a" : isDest ? "#f0fdf4" : "#f8fafc",
+                                border: isMatched ? "1px solid #eab308" : isDest ? "1px solid #bbf7d0" : "1px solid transparent"
+                              }}
+                            >
+                              <span style={{ fontWeight: isDest ? 800 : isMatched ? 700 : 500, color: isDest ? "#166534" : "#1e293b" }}>
+                                {sIdx + 1}. {stop.name}
+                              </span>
+                              <span style={{ fontSize: 11, color: isDest ? "#166534" : "#64748b", fontWeight: 600 }}>
+                                {stop.time || "Scheduled"}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Action Button */}
+                  <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: 10, display: "flex", gap: 8 }}>
+                    <button
+                      className="ad-btn-primary"
+                      style={{ flex: 1, justifyContent: "center", fontSize: 12, padding: "8px 12px" }}
+                      onClick={() => navigate(`/student/tracking?route=${rt.routeId}`)}
+                    >
+                      <Icon d="M5 3l14 9-14 9V3z" size={13} stroke="#fff" />
+                      Track Live Bus ({rt.busNo})
+                    </button>
+                  </div>
+                </div>
+              ))}
+          </div>
+
+          {/* Official Document Remarks */}
+          <div style={{
+            background: "#f8fafc",
+            border: "1px solid #e2e8f0",
+            borderRadius: 8,
+            padding: "10px 16px",
+            fontSize: 12,
+            color: "#64748b",
+            fontStyle: "italic",
+            textAlign: "center"
+          }}>
+            REMARKS: Management reserves right to change the routes as per requirements.
+          </div>
+        </div>
+      )}
 
       {/* DAILY VIEW */}
       {activeTab === "daily" && (

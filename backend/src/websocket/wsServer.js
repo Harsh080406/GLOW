@@ -99,5 +99,22 @@ export function setupWebSocketServer(server) {
     broadcastToChannel(channel, frame);
   });
 
-  return { broadcastToChannel };
+  const close = () => {
+    try {
+      telemetrySimulator.stop();
+    } catch (e) {}
+
+    for (const ws of clientSubscriptions.keys()) {
+      try {
+        ws.terminate();
+      } catch (e) {}
+    }
+    clientSubscriptions.clear();
+
+    try {
+      wss.close();
+    } catch (e) {}
+  };
+
+  return { broadcastToChannel, wss, close };
 }

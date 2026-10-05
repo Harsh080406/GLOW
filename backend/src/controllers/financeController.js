@@ -167,26 +167,53 @@ export const getFinanceStudents = async (req, res, next) => {
     const total = filtered.length;
     const paginated = filtered.slice((page - 1) * limit, page * limit);
 
+    const mappedLedgers = paginated.map((l) => ({
+      id: l._id,
+      _id: l._id,
+      studentId: l.studentId?._id,
+      name: l.studentId?.name || "Student Commuter",
+      email: l.studentId?.email || "student@glowbus.edu",
+      phone: l.studentId?.phone || "+91 98765 00000",
+      enrollmentId: l.studentRef?.enrollmentId || "UNI2026" + l._id.toString().slice(-4),
+      branch: l.studentRef?.branch || "Computer Science",
+      semester: l.studentRef?.semester || "5th Sem",
+      zone: l.zone ? `Zone ${l.zone.replace("Zone ", "")}` : "Zone B",
+      totalFee: l.totalFee,
+      paidAmount: l.paidAmount,
+      balanceDue: l.balanceDue,
+      status: l.status,
+      dueDate: l.dueDate ? l.dueDate.toISOString().slice(0, 10) : "2026-09-15",
+      passStatus: l.studentRef?.passStatus || "ACTIVE",
+    }));
+
+    const mappedStudents = mappedLedgers.map((l) => ({
+      id: l.enrollmentId || l.id,
+      _id: l._id,
+      enrollmentId: l.enrollmentId || l.id,
+      name: l.name,
+      email: l.email,
+      phone: l.phone,
+      dept: l.branch,
+      course: l.branch,
+      branch: l.branch,
+      year: l.semester,
+      semester: l.semester,
+      route: l.zone,
+      routeName: l.zone,
+      pickupStop: "Fatehgunj Bus Stop",
+      totalFee: l.totalFee || 15000,
+      paidFee: l.paidAmount || 0,
+      pendingFee: l.balanceDue || 0,
+      paymentStatus: l.status,
+      passStatus: l.passStatus,
+      pass: l.passStatus === "ACTIVE" ? "Active" : "Pending",
+      accountStatus: "Active",
+    }));
+
     return res.json({
       success: true,
-      ledgers: paginated.map((l) => ({
-        id: l._id,
-        _id: l._id,
-        studentId: l.studentId?._id,
-        name: l.studentId?.name || "Student Commuter",
-        email: l.studentId?.email || "student@glowbus.edu",
-        phone: l.studentId?.phone || "+91 98765 00000",
-        enrollmentId: l.studentRef?.enrollmentId || "UNI2026" + l._id.toString().slice(-4),
-        branch: l.studentRef?.branch || "Computer Science",
-        semester: l.studentRef?.semester || "5th Sem",
-        zone: l.zone ? `Zone ${l.zone.replace("Zone ", "")}` : "Zone B",
-        totalFee: l.totalFee,
-        paidAmount: l.paidAmount,
-        balanceDue: l.balanceDue,
-        status: l.status,
-        dueDate: l.dueDate ? l.dueDate.toISOString().slice(0, 10) : "2026-09-15",
-        passStatus: l.studentRef?.passStatus || "ACTIVE",
-      })),
+      ledgers: mappedLedgers,
+      students: mappedStudents,
       pagination: { total, page, limit, totalPages: Math.ceil(total / limit) || 1 },
     });
   } catch (error) {
@@ -640,7 +667,18 @@ export const getPendingDues = async (req, res, next) => {
       };
     });
 
-    return res.json({ success: true, pendingList: formatted });
+    const totalOverdue = formatted.reduce((acc, curr) => acc + (curr.balanceDue || 0), 0);
+    const totalPendingStudents = formatted.length;
+    const avgDuePerDefaulter = totalPendingStudents > 0 ? Math.round(totalOverdue / totalPendingStudents) : 0;
+
+    return res.json({
+      success: true,
+      pendingList: formatted,
+      pendingStudents: formatted,
+      totalOverdue,
+      totalPendingStudents,
+      avgDuePerDefaulter,
+    });
   } catch (error) {
     next(error);
   }

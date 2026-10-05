@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useTransit } from "../../../shared/context/TransitContext";
+import { OFFICIAL_13_DRIVERS, OFFICIAL_13_BUSES } from "../../../shared/data/officialRoutes2026";
 import "../layout/AdminLayout.css";
 
 const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidth = 1.8 }) => (
@@ -11,8 +12,8 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 
 const ManageDrivers = () => {
   const { authFetch } = useTransit();
-  const [drivers, setDrivers] = useState([]);
-  const [buses, setBuses] = useState([]);
+  const [drivers, setDrivers] = useState(() => (Array.isArray(OFFICIAL_13_DRIVERS) ? OFFICIAL_13_DRIVERS : []));
+  const [buses, setBuses] = useState(() => (Array.isArray(OFFICIAL_13_BUSES) ? OFFICIAL_13_BUSES : []));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -190,7 +191,7 @@ const ManageDrivers = () => {
         <div className="ad-stat-card">
           <div className="ad-stat-body">
             <p className="ad-stat-label">Total Drivers Roster</p>
-            <p className="ad-stat-value">{drivers.length || 92}</p>
+            <p className="ad-stat-value">{drivers.length || 13}</p>
           </div>
           <div className="ad-stat-icon" style={{ background: "#eff6ff" }}>
             <Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" stroke="#3b82f6" />

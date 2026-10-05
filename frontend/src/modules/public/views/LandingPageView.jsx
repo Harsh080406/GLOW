@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import GlowLogo from "../../../shared/assets/GlowLogo";
 import campusBusHero from "../../../shared/assets/campus-bus-hero.jpg";
+import RealMapView from "../../../shared/components/RealMapView";
 import "./LandingPage.css";
 
 // ── CLEAN SVG ICONS (LUCIDE / HEROICON STYLE) ─────────────────────
@@ -181,6 +182,17 @@ const LandingPageView = () => {
       status: "On Time",
       firstBus: "07:15 AM",
       lastBus: "06:30 PM",
+      stopsList: [
+        { name: "Fatehgunj Circle", lat: 22.3245, lng: 73.1880, orderIndex: 1 },
+        { name: "Nizampura Main Cross", lat: 22.3360, lng: 73.1795, orderIndex: 2 },
+        { name: "Chhani Jakat Naka", lat: 22.3485, lng: 73.1710, orderIndex: 3 },
+        { name: "Bajwa Crossing", lat: 22.3550, lng: 73.1620, orderIndex: 4 },
+        { name: "Fertilizernagar Gate", lat: 22.3605, lng: 73.1590, orderIndex: 5 },
+        { name: "GSFC University Gate 1", lat: 22.3615, lng: 73.1550, orderIndex: 6, isDestination: true },
+      ],
+      sampleBuses: [
+        { busId: "BUS-104", lat: 22.3485, lng: 73.1710, speed: 42, routeName: "Fatehgunj Express", status: "On Time", nextStop: "Bajwa Crossing" },
+      ],
     },
     {
       id: "R-01",
@@ -192,6 +204,15 @@ const LandingPageView = () => {
       status: "Normal Traffic",
       firstBus: "07:00 AM",
       lastBus: "07:00 PM",
+      stopsList: [
+        { name: "Alkapuri Hub", lat: 22.3080, lng: 73.1670, orderIndex: 1 },
+        { name: "RC Dutt Road", lat: 22.3120, lng: 73.1710, orderIndex: 2 },
+        { name: "Sayajigunj Tower", lat: 22.3180, lng: 73.1810, orderIndex: 3 },
+        { name: "GSFC University Vigyan Bhavan", lat: 22.3615, lng: 73.1550, orderIndex: 4, isDestination: true },
+      ],
+      sampleBuses: [
+        { busId: "BUS-101", lat: 22.3120, lng: 73.1710, speed: 36, routeName: "Alkapuri Corridor", status: "On Time", nextStop: "Sayajigunj" },
+      ],
     },
     {
       id: "R-07",
@@ -203,6 +224,15 @@ const LandingPageView = () => {
       status: "On Time",
       firstBus: "06:45 AM",
       lastBus: "06:15 PM",
+      stopsList: [
+        { name: "Manjalpur Naka", lat: 22.2700, lng: 73.1950, orderIndex: 1 },
+        { name: "Tarsali Susen Circle", lat: 22.2850, lng: 73.2050, orderIndex: 2 },
+        { name: "Pratapnagar Heritage", lat: 22.2980, lng: 73.1980, orderIndex: 3 },
+        { name: "GSFC University North Gate", lat: 22.3615, lng: 73.1550, orderIndex: 4, isDestination: true },
+      ],
+      sampleBuses: [
+        { busId: "BUS-107", lat: 22.2850, lng: 73.2050, speed: 38, routeName: "Manjalpur Line", status: "On Time", nextStop: "Pratapnagar" },
+      ],
     },
     {
       id: "R-12",
@@ -214,6 +244,15 @@ const LandingPageView = () => {
       status: "Minor Delay (3m)",
       firstBus: "07:10 AM",
       lastBus: "06:45 PM",
+      stopsList: [
+        { name: "Waghodia Cross Road", lat: 22.2950, lng: 73.2350, orderIndex: 1 },
+        { name: "Bapod Gurukul", lat: 22.3100, lng: 73.2250, orderIndex: 2 },
+        { name: "Amit Nagar Circle", lat: 22.3320, lng: 73.2020, orderIndex: 3 },
+        { name: "GSFC Academic Quad", lat: 22.3615, lng: 73.1550, orderIndex: 4, isDestination: true },
+      ],
+      sampleBuses: [
+        { busId: "BUS-112", lat: 22.3100, lng: 73.2250, speed: 32, routeName: "Waghodia Commuter", status: "Delayed", nextStop: "Amit Nagar Circle" },
+      ],
     },
   ];
 
@@ -361,12 +400,12 @@ const LandingPageView = () => {
               {/* Trust & Punctuality Proof Points */}
               <div className="gl-hero-trust-bar">
                 <div className="gl-trust-item">
-                  <span className="gl-trust-strong">85 Shuttles</span>
+                  <span className="gl-trust-strong">13 Shuttles</span>
                   <span className="gl-trust-sub">Active fleet units</span>
                 </div>
                 <div className="gl-trust-divider" />
                 <div className="gl-trust-item">
-                  <span className="gl-trust-strong">34 Corridors</span>
+                  <span className="gl-trust-strong">13 Corridors</span>
                   <span className="gl-trust-sub">Covering Vadodara</span>
                 </div>
                 <div className="gl-trust-divider" />
@@ -408,12 +447,12 @@ const LandingPageView = () => {
               <p className="gl-stat-sub">Students, professors, and administrative staff</p>
             </div>
             <div className="gl-stat-card">
-              <div className="gl-stat-val gl-text-blue">85</div>
+              <div className="gl-stat-val gl-text-blue">13</div>
               <div className="gl-stat-heading">GPS-Monitored Buses</div>
               <p className="gl-stat-sub">Modern fleet serving all university campuses</p>
             </div>
             <div className="gl-stat-card">
-              <div className="gl-stat-val">34</div>
+              <div className="gl-stat-val">13</div>
               <div className="gl-stat-heading">Active Transit Corridors</div>
               <p className="gl-stat-sub">Direct routes connecting all Vadodara zones</p>
             </div>
@@ -426,102 +465,7 @@ const LandingPageView = () => {
         </div>
       </section>
 
-      {/* ── 4. ROLE PORTALS / QUICK ACCESS ───────────────────────── */}
-      <section className="gl-section gl-bg-subtle" id="portals">
-        <div className="gl-container">
-          <div className="gl-section-heading">
-            <span className="gl-pill">CAMPUS STAKEHOLDER PORTALS</span>
-            <h2 className="gl-title">One Unified Transit System, Tailored for Every Role</h2>
-            <p className="gl-description">
-              Access purpose-built interfaces with dedicated tools, granular role-based security, and live data synchronization.
-            </p>
-          </div>
-
-          <div className="gl-portals-grid">
-            {/* 1. Student Portal */}
-            <div className="gl-portal-card" onClick={() => navigate("/login")}>
-              <div className="gl-portal-icon gl-bg-blue-soft">
-                <Icon name="pass" size={24} className="gl-text-blue" />
-              </div>
-              <span className="gl-portal-tag">STUDENT COMMUTER</span>
-              <h3 className="gl-portal-name">Student Mobility Hub</h3>
-              <p className="gl-portal-desc">
-                Track assigned shuttles in real time, pull up digital HMAC bus passes, receive stop alerts, and check semester fee balances.
-              </p>
-              <div className="gl-portal-footer">
-                <span>Access Student Portal</span>
-                <Icon name="arrowRight" size={14} />
-              </div>
-            </div>
-
-            {/* 2. Driver Cockpit */}
-            <div className="gl-portal-card" onClick={() => navigate("/login")}>
-              <div className="gl-portal-icon gl-bg-amber-soft">
-                <Icon name="bus" size={24} className="gl-text-amber" />
-              </div>
-              <span className="gl-portal-tag">DRIVER CREW</span>
-              <h3 className="gl-portal-name">Driver Mobile Cockpit</h3>
-              <p className="gl-portal-desc">
-                Log trip departure and completion, scan student passes offline in under 2s, broadcast corridor delay notices, and trigger emergency SOS.
-              </p>
-              <div className="gl-portal-footer">
-                <span>Access Driver Cockpit</span>
-                <Icon name="arrowRight" size={14} />
-              </div>
-            </div>
-
-            {/* 3. Transport Operations */}
-            <div className="gl-portal-card" onClick={() => navigate("/login")}>
-              <div className="gl-portal-icon gl-bg-green-soft">
-                <Icon name="route" size={24} className="gl-text-green" />
-              </div>
-              <span className="gl-portal-tag">FLEET DISPATCH</span>
-              <h3 className="gl-portal-name">Transport Manager Hub</h3>
-              <p className="gl-portal-desc">
-                Balance corridor loads, manage driver rosters, monitor bus occupancy rates, inspect vehicle fitness certificates, and export manifests.
-              </p>
-              <div className="gl-portal-footer">
-                <span>Access Fleet Operations</span>
-                <Icon name="arrowRight" size={14} />
-              </div>
-            </div>
-
-            {/* 4. Finance & Bursar */}
-            <div className="gl-portal-card" onClick={() => navigate("/login")}>
-              <div className="gl-portal-icon gl-bg-purple-soft">
-                <Icon name="wallet" size={24} className="gl-text-purple" />
-              </div>
-              <span className="gl-portal-tag">FINANCE OFFICE</span>
-              <h3 className="gl-portal-name">Bursar & Fee Ledger</h3>
-              <p className="gl-portal-desc">
-                Collect payments, configure fee slabs, approve bank challan deposit slips, generate tax invoices with verification QR, and audit logs.
-              </p>
-              <div className="gl-portal-footer">
-                <span>Access Finance Console</span>
-                <Icon name="arrowRight" size={14} />
-              </div>
-            </div>
-
-            {/* 5. Super Admin */}
-            <div className="gl-portal-card" onClick={() => navigate("/login")}>
-              <div className="gl-portal-icon gl-bg-slate-soft">
-                <Icon name="settings" size={24} className="gl-text-slate" />
-              </div>
-              <span className="gl-portal-tag">SUPER ADMIN</span>
-              <h3 className="gl-portal-name">Executive Administration</h3>
-              <p className="gl-portal-desc">
-                Campus-wide user directory, RBAC governance, emergency incident resolution, timetable publishing, and complete fleet and corridor governance.
-              </p>
-              <div className="gl-portal-footer">
-                <span>Access Admin Console</span>
-                <Icon name="arrowRight" size={14} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 5. CORE CAPABILITIES (LIGHT BENTO GRID) ──────────────── */}
+      {/* ── 3. PLATFORM CAPABILITIES (LIGHT BENTO GRID) ──────────────── */}
       <section className="gl-section" id="features">
         <div className="gl-container">
           <div className="gl-section-heading">
@@ -690,6 +634,16 @@ const LandingPageView = () => {
                     <span className="gl-flow-chip">Vigyan Bhavan Quad</span>
                   </div>
                 </div>
+
+                {/* Real Interactive Route Map View */}
+                <div style={{ marginTop: 20 }}>
+                  <RealMapView
+                    routeStops={current.stopsList}
+                    buses={current.sampleBuses}
+                    height="320px"
+                    showControls={true}
+                  />
+                </div>
               </div>
             );
           })()}
@@ -744,8 +698,103 @@ const LandingPageView = () => {
         </div>
       </section>
 
-      {/* ── 8. SAFETY & SECURITY COMMAND ─────────────────────────── */}
-      <section className="gl-section gl-bg-subtle" id="safety">
+      {/* ── 6. CAMPUS STAKEHOLDER PORTALS (#portals) ──────────────── */}
+      <section className="gl-section gl-bg-subtle" id="portals">
+        <div className="gl-container">
+          <div className="gl-section-heading">
+            <span className="gl-pill">CAMPUS STAKEHOLDER PORTALS</span>
+            <h2 className="gl-title">One Unified Transit System, Tailored for Every Role</h2>
+            <p className="gl-description">
+              Access purpose-built interfaces with dedicated tools, granular role-based security, and live data synchronization.
+            </p>
+          </div>
+
+          <div className="gl-portals-grid">
+            {/* 1. Student Portal */}
+            <div className="gl-portal-card" onClick={() => navigate("/login")}>
+              <div className="gl-portal-icon gl-bg-blue-soft">
+                <Icon name="pass" size={24} className="gl-text-blue" />
+              </div>
+              <span className="gl-portal-tag">STUDENT COMMUTER</span>
+              <h3 className="gl-portal-name">Student Mobility Hub</h3>
+              <p className="gl-portal-desc">
+                Track assigned shuttles in real time, pull up digital HMAC bus passes, receive stop alerts, and check semester fee balances.
+              </p>
+              <div className="gl-portal-footer">
+                <span>Access Student Portal</span>
+                <Icon name="arrowRight" size={14} />
+              </div>
+            </div>
+
+            {/* 2. Driver Cockpit */}
+            <div className="gl-portal-card" onClick={() => navigate("/login")}>
+              <div className="gl-portal-icon gl-bg-amber-soft">
+                <Icon name="bus" size={24} className="gl-text-amber" />
+              </div>
+              <span className="gl-portal-tag">DRIVER CREW</span>
+              <h3 className="gl-portal-name">Driver Mobile Cockpit</h3>
+              <p className="gl-portal-desc">
+                Log trip departure and completion, scan student passes offline in under 2s, broadcast corridor delay notices, and trigger emergency SOS.
+              </p>
+              <div className="gl-portal-footer">
+                <span>Access Driver Cockpit</span>
+                <Icon name="arrowRight" size={14} />
+              </div>
+            </div>
+
+            {/* 3. Transport Operations */}
+            <div className="gl-portal-card" onClick={() => navigate("/login")}>
+              <div className="gl-portal-icon gl-bg-green-soft">
+                <Icon name="route" size={24} className="gl-text-green" />
+              </div>
+              <span className="gl-portal-tag">FLEET DISPATCH</span>
+              <h3 className="gl-portal-name">Transport Manager Hub</h3>
+              <p className="gl-portal-desc">
+                Balance corridor loads, manage driver rosters, monitor bus occupancy rates, inspect vehicle fitness certificates, and export manifests.
+              </p>
+              <div className="gl-portal-footer">
+                <span>Access Fleet Operations</span>
+                <Icon name="arrowRight" size={14} />
+              </div>
+            </div>
+
+            {/* 4. Finance & Bursar */}
+            <div className="gl-portal-card" onClick={() => navigate("/login")}>
+              <div className="gl-portal-icon gl-bg-purple-soft">
+                <Icon name="wallet" size={24} className="gl-text-purple" />
+              </div>
+              <span className="gl-portal-tag">FINANCE OFFICE</span>
+              <h3 className="gl-portal-name">Bursar & Fee Ledger</h3>
+              <p className="gl-portal-desc">
+                Collect payments, configure fee slabs, approve bank challan deposit slips, generate tax invoices with verification QR, and audit logs.
+              </p>
+              <div className="gl-portal-footer">
+                <span>Access Finance Console</span>
+                <Icon name="arrowRight" size={14} />
+              </div>
+            </div>
+
+            {/* 5. Super Admin */}
+            <div className="gl-portal-card" onClick={() => navigate("/login")}>
+              <div className="gl-portal-icon gl-bg-slate-soft">
+                <Icon name="settings" size={24} className="gl-text-slate" />
+              </div>
+              <span className="gl-portal-tag">SUPER ADMIN</span>
+              <h3 className="gl-portal-name">Executive Administration</h3>
+              <p className="gl-portal-desc">
+                Campus-wide user directory, RBAC governance, emergency incident resolution, timetable publishing, and complete fleet and corridor governance.
+              </p>
+              <div className="gl-portal-footer">
+                <span>Access Admin Console</span>
+                <Icon name="arrowRight" size={14} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 7. SAFETY & SECURITY COMMAND (#safety) ────────────────── */}
+      <section className="gl-section" id="safety">
         <div className="gl-container">
           <div className="gl-safety-layout">
             <div className="gl-safety-info">
@@ -805,7 +854,7 @@ const LandingPageView = () => {
               <div className="gl-scard-metrics">
                 <div className="gl-smetric">
                   <span className="gl-slabel">Active Fleet Shuttles</span>
-                  <strong className="gl-sval">85 / 85 Operational</strong>
+                  <strong className="gl-sval">13 / 13 Operational</strong>
                 </div>
                 <div className="gl-smetric">
                   <span className="gl-slabel">Speed Compliance</span>
@@ -835,8 +884,8 @@ const LandingPageView = () => {
         </div>
       </section>
 
-      {/* ── 9. FREQUENTLY ASKED QUESTIONS ────────────────────────── */}
-      <section className="gl-section" id="faq">
+      {/* ── 8. FREQUENTLY ASKED QUESTIONS (#faq) ────────────────── */}
+      <section className="gl-section gl-bg-subtle" id="faq">
         <div className="gl-container">
           <div className="gl-section-heading">
             <span className="gl-pill">COMMON INQUIRIES</span>

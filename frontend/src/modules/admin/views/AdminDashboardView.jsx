@@ -93,14 +93,14 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [kpis, setKpis] = useState({
     students: "4,250",
-    buses: "85",
-    drivers: "92",
-    routes: "34",
-    activeTrips: "28",
+    buses: "13",
+    drivers: "13",
+    routes: "13",
+    activeTrips: "11",
     pendingFees: "₹3.6L",
     pendingAccounts: "530",
-    maintenance: "6",
-    complaints: "12",
+    maintenance: "1",
+    complaints: "4",
   });
   const [activityLogs, setActivityLogs] = useState([]);
   const [dispatches, setDispatches] = useState([]);
@@ -126,10 +126,10 @@ const AdminDashboard = () => {
             };
             setKpis({
               students: extractVal(rawK.students, "4,250"),
-              buses: extractVal(rawK.buses, "85"),
-              drivers: extractVal(rawK.drivers, "92"),
-              routes: extractVal(rawK.routes, "34"),
-              activeTrips: extractVal(rawK.activeTrips, "28"),
+              buses: extractVal(rawK.buses, "13"),
+              drivers: extractVal(rawK.drivers, "13"),
+              routes: extractVal(rawK.routes, "13"),
+              activeTrips: extractVal(rawK.activeTrips, "11"),
               pendingFees: extractVal(rawK.pendingFees, "₹3.6L"),
               pendingAccounts: rawK.pendingFees?.sub ? rawK.pendingFees.sub.replace(/[^\d]/g, "") : (rawK.pendingAccounts || "530"),
               maintenance: extractVal(rawK.maintenance, "6"),

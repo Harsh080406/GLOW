@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Html5Qrcode } from "html5-qrcode";
 import GlowLogo from "../../../shared/assets/GlowLogo";
 import { useTransit } from "../../../shared/context/TransitContext";
+import { OFFICIAL_GSFC_ROUTES_2026, OFFICIAL_13_DRIVERS, OFFICIAL_13_BUSES } from "../../../shared/data/officialRoutes2026";
+import RealMapView from "../../../shared/components/RealMapView";
 import "./DriverDashboard.css";
 import "../../admin/layout/AdminLayout.css";
 import "../../admin/views/AdminProfile.css";
@@ -84,6 +86,7 @@ const DriverDashboardView = () => {
     activeTrip,
     setActiveTrip,
     students,
+    drivers,
     boardStudent,
     startTrip,
     pauseTrip,
@@ -119,6 +122,8 @@ const DriverDashboardView = () => {
   const [scanResult, setScanResult] = useState(null);
   const [cameraError, setCameraError] = useState(null);
   const scannerInstanceRef = useRef(null);
+
+  const [boardingSearch, setBoardingSearch] = useState("");
 
   // Modals & form state
   const [showDelayModal, setShowDelayModal] = useState(false);
@@ -467,6 +472,13 @@ const DriverDashboardView = () => {
         if (boardStudent) {
           boardStudent(res.student?.id || enrollmentId);
         }
+        const validId = res.student?.id || enrollmentId;
+        if (validId) {
+          setBoardedStudentsState((prev) => ({
+            ...prev,
+            [validId]: true,
+          }));
+        }
       } else {
         const status = res?.status || "REJECTED";
         const reason = status === "EXPIRED"
@@ -586,16 +598,44 @@ const DriverDashboardView = () => {
     setScanInput("");
   };
 
-  const routeStops = [
-    { index: 0, name: "Fatehgunj Stop", scheduled: "07:30 AM", actual: "07:31 AM", students: 12, status: "departed" },
-    { index: 1, name: "Nizampura Char Rasta", scheduled: "07:42 AM", actual: "07:44 AM", students: 8, status: "departed" },
-    { index: 2, name: "Chhani Jakat Naka", scheduled: "07:54 AM", actual: "On Time (2 min)", students: 11, status: "approaching" },
-    { index: 3, name: "Bajwa Crossing", scheduled: "08:04 AM", actual: "Estimated 08:05 AM", students: 5, status: "upcoming" },
-    { index: 4, name: "Fertilizernagar Gate", scheduled: "08:14 AM", actual: "Estimated 08:15 AM", students: 2, status: "upcoming" },
-    { index: 5, name: "GSFC University Main Bay", scheduled: "08:20 AM", actual: "Estimated 08:20 AM", students: 0, status: "destination" },
-  ];
+  const handleSwitchDriverProfile = (driverId) => {
+    const driverList = drivers && drivers.length > 0 ? drivers : OFFICIAL_13_DRIVERS;
+    const foundDriver = driverList.find((d) => d.id === driverId || d.assignedBus === driverId);
+    if (foundDriver) {
+      setCurrentDriver(foundDriver);
+      const matchedRoute = OFFICIAL_GSFC_ROUTES_2026.find(
+        (r) => r.routeId === foundDriver.assignedRoute || r.busNo === foundDriver.assignedBus
+      );
+      if (setActiveTrip) {
+        setActiveTrip((prev) => ({
+          ...prev,
+          busId: foundDriver.assignedBus,
+          routeId: foundDriver.assignedRoute,
+          driverName: foundDriver.name,
+          driverPhone: foundDriver.phone,
+          routeName: matchedRoute ? matchedRoute.title : foundDriver.assignedRoute,
+        }));
+      }
+    }
+  };
 
-  const driverRouteId = currentDriver?.assignedRoute || currentDriver?.routeId || activeTrip?.routeId || "R-04";
+  const driverRouteId = currentDriver?.assignedRoute || currentDriver?.routeId || activeTrip?.routeId || "ROUTE-9";
+
+  const matchedOfficialRoute = OFFICIAL_GSFC_ROUTES_2026.find(
+    (r) =>
+      r.routeId === driverRouteId ||
+      r.routeNumber === Number(String(driverRouteId).replace(/[^\d]/g, "")) ||
+      r.busNo === currentDriver?.assignedBus
+  ) || OFFICIAL_GSFC_ROUTES_2026[8];
+
+  const routeStops = matchedOfficialRoute.stops.map((s, idx) => ({
+    index: idx,
+    name: s.name,
+    scheduled: s.time,
+    actual: idx < 2 ? `${s.time} (Departed)` : idx === 2 ? "Approaching (2 min)" : `Estimated ${s.time}`,
+    students: s.isDestination ? 0 : Math.floor(6 + ((idx * 5) % 8)),
+    status: idx < 2 ? "departed" : idx === 2 ? "approaching" : s.isDestination ? "destination" : "upcoming",
+  }));
 
   const defaultStudents = [
     { id: "UNI20260125", name: "Rahul Sharma", enrollmentId: "UNI20260125", pickupStop: "Chhani Jakat Naka", stopName: "Chhani Jakat Naka", pickupTime: "07:54 AM", boardedToday: true, passStatus: "ACTIVE" },
@@ -634,6 +674,17 @@ const DriverDashboardView = () => {
     boardedToday: boardedStudentsState[s.id] !== undefined ? boardedStudentsState[s.id] : !!s.boardedToday,
   }));
   const effectiveBoardedCount = effectiveStudents.filter((s) => s.boardedToday).length;
+
+  const displayedStudents = effectiveStudents.filter((s) => {
+    if (!boardingSearch.trim()) return true;
+    const term = boardingSearch.toLowerCase();
+    return (
+      (s.name && s.name.toLowerCase().includes(term)) ||
+      (s.id && s.id.toLowerCase().includes(term)) ||
+      (s.pickupStop && s.pickupStop.toLowerCase().includes(term)) ||
+      (s.stopName && s.stopName.toLowerCase().includes(term))
+    );
+  });
 
   const currentStopIndex = typeof activeTrip?.currentStopIndex === "number" ? activeTrip.currentStopIndex : 2;
   const currentApproachingStop = routeStops[currentStopIndex] || routeStops[2];
@@ -782,6 +833,44 @@ const DriverDashboardView = () => {
               <p className="dd-topbar-subtitle">{currentTabMeta.subtitle}</p>
             </div>
             <div className="dd-topbar-right">
+              {/* Official 13 Fleet Driver & Bus Switcher */}
+              <div
+                className="dd-driver-switch-select-wrapper"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  background: "#f8fafc",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: 10,
+                  padding: "4px 10px",
+                }}
+              >
+                <BusIcon size={16} color="#0066ff" />
+                <select
+                  aria-label="Switch Driver and Bus Profile"
+                  value={currentDriver?.id || ""}
+                  onChange={(e) => handleSwitchDriverProfile(e.target.value)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    fontWeight: 700,
+                    fontSize: 12.5,
+                    color: "#0f172a",
+                    cursor: "pointer",
+                    maxWidth: 220,
+                  }}
+                  title="Switch between the 13 official GSFC University drivers and buses"
+                >
+                  {(drivers && drivers.length > 0 ? drivers : OFFICIAL_13_DRIVERS).map((d, idx) => (
+                    <option key={d.id || idx} value={d.id}>
+                      Route {d.assignedRoute?.replace("ROUTE-", "") || idx + 1}: {d.name} ({d.assignedBus})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <span className={`dd-trip-status ${activeTrip?.status === "ON_ROUTE" ? "dd-trip-status--active" : "dd-trip-status--idle"}`}>
                 {activeTrip?.status === "ON_ROUTE" ? "● Trip Active" : activeTrip?.status === "PAUSED" ? "⏸ Trip Paused" : "○ Standby / Base"}
               </span>
@@ -1299,16 +1388,56 @@ const DriverDashboardView = () => {
             {/* ── 3. STUDENT BOARDING ────────────────────────────────── */}
             {activeNav === "boarding" && (
               <div className="dd-card">
-                <div className="dd-card-header">
+                <div className="dd-card-header" style={{ flexWrap: "wrap", gap: 12 }}>
                   <div>
                     <h2 className="dd-card-title">Allocated Route Passenger Roster</h2>
                     <p style={{ fontSize: 12.5, color: "#64748b" }}>
-                      Bus: <strong>{currentDriver.assignedBus}</strong> &nbsp;·&nbsp; Route: <strong>{driverRouteId} ({currentDriver.routeName || "Fatehgunj - GSFC"})</strong> &nbsp;·&nbsp; {boardedCount} of {assignedBusStudents.length} passengers boarded
+                      Bus: <strong>{currentDriver?.assignedBus || driverAssignedBusId}</strong> &nbsp;·&nbsp; Route: <strong>{driverRouteId} ({currentDriver?.routeName || "Fatehgunj - GSFC"})</strong> &nbsp;·&nbsp; {effectiveBoardedCount} of {effectiveStudents.length} passengers boarded
                     </p>
                   </div>
-                  <button className="dd-btn-primary" onClick={() => setShowScannerModal(true)}>
-                    + Verify Passenger
-                  </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        type="text"
+                        placeholder="Search student or stop..."
+                        value={boardingSearch}
+                        onChange={(e) => setBoardingSearch(e.target.value)}
+                        style={{
+                          padding: "7px 12px 7px 32px",
+                          borderRadius: 8,
+                          border: "1px solid #cbd5e1",
+                          fontSize: 13,
+                          outline: "none",
+                          width: 220,
+                        }}
+                      />
+                      <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "#94a3b8" }}>
+                        🔍
+                      </span>
+                      {boardingSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setBoardingSearch("")}
+                          style={{
+                            position: "absolute",
+                            right: 8,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            background: "transparent",
+                            border: "none",
+                            cursor: "pointer",
+                            fontSize: 12,
+                            color: "#94a3b8",
+                          }}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                    <button className="dd-btn-primary" onClick={() => setShowScannerModal(true)}>
+                      + Verify Passenger
+                    </button>
+                  </div>
                 </div>
 
                 <div className="ad-table-wrap">
@@ -1324,33 +1453,64 @@ const DriverDashboardView = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {assignedBusStudents.map((s) => (
-                        <tr key={s.id} className="ad-tr">
-                          <td className="ad-td"><strong>{s.name}</strong></td>
-                          <td className="ad-td">{s.id}</td>
-                          <td className="ad-td">{s.pickupStop || s.boarding || "Fatehgunj Stop"}</td>
-                          <td className="ad-td">{s.pickupTime || "07:45 AM"}</td>
-                          <td className="ad-td">
-                            <span className={`ad-badge ${(s.pass || s.passStatus || "").toUpperCase() === "ACTIVE" ? "ad-badge--green" : "ad-badge--yellow"}`}>
-                              {(s.pass || s.passStatus || "Active").toUpperCase() === "ACTIVE" ? "● Active Pass" : "● Pending"}
-                            </span>
-                          </td>
-                          <td className="ad-td">
-                            {s.boardedToday ? (
-                              <span style={{ fontSize: 12.5, color: "#16a34a", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                                ✓ Boarded
-                              </span>
-                            ) : (
-                              <button
-                                className="dd-board-btn"
-                                onClick={() => boardStudent(s.id)}
-                              >
-                                Mark Boarded
-                              </button>
-                            )}
+                      {displayedStudents.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} style={{ textAlign: "center", padding: "28px 16px", color: "#64748b" }}>
+                            No passengers found matching &ldquo;{boardingSearch}&rdquo;
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        displayedStudents.map((s) => (
+                          <tr key={s.id} className="ad-tr">
+                            <td className="ad-td"><strong>{s.name}</strong></td>
+                            <td className="ad-td">{s.id}</td>
+                            <td className="ad-td">{s.pickupStop || s.stopName || s.boarding || "Assigned Stop"}</td>
+                            <td className="ad-td">{s.pickupTime || "07:45 AM"}</td>
+                            <td className="ad-td">
+                              <span className={`ad-badge ${(s.pass || s.passStatus || "").toUpperCase() === "ACTIVE" ? "ad-badge--green" : "ad-badge--yellow"}`}>
+                                {(s.pass || s.passStatus || "Active").toUpperCase() === "ACTIVE" ? "● Active Pass" : "● Pending"}
+                              </span>
+                            </td>
+                            <td className="ad-td">
+                              {s.boardedToday ? (
+                                <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                                  <span style={{ fontSize: 12.5, color: "#16a34a", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                    ✓ Boarded
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleStudentBoarded(s.id)}
+                                    title="Undo boarding"
+                                    style={{
+                                      fontSize: 11,
+                                      color: "#64748b",
+                                      background: "#f1f5f9",
+                                      border: "1px solid #cbd5e1",
+                                      borderRadius: 4,
+                                      padding: "2px 7px",
+                                      cursor: "pointer",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    Undo
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="dd-board-btn"
+                                  onClick={() => {
+                                    toggleStudentBoarded(s.id);
+                                    if (boardStudent) boardStudent(s.id);
+                                  }}
+                                >
+                                  Mark Boarded
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -1497,85 +1657,35 @@ const DriverDashboardView = () => {
                     <span className="ad-badge ad-badge--blue">GPS Lock: 100% Signal (3m Accuracy)</span>
                   </div>
 
-                  {/* Visual Route SVG Map */}
-                  <div className="dd-map-wrap">
-                    <svg viewBox="0 0 680 280" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "auto", display: "block" }}>
-                      <rect width="680" height="280" fill="#f8fafc" />
-
-                      {/* City Blocks */}
-                      {[
-                        [20, 20, 110, 80], [150, 20, 160, 80], [330, 20, 160, 80], [510, 20, 150, 80],
-                        [20, 120, 110, 70], [150, 120, 160, 70], [330, 120, 160, 70], [510, 120, 150, 70],
-                        [20, 210, 110, 60], [150, 210, 160, 60], [330, 210, 160, 60], [510, 210, 150, 60],
-                      ].map(([x, y, w, h], i) => (
-                        <rect key={i} x={x} y={y} width={w} height={h} rx="6" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1.5" />
-                      ))}
-
-                      {/* Road Network */}
-                      <line x1="0" y1="110" x2="680" y2="110" stroke="#f1f5f9" strokeWidth="14" />
-                      <line x1="0" y1="200" x2="680" y2="200" stroke="#f1f5f9" strokeWidth="14" />
-                      <line x1="140" y1="0" x2="140" y2="280" stroke="#f1f5f9" strokeWidth="14" />
-                      <line x1="320" y1="0" x2="320" y2="280" stroke="#f1f5f9" strokeWidth="14" />
-                      <line x1="500" y1="0" x2="500" y2="280" stroke="#f1f5f9" strokeWidth="14" />
-
-                      {/* Active Route Polyline */}
-                      <polyline
-                        points="60,240 140,190 260,160 380,130 480,90 600,60"
-                        fill="none"
-                        stroke="#0066ff"
-                        strokeWidth="5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-
-                      {/* Marked Stops */}
-                      {[
-                        { x: 60, y: 240, name: "Fatehgunj Stop" },
-                        { x: 140, y: 190, name: "Nizampura Char Rasta" },
-                        { x: 260, y: 160, name: "Chhani Jakat Naka (Next)" },
-                        { x: 380, y: 130, name: "Bajwa Crossing" },
-                        { x: 480, y: 90, name: "Fertilizernagar Gate" },
-                        { x: 600, y: 60, name: "GSFC University" },
-                      ].map((stop, idx) => (
-                        <g key={idx}>
-                          <circle
-                            cx={stop.x}
-                            cy={stop.y}
-                            r={idx === 2 ? 8 : 6}
-                            fill={idx === 2 ? "#0066ff" : idx < 2 ? "#0f172a" : "#ffffff"}
-                            stroke={idx === 2 ? "#ffffff" : idx < 2 ? "#ffffff" : "#0066ff"}
-                            strokeWidth="2.5"
-                          />
-                          <text
-                            x={stop.x}
-                            y={stop.y + (idx % 2 === 0 ? 18 : -12)}
-                            textAnchor="middle"
-                            fontSize="10"
-                            fontWeight={idx === 2 ? "800" : "600"}
-                            fill={idx === 2 ? "#0066ff" : "#0f172a"}
-                          >
-                            {stop.name}
-                          </text>
-                        </g>
-                      ))}
-
-                      {/* Moving Driver Bus Marker */}
-                      <g transform={`translate(${70 + (((liveBusTelemetry && liveBusTelemetry[currentDriver.assignedBus]?.progressPercent) || 46) / 100) * 500}, ${260 - (((liveBusTelemetry && liveBusTelemetry[currentDriver.assignedBus]?.progressPercent) || 46) / 100) * 190})`}>
-                        <circle r="20" fill="#0066ff" opacity="0.25" className="lt-pulse-circle" />
-                        <circle r="14" fill="#0066ff" stroke="#ffffff" strokeWidth="2.5" />
-                        <text textAnchor="middle" y="5" fontSize="12">🚌</text>
-                      </g>
-                    </svg>
-
-                    {/* HUD Telemetry Chips */}
-                    <div className="dd-map-telemetry-hud">
-                      <span className="dd-hud-pill">
-                        Lat: {((liveBusTelemetry && liveBusTelemetry[currentDriver.assignedBus]?.lat) || 23.0982)}° N, Long: {((liveBusTelemetry && liveBusTelemetry[currentDriver.assignedBus]?.lng) || 72.5784)}° E
-                      </span>
-                      <span className="dd-hud-pill dd-hud-pill--blue">
-                        Speed: {((liveBusTelemetry && liveBusTelemetry[currentDriver.assignedBus]?.speed) || 42)} km/h · Heading: North-East
-                      </span>
-                    </div>
+                  {/* Real Interactive Route Navigation Map */}
+                  <div style={{ marginTop: 12 }}>
+                    <RealMapView
+                      singleBus={{
+                        busId: currentDriver.assignedBus || "BUS-104",
+                        regNo: currentDriver.assignedBus || "BUS-104",
+                        routeName: currentDriver.routeName || "Route R-04: Fatehgunj ➔ GSFC University",
+                        driverName: currentDriver.name,
+                        driverPhone: currentDriver.phone,
+                        lat: Number(liveBusTelemetry?.[currentDriver.assignedBus]?.lat) || 22.3485,
+                        lng: Number(liveBusTelemetry?.[currentDriver.assignedBus]?.lng) || 73.1710,
+                        speed: Number(liveBusTelemetry?.[currentDriver.assignedBus]?.speed) || 42,
+                        nextStop: liveBusTelemetry?.[currentDriver.assignedBus]?.nextStop || "Chhani Jakat Naka",
+                        nextStopIndex: liveBusTelemetry?.[currentDriver.assignedBus]?.nextStopIndex ?? 2,
+                        etaMinutes: liveBusTelemetry?.[currentDriver.assignedBus]?.etaMinutes || 6,
+                        status: "On Route",
+                        occupancy: 31,
+                        capacity: 38,
+                      }}
+                      routeStops={[
+                        { name: "Fatehgunj Stop", lat: 22.3245, lng: 73.1880, orderIndex: 1 },
+                        { name: "Nizampura Char Rasta", lat: 22.3360, lng: 73.1795, orderIndex: 2 },
+                        { name: "Chhani Jakat Naka", lat: 22.3485, lng: 73.1710, orderIndex: 3 },
+                        { name: "Bajwa Crossing", lat: 22.3550, lng: 73.1620, orderIndex: 4 },
+                        { name: "Fertilizernagar Gate", lat: 22.3605, lng: 73.1590, orderIndex: 5 },
+                        { name: "GSFC University", lat: 22.3615, lng: 73.1550, orderIndex: 6, isDestination: true },
+                      ]}
+                      height="360px"
+                    />
                   </div>
                 </div>
               </div>
