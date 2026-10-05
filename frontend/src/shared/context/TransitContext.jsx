@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
+import { INITIAL_MASTER_STUDENTS } from "../data/studentsData";
+import { OFFICIAL_13_BUSES, OFFICIAL_13_DRIVERS, OFFICIAL_GSFC_ROUTES_2026 } from "../data/officialRoutes2026";
 
 const TransitContext = createContext(null);
 
@@ -60,13 +62,14 @@ export const TransitProvider = ({ children }) => {
   });
 
   const [currentDriver, setCurrentDriver] = useState({
-    id: "DRV-102",
+    id: "DRV-2026-09",
     name: "Mahesh Patel",
     avatar: "MP",
     phone: "+91 98765 11111",
-    email: "driver@glowbus.edu",
-    assignedBus: "BUS-104",
-    routeName: "GSFC University ↔ Fatehgunj",
+    email: "mahesh.patel@glowbus.edu",
+    assignedBus: "GJ-06-BV-2915",
+    assignedRoute: "ROUTE-9",
+    routeName: "Route 9 (Tulsidham - Fatehgunj - Nizampura)",
     licenseNo: "GJ-06-2018-9842",
     rating: 4.9,
   });
@@ -91,20 +94,21 @@ export const TransitProvider = ({ children }) => {
   const [activeTrip, setActiveTrip] = useState({
     isActive: true,
     tripId: "TRIP-2026-0822-01",
-    busId: "BUS-104",
-    routeId: "R-04",
+    busId: "GJ-06-BV-2915",
+    routeId: "ROUTE-9",
     driverName: "Mahesh Patel",
     status: "ON_ROUTE",
-    currentSpeed: 42,
+    currentSpeed: 38,
     etaMinutes: 6,
-    coordinates: { lat: 22.3412, lng: 73.1710 },
-    progressPercent: 46,
+    coordinates: { lat: 22.3365, lng: 73.1795 },
+    progressPercent: 68,
   });
 
   const [liveBusTelemetry, setLiveBusTelemetry] = useState({});
-  const [buses, setBuses] = useState([]);
-  const [routes, setRoutes] = useState([]);
-  const [students, setStudents] = useState([]);
+  const [buses, setBuses] = useState(() => (Array.isArray(OFFICIAL_13_BUSES) ? OFFICIAL_13_BUSES : []));
+  const [routes, setRoutes] = useState(() => (Array.isArray(OFFICIAL_GSFC_ROUTES_2026) ? OFFICIAL_GSFC_ROUTES_2026 : []));
+  const [drivers, setDrivers] = useState(() => (Array.isArray(OFFICIAL_13_DRIVERS) ? OFFICIAL_13_DRIVERS : []));
+  const [students, setStudents] = useState(() => (Array.isArray(INITIAL_MASTER_STUDENTS) && INITIAL_MASTER_STUDENTS.length > 0 ? INITIAL_MASTER_STUDENTS : []));
   const [notifications, setNotifications] = useState([]);
   const [sosAlerts, setSosAlerts] = useState([]);
 
@@ -429,8 +433,31 @@ export const TransitProvider = ({ children }) => {
         if (feeRes.status === "fulfilled" && feeRes.value?.feeStructures) {
           setFeeStructures(feeRes.value.feeStructures);
         }
-        if (stuRes.status === "fulfilled" && stuRes.value?.students) {
-          setStudents(stuRes.value.students);
+        if (stuRes.status === "fulfilled") {
+          const rawStudents = stuRes.value?.students || (stuRes.value?.ledgers && stuRes.value.ledgers.map((l) => ({
+            id: l.enrollmentId || l.id,
+            enrollmentId: l.enrollmentId || l.id,
+            name: l.name,
+            email: l.email,
+            phone: l.phone,
+            dept: l.branch || "Computer Science",
+            course: l.branch || "Computer Science",
+            branch: l.branch || "Computer Science",
+            year: l.semester || "3rd",
+            semester: l.semester || "5th Sem",
+            route: l.zone || "Route 4D",
+            routeName: l.zone || "Route 4D (Fatehgunj - GSFC)",
+            pickupStop: "Fatehgunj Bus Stop",
+            totalFee: l.totalFee || 15000,
+            paidFee: l.paidAmount !== undefined ? l.paidAmount : (l.paidFee || 0),
+            pendingFee: l.balanceDue !== undefined ? l.balanceDue : (l.pendingFee || 0),
+            paymentStatus: l.status || l.paymentStatus || "PARTIAL",
+            passStatus: l.passStatus || "ACTIVE",
+            pass: (l.passStatus || "").toUpperCase() === "ACTIVE" ? "Active" : "Pending",
+          })));
+          if (rawStudents && rawStudents.length > 0) {
+            setStudents(rawStudents);
+          }
         }
         if (txnRes.status === "fulfilled" && txnRes.value?.payments) {
           setTransactions(txnRes.value.payments);
@@ -826,6 +853,8 @@ export const TransitProvider = ({ children }) => {
     liveBusTelemetry,
     buses,
     setBuses,
+    drivers,
+    setDrivers,
     routes,
     setRoutes,
     students,

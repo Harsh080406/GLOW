@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
+import mongoose from "mongoose";
 import connectDB from "./db/connect.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -88,34 +89,95 @@ const isTestEnv =
   process.argv.includes("--test") ||
   process.argv.some((arg) => arg.endsWith(".test.js") || arg.endsWith(".spec.js"));
 
-// 5. Initialize WebSocket Server
-if (!isTestEnv) {
-  setupWebSocketServer(server);
-}
+let wsGateway = null;
+let isShuttingDown = false;
 
-// 6. Database Connection & Server Startup
+// 5. Graceful Process Termination Handlers
+const gracefulShutdown = async (signal) => {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log(`\n🛑 Received ${signal}. Gracefully stopping GLOW Backend Server...`);
+
+  if (wsGateway?.close) {
+    try {
+      wsGateway.close();
+    } catch (e) {}
+  }
+
+  if (server.listening) {
+    try {
+      await new Promise((resolve) => server.close(resolve));
+      console.log("🔒 HTTP server closed.");
+    } catch (e) {}
+  }
+
+  try {
+    await mongoose.disconnect();
+    console.log("🍃 MongoDB disconnected.");
+  } catch (e) {}
+
+  process.exit(0);
+};
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("⚠️ Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("⚠️ Uncaught Exception:", error);
+});
+
+// 6. Database Connection & Server Startup with Port-in-use Retry
 const startServer = async () => {
   try {
     console.log("🔄 Initializing GLOW Enterprise Backend Service...");
     await connectDB();
 
+    // Initialize WebSocket Gateway AFTER database is successfully connected
+    if (!isTestEnv && !wsGateway) {
+      wsGateway = setupWebSocketServer(server);
+    }
+
+    let attempts = 0;
+    const maxRetries = 5;
+    const retryDelayMs = 1000;
+
+    const tryListen = () => {
+      attempts++;
+      server.listen(PORT, () => {
+        console.log(`🚀 GLOW Backend Server live on port ${PORT}`);
+        console.log(`📡 WebSocket Real-time Gateway active on ws://localhost:${PORT}`);
+        console.log(`🔒 Security headers (Helmet) & CORS active for origin: ${FRONTEND_ORIGIN}`);
+      });
+    };
+
     server.on("error", (err) => {
       if (err.code === "EADDRINUSE") {
-        console.error(`❌ Port ${PORT} is already in use by another process.`);
-        console.error(`👉 Run 'netstat -ano | findstr :${PORT}' or terminate the existing process.`);
+        if (attempts < maxRetries) {
+          console.warn(`⚠️ Port ${PORT} is busy (attempt ${attempts}/${maxRetries}). Waiting ${retryDelayMs}ms for release...`);
+          setTimeout(() => {
+            try {
+              server.close();
+            } catch (e) {}
+            tryListen();
+          }, retryDelayMs);
+        } else {
+          console.error(`❌ Port ${PORT} is already in use after ${maxRetries} attempts.`);
+          console.error(`👉 Run 'netstat -ano | findstr :${PORT}' or terminate the existing process.`);
+          process.exit(1);
+        }
       } else {
         console.error("❌ Backend Server Error:", err.message);
+        process.exit(1);
       }
-      process.exit(1);
     });
 
-    server.listen(PORT, () => {
-      console.log(`🚀 GLOW Backend Server live on port ${PORT}`);
-      console.log(`📡 WebSocket Real-time Gateway active on ws://localhost:${PORT}`);
-      console.log(`🔒 Security headers (Helmet) & CORS active for origin: ${FRONTEND_ORIGIN}`);
-    });
+    tryListen();
   } catch (error) {
-    console.error("❌ Refusing to start server: Initial MongoDB connection failed.");
+    console.error("❌ Refusing to start server: Initial MongoDB connection failed.", error.message);
     process.exit(1);
   }
 };
@@ -124,4 +186,4 @@ if (!isTestEnv) {
   startServer();
 }
 
-export { app, server, startServer };
+export { app, server, startServer, wsGateway };

@@ -1,0 +1,397 @@
+/* RealMapView.css — Leaflet Interactive Transit Map Styles */
+@import "leaflet/dist/leaflet.css";
+
+.real-map-wrapper {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: #e2e8f0;
+}
+
+.real-map-container {
+  width: 100%;
+  height: 100%;
+  min-height: 360px;
+  z-index: 1;
+}
+
+/* Ensure tiles render cleanly */
+.leaflet-tile {
+  filter: brightness(0.99) contrast(1.02);
+}
+
+/* ── Google Maps Style Route Polyline ── */
+.leaflet-pane svg path.gm-route-casing {
+  stroke: #1e3a8a !important;
+  stroke-width: 8px !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  stroke-opacity: 0.9 !important;
+  filter: drop-shadow(0 2px 6px rgba(30, 58, 138, 0.4));
+}
+
+.leaflet-pane svg path.gm-route-core {
+  stroke: #3b82f6 !important;
+  stroke-width: 5px !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  stroke-opacity: 1 !important;
+}
+
+/* ── Compact Google Maps Style Moving Bus Marker ── */
+.glow-bus-marker-small {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 2000;
+}
+
+.glow-bus-puck {
+  width: 34px;
+  height: 34px;
+  background: #2563eb;
+  border: 2.5px solid #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.5), 0 2px 6px rgba(0, 0, 0, 0.25);
+  color: #ffffff;
+  font-size: 16px;
+  position: relative;
+  transition: transform 0.2s ease, background 0.2s ease;
+  z-index: 10;
+}
+
+.glow-bus-leaflet-icon-wrapper {
+  background: transparent !important;
+  border: none !important;
+}
+
+.glow-bus-rotator {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glow-bus-arrow {
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 7px solid #2563eb;
+  z-index: 12;
+}
+
+.glow-bus-pill {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f172a;
+  color: #ffffff;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 9.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+  z-index: 11;
+}
+
+.glow-bus-pulse-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  margin-top: -24px;
+  margin-left: -24px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.35);
+  animation: busPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes busPulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* ── Stop Markers (Clean Numbered Dots) ── */
+.glow-stop-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 800;
+}
+
+.glow-stop-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2.5px solid #0066ff;
+  color: #0066ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.glow-stop-marker:hover .glow-stop-dot {
+  transform: scale(1.25);
+  background: #eff6ff;
+}
+
+.glow-stop-dot.is-passed {
+  background: #64748b;
+  border-color: #94a3b8;
+  color: #ffffff;
+}
+
+.glow-stop-dot.is-next {
+  background: #0066ff;
+  border-color: #ffffff;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.glow-stop-dot.is-start {
+  background: #16a34a;
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+/* ── Campus Destination Pin ── */
+.glow-campus-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 850;
+}
+
+.glow-campus-pin {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1e1b4b;
+  border: 2.5px solid #818cf8;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  box-shadow: 0 3px 8px rgba(30, 27, 75, 0.35);
+  transition: transform 0.15s ease;
+}
+
+.glow-campus-marker:hover .glow-campus-pin {
+  transform: scale(1.2);
+}
+
+/* ── Stop Tooltips (Clean Floating Dark Badges on Hover) ── */
+.glow-stop-tooltip {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+}
+
+.glow-stop-tooltip::before {
+  border-right-color: #0f172a !important;
+}
+
+.glow-campus-tooltip {
+  background: #1e1b4b !important;
+  color: #e0e7ff !important;
+  border: 1px solid #818cf8 !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  box-shadow: 0 4px 12px rgba(30, 27, 75, 0.4) !important;
+}
+
+.glow-campus-tooltip::before {
+  border-right-color: #1e1b4b !important;
+}
+
+/* ── Floating Map HUD Overlays ── */
+.real-map-hud-top-right {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.real-map-hud-bottom-left {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.real-map-pill {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(6px);
+  padding: 5px 11px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.real-map-pill--dark {
+  background: rgba(15, 23, 42, 0.88);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.real-map-pill--green {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.real-map-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 6px #22c55e;
+  display: inline-block;
+  animation: pulseDot 1.5s infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.real-map-btn {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.real-map-btn:hover {
+  background: #f8fafc;
+  border-color: #0066ff;
+  color: #0066ff;
+}
+
+/* ── Custom Leaflet Popup Styles ── */
+.leaflet-popup-content-wrapper {
+  border-radius: 10px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid #e2e8f0 !important;
+  padding: 2px !important;
+}
+
+.glow-popup {
+  padding: 6px 4px;
+  font-family: inherit;
+  color: #0f172a;
+  min-width: 190px;
+}
+
+.glow-popup-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 2px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.glow-popup-subtitle {
+  font-size: 11px;
+  color: #64748b;
+  margin: 0 0 8px 0;
+}
+
+.glow-popup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background: #f8fafc;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  margin-bottom: 6px;
+}
+
+.glow-popup-grid div strong {
+  display: block;
+  font-size: 11.5px;
+  color: #0f172a;
+}
+
+.glow-popup-footer {
+  font-size: 10px;
+  color: #059669;
+  font-weight: 700;
+}

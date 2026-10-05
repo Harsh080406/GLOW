@@ -194,7 +194,7 @@ const TransportReports = () => {
                   <p className="ad-stat-value" style={{ fontSize: 24, fontWeight: 900 }}>
                     {data.totalMileageKm?.toLocaleString()} km
                   </p>
-                  <p className="ad-stat-meta ad-stat-meta--green" style={{ fontSize: 11 }}>34 Routes × 2 Shifts</p>
+                  <p className="ad-stat-meta ad-stat-meta--green" style={{ fontSize: 11 }}>13 Routes × 2 Shifts</p>
                 </div>
               </div>
 

@@ -62,36 +62,37 @@ const runSeed = async () => {
       { zone: "C", amount: 14000, semester: "Fall 2026" },
     ]);
 
-    // 3. Seed Routes (34 Vadodara Corridors to GSFC University)
-    console.log("🗺️ Seeding 34 Vadodara Transit Corridors to GSFC University...");
-    const routeDocs = [];
-    const routeNames = [
-      "Fatehgunj Express", "Alkapuri - RC Dutt Road", "Akota - Old Padra Road", "Sayajigunj Station Corridor",
-      "Manjalpur - Makarpura Line", "Karelibaug Water Tank", "Amit Nagar Circle - Sama", "Waghodia Road Parivar",
-      "Ajwa Road - Sardar Estate", "Gotri - Sevasi Canal", "Vasna - Bhayli Road", "Subhanpura High Tension",
-      "Gorwa - BIDC Industrial", "Nizampura - Chhani Jakat Naka", "Sama-Savli Abacus Circle", "Harni Airport Express",
-      "Tarsali - Susen Circle", "Kalali - Vadsar Ring", "Atladara Sun Pharma Road", "Ellora Park Race Course",
-      "OP Road - Chakli Circle", "Pratapnagar Dabhoi Line", "Panigate Mandvi Heritage", "Warasia Ring Road Link",
-      "New VIP Road Khodiyar", "Bapod Gurukul Line", "Kapurai NH-48 Connect", "Laxmipura Gorwa Link",
-      "Chhani Fertilizernagar Direct", "Bajwa Koyali Petrochem", "Ranoli Dashrath Industrial", "Undera Karachiya Shuttle",
-      "Sindhwai Mata Pratapgunj", "Dandia Bazar Rajmahal Road"
+    // 3. Seed Routes (13 Official University Corridors to GSFC University)
+    console.log("🗺️ Seeding 13 Official Vadodara Transit Corridors to GSFC University...");
+    const officialRoutesData = [
+      { routeNo: 1, name: "Route 1 (Soma Talav - Gurukul - Bapod)", busNo: "GJ-16-AU-4788", driverName: "Ramesh Vasava", driverPhone: "+91 98765 11001", capacity: 45, origin: "SOMA TALAV (BPC PUMP)", durationMin: 55, distanceKm: 18 },
+      { routeNo: 2, name: "Route 2 (Parivar - Vrundavan - Amit Nagar)", busNo: "GJ-06-BX-3670", driverName: "Sanjay Parmar", driverPhone: "+91 98765 11002", capacity: 52, origin: "PARIVAR CHAR RASTA", durationMin: 60, distanceKm: 19 },
+      { routeNo: 3, name: "Route 3 (Khodiyar Nagar - Airport - Dena)", busNo: "GJ-06-BV-2875", driverName: "Jitendra Solanki", driverPhone: "+91 98765 11003", capacity: 50, origin: "KHODIYAR NAGAR", durationMin: 55, distanceKm: 17 },
+      { routeNo: 4, name: "Route 4 (Chankypuri - Abhilasha - Military)", busNo: "GJ-06-AX-3348", driverName: "Prakash Baria", driverPhone: "+91 98765 11004", capacity: 45, origin: "CHANKYPURI", durationMin: 40, distanceKm: 14 },
+      { routeNo: 5, name: "Route 5 (Earth Icon - Jagdish - L&T Circle)", busNo: "GJ-16-AU-4890", driverName: "Dinesh Vankar", driverPhone: "+91 98765 11005", capacity: 48, origin: "EARTH ICON", durationMin: 45, distanceKm: 15 },
+      { routeNo: 6, name: "Route 6 (Voltamp - Maneja - Susen Circle)", busNo: "GJ-06-BV-7584", driverName: "Mukesh Tadvi", driverPhone: "+91 98765 11006", capacity: 52, origin: "VOLTAMP COMPANY", durationMin: 70, distanceKm: 24 },
+      { routeNo: 7, name: "Route 7 (Ravi Park - Kabir Complex - Polo Ground)", busNo: "GJ-16-AU-1390", driverName: "Kishore Rathwa", driverPhone: "+91 98765 11007", capacity: 45, origin: "RAVI PARK", durationMin: 55, distanceKm: 18 },
+      { routeNo: 8, name: "Route 8 (Darbar Chowkdi - Kalaghoda - Mahesana)", busNo: "GJ-06-BV-7989", driverName: "Chetan Chauhan", driverPhone: "+91 98765 11008", capacity: 50, origin: "DARBAR CHOWKDI", durationMin: 65, distanceKm: 20 },
+      { routeNo: 9, name: "Route 9 (Tulsidham - Fatehgunj - Nizampura)", busNo: "GJ-06-BV-2915", driverName: "Mahesh Patel", driverPhone: "+91 98765 11111", capacity: 52, origin: "SARSWATI COMPLEX", durationMin: 65, distanceKm: 19 },
+      { routeNo: 10, name: "Route 10 (Khishcoli - Atladra - Sun Pharma - Tandalja)", busNo: "GJ-16-AU-3840", driverName: "Ashok Dabhi", driverPhone: "+91 98765 11010", capacity: 45, origin: "KHISHCOLI CIRCLE", durationMin: 65, distanceKm: 22 },
+      { routeNo: 11, name: "Route 11 (Hari Nagar - Zansi Ki Rani - Gorwa)", busNo: "GJ-06-AX-1826", driverName: "Naresh Gohil", driverPhone: "+91 98765 11011", capacity: 50, origin: "HARI NAGAR CHAR RASTA", durationMin: 60, distanceKm: 17 },
+      { routeNo: 12, name: "Route 12 (Akshar Chowk - Vasna - Chhani Corridor)", busNo: "GJ-06-BV-6129", driverName: "Haresh Vaghela", driverPhone: "+91 98765 11012", capacity: 52, origin: "AKSHAR CHOWK", durationMin: 65, distanceKm: 21 },
+      { routeNo: 13, name: "Route 13 (Nilamber - Natubhai - Chakli - Genda Circle)", busNo: "GJ-06-BV-6527", driverName: "Dilip Joshi", driverPhone: "+91 98765 11013", capacity: 48, origin: "NILAMBER CIRCLE", durationMin: 55, distanceKm: 16 },
     ];
 
-    for (let i = 1; i <= 34; i++) {
-      const name = routeNames[i - 1] || `Route R-${i < 10 ? '0' + i : i}`;
-      routeDocs.push({
-        name: `Route R-${i < 10 ? '0' + i : i} (${name})`,
-        origin: `Terminal ${i} - ${name.split(" ")[0]}`,
-        destination: "GSFC University Main Campus",
-        distanceKm: Math.floor(10 + (i * 0.4)),
-        durationMin: Math.floor(22 + (i * 0.7)),
-        stops: [
-          { name: `Stop A - ${name.split(" ")[0]} Terminal`, orderIndex: 1, etaOffsetMin: 0, lat: 22.3100 + (i * 0.002), lng: 73.1700 + (i * 0.002) },
-          { name: `Stop B - Chhani / Bajwa Hub`, orderIndex: 2, etaOffsetMin: 14, lat: 22.3480, lng: 73.1680 },
-          { name: "GSFC University Main Campus", orderIndex: 3, etaOffsetMin: 32, lat: 22.3615, lng: 73.1550 },
-        ],
-      });
-    }
+    const routeDocs = officialRoutesData.map((r, i) => ({
+      name: r.name,
+      origin: r.origin,
+      destination: "GSFC University Main Campus",
+      distanceKm: r.distanceKm,
+      durationMin: r.durationMin,
+      stops: [
+        { name: r.origin, orderIndex: 1, etaOffsetMin: 0, lat: 22.3100 + (i * 0.003), lng: 73.1700 + (i * 0.003) },
+        { name: `Corridor Hub - Stop ${i + 1}`, orderIndex: 2, etaOffsetMin: Math.floor(r.durationMin * 0.5), lat: 22.3480, lng: 73.1680 },
+        { name: "GSFC University Main Campus", orderIndex: 3, etaOffsetMin: r.durationMin, lat: 22.3615, lng: 73.1550 },
+      ],
+    }));
+
     const createdRoutes = await Route.insertMany(routeDocs);
 
     // 4. Seed Named Demo Users
@@ -156,37 +157,36 @@ const runSeed = async () => {
     const studentUser = demoUsers[0];
     const driverUser = demoUsers[3];
 
-    // 5. Seed 92 Drivers (Mahesh Patel + 91 generated)
-    console.log("🚌 Seeding 92 Licensed Drivers Roster...");
-    const driverUsersDocs = [];
-    for (let i = 2; i <= 92; i++) {
-      driverUsersDocs.push({
-        name: `Driver ${i}`,
-        email: `driver${i}@glowbus.edu`,
-        passwordHash: defaultPasswordHash,
-        role: "driver",
-        phone: `+91 98765 ${10000 + i}`,
-      });
-    }
-    const createdDriverUsers = await User.insertMany(driverUsersDocs);
-    const allDriverUsers = [driverUser, ...createdDriverUsers];
+    // 5. Seed 13 Official University Drivers
+    console.log("🚌 Seeding 13 Licensed University Drivers Roster...");
+    const otherDriverProfiles = officialRoutesData.filter((r) => r.driverName !== "Mahesh Patel");
+    const driverUsersDocs = otherDriverProfiles.map((r) => ({
+      name: r.driverName,
+      email: `${r.driverName.toLowerCase().replace(/\s+/g, ".")}@glowbus.edu`,
+      passwordHash: defaultPasswordHash,
+      role: "driver",
+      department: "Fleet Operations",
+      phone: r.driverPhone,
+      avatar: r.driverName.split(" ").filter(Boolean).map((n) => n[0]).join(""),
+    }));
+    const createdOtherDriverUsers = await User.insertMany(driverUsersDocs);
 
-    // 6. Seed 85 Buses (Vadodara RTO GJ-06)
-    console.log("🚍 Seeding 85 Fleet Vehicles (Vadodara RTO GJ-06)...");
-    const busDocs = [];
-    const models = ["Tata Starbus Ultra AC", "Volvo B11R AC Luxury", "Eicher Skyline Pro EV", "Ashok Leyland Oyster"];
+    // Arrange all 13 driver users in exact route order (1 to 13)
+    const allDriverUsers = officialRoutesData.map((r) => {
+      if (r.driverName === "Mahesh Patel") return driverUser;
+      return createdOtherDriverUsers.find((u) => u.name === r.driverName) || driverUser;
+    });
 
-    for (let i = 1; i <= 85; i++) {
-      const busIdNum = 100 + i;
-      busDocs.push({
-        registrationNumber: `GJ-06-AB-${1000 + i}`,
-        capacity: i % 2 === 0 ? 52 : 45,
-        occupancy: Math.floor(Math.random() * 40),
-        fuelLevel: Math.floor(60 + Math.random() * 40),
-        status: i % 15 === 0 ? "Maintenance" : i % 3 === 0 ? "Delayed" : "On Route",
-        currentDriverId: allDriverUsers[(i - 1) % allDriverUsers.length]._id,
-      });
-    }
+    // 6. Seed 13 Official University Buses
+    console.log("🚍 Seeding 13 Fleet Vehicles (Vadodara RTO & Official Registrations)...");
+    const busDocs = officialRoutesData.map((r, idx) => ({
+      registrationNumber: r.busNo,
+      capacity: r.capacity || 50,
+      occupancy: Math.floor((r.capacity || 50) * 0.75),
+      fuelLevel: 80 - (idx * 2),
+      status: idx === 3 ? "Delayed" : idx === 11 ? "Maintenance" : "On Route",
+      currentDriverId: allDriverUsers[idx]._id,
+    }));
     const createdBuses = await Bus.insertMany(busDocs);
 
     // Link Routes to Primary Assigned Buses
@@ -199,9 +199,9 @@ const runSeed = async () => {
     const driverDocs = allDriverUsers.map((dUser, idx) => ({
       userId: dUser._id,
       licenseNumber: `GJ-06-2015-${100000 + idx}`,
-      assignedBusId: createdBuses[idx % createdBuses.length]._id,
+      assignedBusId: createdBuses[idx]._id,
       shiftTiming: "07:00 AM - 06:30 PM",
-      safetyRating: 4.8,
+      safetyRating: Number((4.7 + ((idx * 3) % 4) * 0.1).toFixed(1)),
     }));
     await Driver.insertMany(driverDocs);
 

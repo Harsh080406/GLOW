@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useTransit } from "../../../shared/context/TransitContext";
+import RealMapView from "../../../shared/components/RealMapView";
 import "../layout/AdminLayout.css";
 
 const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidth = 1.8 }) => (
@@ -7,81 +8,6 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
     strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d={d} />
   </svg>
-);
-
-const FleetMap = ({ buses, selected, onSelect }) => (
-  <div style={{
-    position: "relative",
-    borderRadius: 12,
-    overflow: "hidden",
-    border: "1.5px solid #e2e8f0",
-    touchAction: "pan-x pan-y pinch-zoom"
-  }}>
-    <svg viewBox="0 0 700 360" style={{ width: "100%", height: "auto", display: "block" }}>
-      <rect width="700" height="360" fill="#f8fafc" />
-
-      {/* City Road Network */}
-      <line x1="0" y1="130" x2="700" y2="130" stroke="#e2e8f0" strokeWidth="16" />
-      <line x1="0" y1="240" x2="700" y2="240" stroke="#e2e8f0" strokeWidth="16" />
-      <line x1="120" y1="0" x2="120" y2="360" stroke="#e2e8f0" strokeWidth="16" />
-      <line x1="300" y1="0" x2="300" y2="360" stroke="#e2e8f0" strokeWidth="16" />
-      <line x1="500" y1="0" x2="500" y2="360" stroke="#e2e8f0" strokeWidth="16" />
-
-      {/* Urban Blocks */}
-      {[[10, 10, 100, 112], [140, 10, 148, 112], [320, 10, 168, 112], [520, 10, 168, 112],
-        [10, 150, 100, 80], [140, 150, 148, 80], [320, 150, 168, 80], [520, 150, 148, 80],
-        [10, 260, 100, 90], [140, 260, 148, 90], [320, 260, 168, 90], [520, 260, 168, 90]].map(([x, y, w, h], i) => (
-        <rect key={i} x={x} y={y} width={w} height={h} rx="8" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1.5" />
-      ))}
-
-      {/* Transit Route Polylines */}
-      <polyline points="60,310 120,200 300,200 500,200 620,200" fill="none" stroke="#0066ff" strokeWidth="4" strokeLinecap="round" />
-      <polyline points="60,250 120,250 300,250 500,250 620,250" fill="none" stroke="#f59e0b" strokeWidth="3" strokeDasharray="8 4" strokeLinecap="round" />
-      <polyline points="60,310 200,310 300,120 500,80 620,60" fill="none" stroke="#16a34a" strokeWidth="3" strokeDasharray="6 3" strokeLinecap="round" />
-      <polyline points="60,180 120,180 300,180 500,180 620,180" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeDasharray="5 5" strokeLinecap="round" />
-
-      {/* Real-Time Live Bus Markers */}
-      {buses.map((b, idx) => {
-        const isSel = selected === (b.busId || b.id);
-        const progress = b.progressPercent !== undefined ? b.progressPercent : (idx * 17) % 100;
-        const posX = 70 + (progress / 100) * 540;
-        const posY = (idx % 4 === 0)
-          ? 280 - (progress / 100) * 190
-          : (idx % 4 === 1)
-          ? 250
-          : (idx % 4 === 2)
-          ? 200
-          : 160;
-
-        return (
-          <g
-            key={b.busId || b.id || idx}
-            transform={`translate(${posX},${posY})`}
-            style={{ cursor: "pointer", transition: "transform 0.4s ease" }}
-            onClick={() => onSelect(b.busId || b.id)}
-          >
-            {isSel && <circle r="22" fill="#0066ff" opacity="0.25" />}
-            <circle
-              r={isSel ? 16 : 13}
-              fill={isSel ? "#0066ff" : b.status === "DELAYED" ? "#f59e0b" : "#0f172a"}
-              stroke="#ffffff"
-              strokeWidth={isSel ? 3 : 2}
-            />
-            <text x="0" y="4" textAnchor="middle" fontSize="11">🚌</text>
-            <text x="0" y={isSel ? -20 : -16} textAnchor="middle" fontSize="10.5" fontWeight="800" fill="#0f172a" stroke="#ffffff" strokeWidth="3" paintOrder="stroke">
-              {b.busId || b.id}
-            </text>
-            <text x="0" y={isSel ? -20 : -16} textAnchor="middle" fontSize="10.5" fontWeight="800" fill="#0f172a">
-              {b.busId || b.id}
-            </text>
-          </g>
-        );
-      })}
-    </svg>
-    <div style={{ position: "absolute", bottom: 12, right: 12, background: "rgba(255,255,255,0.9)", padding: "4px 10px", borderRadius: 20, fontSize: 11.5, fontWeight: 700, border: "1px solid #cbd5e1" }}>
-      Touch pan & pinch-zoom enabled
-    </div>
-  </div>
 );
 
 const AdminTracking = () => {
@@ -113,13 +39,24 @@ const AdminTracking = () => {
   }, [liveBusTelemetry]);
 
   // Merge live telemetry with seed list of active buses (covers fleet of up to 85 buses)
-  const allBusList = Object.values(batchedTelemetry);
-  const displayList = allBusList.length > 0 ? allBusList : [
-    { busId: "BUS-104", regNo: "GJ-06-AB-1004", routeName: "Route 4D (Fatehgunj)", driverName: "Mahesh Patel", speed: 42, nextStop: "Nizampura Char Rasta", etaMinutes: 6, status: "ON_ROUTE", progressPercent: 46 },
-    { busId: "BUS-108", regNo: "GJ-06-CD-1008", routeName: "Route 2A (Sayajigunj)", driverName: "Ramesh Shah", speed: 18, nextStop: "Station Circle", etaMinutes: 12, status: "DELAYED", progressPercent: 62 },
-    { busId: "BUS-101", regNo: "GJ-06-EF-1001", routeName: "Route 1C (Alkapuri)", driverName: "Suresh Joshi", speed: 36, nextStop: "RC Dutt Road", etaMinutes: 4, status: "ON_ROUTE", progressPercent: 28 },
-    { busId: "BUS-115", regNo: "GJ-06-GH-1015", routeName: "Route 5E (Karelibaug)", driverName: "Kailash Dave", speed: 48, nextStop: "Amit Nagar Circle", etaMinutes: 9, status: "ON_ROUTE", progressPercent: 78 },
-  ];
+  const demoBusCoords = {
+    "BUS-104": { lat: 22.3485, lng: 73.1710 },
+    "BUS-108": { lat: 22.3150, lng: 73.1810 },
+    "BUS-101": { lat: 22.3080, lng: 73.1670 },
+    "BUS-115": { lat: 22.3290, lng: 73.1950 },
+  };
+
+  const rawList = Object.values(batchedTelemetry);
+  const displayList = (rawList.length > 0 ? rawList : [
+    { busId: "BUS-104", regNo: "GJ-06-AB-1004", routeName: "Route 4D (Fatehgunj)", driverName: "Mahesh Patel", speed: 42, nextStop: "Nizampura Char Rasta", etaMinutes: 6, status: "ON_ROUTE", progressPercent: 46, lat: 22.3485, lng: 73.1710 },
+    { busId: "BUS-108", regNo: "GJ-06-CD-1008", routeName: "Route 2A (Sayajigunj)", driverName: "Ramesh Shah", speed: 18, nextStop: "Station Circle", etaMinutes: 12, status: "DELAYED", progressPercent: 62, lat: 22.3150, lng: 73.1810 },
+    { busId: "BUS-101", regNo: "GJ-06-EF-1001", routeName: "Route 1C (Alkapuri)", driverName: "Suresh Joshi", speed: 36, nextStop: "RC Dutt Road", etaMinutes: 4, status: "ON_ROUTE", progressPercent: 28, lat: 22.3080, lng: 73.1670 },
+    { busId: "BUS-115", regNo: "GJ-06-GH-1015", routeName: "Route 5E (Karelibaug)", driverName: "Kailash Dave", speed: 48, nextStop: "Amit Nagar Circle", etaMinutes: 9, status: "ON_ROUTE", progressPercent: 78, lat: 22.3290, lng: 73.1950 },
+  ]).map((b, idx) => ({
+    ...b,
+    lat: Number(b.lat) || demoBusCoords[b.busId]?.lat || (22.3100 + ((idx * 7) % 30) * 0.002),
+    lng: Number(b.lng) || demoBusCoords[b.busId]?.lng || (73.1600 + ((idx * 11) % 30) * 0.002),
+  }));
 
   const selBus = displayList.find((b) => (b.busId || b.id) === selected) || displayList[0];
 
@@ -138,7 +75,7 @@ const AdminTracking = () => {
         <div>
           <h2 className="ad-page-title" style={{ fontSize: 20, fontWeight: 800 }}>Live Fleet GPS Telemetry Console</h2>
           <p className="ad-page-sub" style={{ color: "#64748b", fontSize: 13 }}>
-            High-frequency 3-second GPS updates across 85 fleet channels · Throttled batch rendering
+            High-frequency 3-second GPS updates across 85 fleet channels · Real Vadodara Map view
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -155,13 +92,14 @@ const AdminTracking = () => {
         </div>
       </div>
 
-      {/* Grid: Map on Left (or Top), Selected Bus Details on Right */}
+      {/* Grid: Real Map on Left (or Top), Selected Bus Details on Right */}
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 20, marginBottom: 20 }}>
         <div>
-          <FleetMap
+          <RealMapView
             buses={displayList}
-            selected={selected}
-            onSelect={(id) => setSelected(id)}
+            selectedBusId={selected}
+            onSelectBus={(id) => setSelected(id)}
+            height="440px"
           />
         </div>
 

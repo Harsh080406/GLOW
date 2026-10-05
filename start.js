@@ -2,7 +2,7 @@
  * GLOW Monorepo Unified Dev Runner
  * Starts both Backend API (port 5000) and Frontend (port 5173) concurrently.
  */
-import { spawn } from "child_process";
+import { spawn, execSync } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -38,15 +38,27 @@ frontend.on("error", (err) => {
   console.error("❌ Failed to start Frontend process:", err);
 });
 
+// Helper to kill entire process tree on Windows or POSIX
+const killProcessTree = (proc) => {
+  if (!proc || !proc.pid) return;
+  try {
+    if (isWindows) {
+      execSync(`taskkill /pid ${proc.pid} /T /F`, { stdio: "ignore" });
+    } else {
+      proc.kill("SIGTERM");
+    }
+  } catch (e) {
+    try {
+      proc.kill();
+    } catch (ignore) {}
+  }
+};
+
 // Graceful cleanup on SIGINT/SIGTERM
 const cleanup = () => {
   console.log("\n🛑 Stopping GLOW processes...");
-  try {
-    backend.kill();
-  } catch (e) {}
-  try {
-    frontend.kill();
-  } catch (e) {}
+  killProcessTree(backend);
+  killProcessTree(frontend);
   process.exit(0);
 };
 

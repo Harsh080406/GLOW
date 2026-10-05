@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useTransit } from "../../../shared/context/TransitContext";
+import { OFFICIAL_13_BUSES } from "../../../shared/data/officialRoutes2026";
 import "../layout/AdminLayout.css";
 
 const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidth = 1.8 }) => (
@@ -22,7 +23,7 @@ const BusIcon = ({ size = 20, color = "currentColor" }) => (
 
 const ManageFleet = () => {
   const { authFetch } = useTransit();
-  const [buses, setBuses] = useState([]);
+  const [buses, setBuses] = useState(() => (Array.isArray(OFFICIAL_13_BUSES) ? OFFICIAL_13_BUSES : []));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -186,7 +187,7 @@ const ManageFleet = () => {
         <div className="ad-stat-card">
           <div className="ad-stat-body">
             <p className="ad-stat-label">Total Fleet Buses</p>
-            <p className="ad-stat-value">{buses.length || 85}</p>
+            <p className="ad-stat-value">{buses.length || 13}</p>
           </div>
           <div className="ad-stat-icon" style={{ background: "#eff6ff" }}>
             <BusIcon size={24} color="#3b82f6" />

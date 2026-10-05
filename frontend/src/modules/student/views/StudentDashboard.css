@@ -4,8 +4,7 @@
 
 /* ── HERO BUS CARD ──────────────────────────────────────── */
 .sdb-hero-card {
-  display: grid;
-  grid-template-columns: 1.25fr 0.75fr;
+  display: block;
   background: linear-gradient(135deg, #1d6fe9 0%, #0d52c7 100%);
   border-radius: 20px;
   overflow: hidden;

@@ -20,46 +20,6 @@ const BusIcon = ({ size = 20, color = "currentColor" }) => (
   </svg>
 );
 
-/* Mini live map */
-const MiniMap = ({ progress = 46 }) => {
-  const busX = 50 + (progress / 100) * 430;
-  const busY = 160 - (progress / 100) * 120;
-
-  return (
-    <div className="sdb-map">
-      <svg viewBox="0 0 500 180" style={{ width: "100%", height: "100%", display: "block" }}>
-        <rect width="500" height="180" fill="#f1f5f9" />
-        <rect x="0" y="55" width="500" height="22" fill="#ffffff" opacity="0.8" />
-        <rect x="0" y="110" width="500" height="18" fill="#ffffff" opacity="0.7" />
-        <rect x="80" y="0" width="18" height="180" fill="#ffffff" opacity="0.7" />
-        <rect x="200" y="0" width="15" height="180" fill="#ffffff" opacity="0.7" />
-        <rect x="340" y="0" width="18" height="180" fill="#ffffff" opacity="0.7" />
-        {[
-          [10, 10, 60, 38], [108, 10, 82, 38], [225, 10, 105, 38], [368, 10, 120, 38],
-          [10, 85, 60, 18], [108, 85, 82, 18], [225, 85, 105, 18], [368, 85, 120, 18],
-          [10, 136, 60, 38], [108, 136, 82, 38], [225, 136, 105, 38], [368, 136, 120, 38],
-        ].map(([x, y, w, h], i) => (
-          <rect key={i} x={x} y={y} width={w} height={h} rx="4" fill="#e2e8f0" opacity="0.8" />
-        ))}
-        <polyline points="50,160 99,66 215,66 358,66 480,40" fill="none" stroke="#0066ff" strokeWidth="4" strokeLinecap="round" />
-        <circle cx="50" cy="160" r="6" fill="#0066ff" stroke="#fff" strokeWidth="2" />
-        <circle cx="480" cy="40" r="6" fill="#0f172a" stroke="#fff" strokeWidth="2" />
-        {/* Bus position */}
-        <g transform={`translate(${busX}, ${busY})`}>
-          <circle r="14" fill="#0066ff" stroke="#fff" strokeWidth="2.5" />
-          <text x="-6" y="4" fontSize="10">🚌</text>
-        </g>
-        <text x="30" y="173" fontSize="10" fill="#0066ff" fontWeight="700">Fatehgunj Stop</text>
-        <text x="390" y="32" fontSize="10" fill="#0f172a" fontWeight="700">GSFC University</text>
-      </svg>
-      <div className="sdb-map-badge-wrap">
-        <div className="sdb-live-tag">
-          <span className="sdb-pulse-dot" /> 📡 Live Driver Telemetry Feed
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const StudentDashboardView = () => {
   const navigate = useNavigate();
@@ -124,14 +84,31 @@ const StudentDashboardView = () => {
               </div>
             </div>
           </div>
-          <button className="sdb-track-btn" onClick={() => navigate("/student/tracking")}>
-            <Icon d="M5 3l14 9-14 9V3z" size={16} stroke="#0066ff" />
-            Track Bus on Live Map
-          </button>
-        </div>
-        <div className="sdb-hero-right">
-          <MiniMap progress={telemetry.progressPercent || 46} />
-          <p className="sdb-map-label">Bus is near {locationName} · ETA {etaMinutes} min ({speed} km/h)</p>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
+            <button className="sdb-track-btn" onClick={() => navigate("/student/tracking")}>
+              <Icon d="M5 3l14 9-14 9V3z" size={16} stroke="#0066ff" />
+              Track Bus on Live Map
+            </button>
+            <button
+              style={{
+                background: "rgba(255, 255, 255, 0.18)",
+                color: "#ffffff",
+                border: "1px solid rgba(255, 255, 255, 0.35)",
+                borderRadius: 10,
+                padding: "10px 18px",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+              onClick={() => navigate("/student/my-bus")}
+            >
+              <BusIcon size={16} color="#ffffff" />
+              View My Bus & Crew
+            </button>
+          </div>
         </div>
       </div>
 
@@ -180,6 +157,48 @@ const StudentDashboardView = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* ── MISSED BUS RESCUE BANNER ─────────────────────────── */}
+      <div style={{
+        background: "#eff6ff",
+        border: "1.5px solid #bfdbfe",
+        borderRadius: 14,
+        padding: "12px 18px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: 12,
+        marginBottom: 20
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 22 }}>🚨</span>
+          <div>
+            <strong style={{ fontSize: 13.5, color: "#1e3a8a" }}>Missed your morning bus?</strong>
+            <p style={{ margin: 0, fontSize: 12, color: "#475569" }}>
+              12 other official university fleet buses are currently on route to GSFC Campus. Track any bus live & catch it at a nearby stop.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => navigate("/student/tracking")}
+          style={{
+            background: "#2563eb",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: 8,
+            padding: "8px 16px",
+            fontSize: 12.5,
+            fontWeight: 700,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6
+          }}
+        >
+          Find Alternative Bus ➔
+        </button>
       </div>
 
       {/* ── QUICK ACTIONS ──────────────────────────────────────── */}

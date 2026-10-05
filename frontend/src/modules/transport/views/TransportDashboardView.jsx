@@ -126,15 +126,15 @@ const TransportDashboard = () => {
   const topCards = [
     {
       label: "Active Buses",
-      value: kpis.totalFleet ? `${kpis.busesOnRoute || 79} / ${kpis.totalFleet}` : "79 / 85",
-      sub: "On-Route & Standby",
+      value: kpis.totalFleet ? `${kpis.busesOnRoute || 13} / ${kpis.totalFleet}` : "13 / 13",
+      sub: "13 Official Fleet Units",
       color: "#059669",
       path: "/transport/fleet",
     },
     {
       label: "Active Drivers",
-      value: "89 / 92",
-      sub: "3 on Approved Leave",
+      value: "13 / 13",
+      sub: "All Official Drivers Active",
       color: "#2563eb",
       path: "/transport/drivers",
     },

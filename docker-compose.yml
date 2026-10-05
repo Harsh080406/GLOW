@@ -1,0 +1,125 @@
+services:
+  # ─────────────────────────────────────────────────────────────
+  # 1. MongoDB with Single-Node Replica Set (rs0)
+  # Enables ACID multi-document transactions for local/staging parity
+  # ─────────────────────────────────────────────────────────────
+  mongo:
+    image: mongo:7.0
+    container_name: glow-mongo
+    restart: unless-stopped
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+    networks:
+      - glow-network
+    healthcheck:
+      test: >
+        mongosh --port 27017 --eval '
+          try {
+            if (rs.status().ok === 1) quit(0);
+          } catch (e) {}
+          try {
+            rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "mongo:27017" }] });
+          } catch (e) {}
+          sleep(1500);
+          try {
+            if (rs.status().ok === 1) quit(0);
+          } catch (e) {}
+          quit(1);
+        ' --quiet || exit 1
+      interval: 4s
+      timeout: 10s
+      retries: 30
+      start_period: 4s
+
+  # ─────────────────────────────────────────────────────────────
+  # 2. GLOW Backend API & Real-Time Telemetry WebSocket Gateway
+  # ─────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: glow-backend
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongo:27017/glow_transit?replicaSet=rs0
+    ports:
+      - "5000:5000"
+    volumes:
+      - backend_uploads:/app/uploads
+    networks:
+      - glow-network
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/api/v1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ─────────────────────────────────────────────────────────────
+  # 3. GLOW Frontend SPA (Production Nginx Reverse Proxy)
+  # ─────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: glow-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - glow-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # ─────────────────────────────────────────────────────────────
+  # 4. Optional Utility: Database Seed / Migration Runner
+  # Run on-demand: docker compose run --rm db-seed
+  # ─────────────────────────────────────────────────────────────
+  db-seed:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: glow-db-seed
+    profiles:
+      - tools
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongo:27017/glow_transit?replicaSet=rs0
+    command: ["npm", "run", "db:seed"]
+    networks:
+      - glow-network
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+volumes:
+  mongo_data:
+    driver: local
+  mongo_config:
+    driver: local
+  backend_uploads:
+    driver: local
+
+networks:
+  glow-network:
+    driver: bridge

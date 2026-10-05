@@ -92,7 +92,7 @@ const TransportLayout = ({ children, title: overrideTitle, subtitle: overrideSub
                 }}
               >
                 <span style={{ color: "#16a34a" }}>●</span>
-                <span>28/85 Dispatched</span>
+                <span>13/13 Dispatched</span>
               </div>
 
               {/* Emergency Alert Indicator */}

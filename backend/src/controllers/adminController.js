@@ -52,10 +52,10 @@ export const getAdminKPIs = async (req, res, next) => {
 
     const kpis = {
       students: { label: "Students", value: totalStudents || 4250, sub: "Registered Commuters" },
-      buses: { label: "Buses", value: `${activeBusesCount || 28}/${totalBuses || 85}`, sub: "Active / Fleet Total" },
-      drivers: { label: "Drivers", value: totalDrivers || 92, sub: "Licensed Roster" },
-      routes: { label: "Routes", value: totalRoutes || 34, sub: "Active Corridors" },
-      activeTrips: { label: "Active Trips", value: activeTripsCount || 28, sub: "On-Route Now", isLive: true },
+      buses: { label: "Buses", value: `${activeBusesCount || 11}/${totalBuses || 13}`, sub: "Active / Fleet Total" },
+      drivers: { label: "Drivers", value: totalDrivers || 13, sub: "Licensed Roster" },
+      routes: { label: "Routes", value: totalRoutes || 13, sub: "Active Corridors" },
+      activeTrips: { label: "Active Trips", value: activeTripsCount || 11, sub: "On-Route Now", isLive: true },
       pendingFees: {
         label: "Pending Fees",
         value: `₹${(pendingDuesAmount / 100000).toFixed(1)}L`,
