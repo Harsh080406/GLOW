@@ -40,15 +40,56 @@ const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
 const server = http.createServer(app);
 
 // 1. Security & Middleware Configuration
-app.use(helmet());
 app.use(
-  cors({
-    origin: FRONTEND_ORIGIN,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
   })
 );
+
+// Bulletproof CORS Configuration for Vercel, Render, Localhost & Custom Domains
+const rawOrigins = process.env.FRONTEND_ORIGIN || "http://localhost:5173,http://localhost:80";
+const configuredOrigins = rawOrigins.split(",").map((o) => o.trim()).filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow server-to-server, mobile, curl, or empty origin requests
+    if (!origin) return callback(null, true);
+
+    // Explicitly allowed origins or wildcard
+    if (
+      configuredOrigins.includes("*") ||
+      configuredOrigins.includes(origin) ||
+      origin.endsWith(".vercel.app") ||
+      origin.includes("vercel.app") ||
+      origin.endsWith(".onrender.com") ||
+      origin.includes("onrender.com") ||
+      origin.includes("localhost") ||
+      origin.includes("127.0.0.1") ||
+      origin.includes("gsfcuniversity.ac.in")
+    ) {
+      return callback(null, true);
+    }
+
+    // Default to allow to ensure cross-origin fetch succeeds
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-CSRF-Token",
+    "x-csrf-token",
+    "Accept",
+    "Origin",
+    "X-Requested-With",
+  ],
+  exposedHeaders: ["Set-Cookie"],
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

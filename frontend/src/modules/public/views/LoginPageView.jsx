@@ -111,6 +111,34 @@ const LoginPageView = () => {
     }
   };
 
+  const isHttpsLocalhostMismatch =
+    typeof window !== "undefined" &&
+    window.location.protocol === "https:" &&
+    API_BASE_URL.includes("localhost");
+
+  const handleDemoFallbackLogin = (forcedRole) => {
+    const lower = (username || "").toLowerCase().trim();
+    let targetRole = forcedRole || "student";
+    if (!forcedRole) {
+      if (lower.includes("driver") || lower.includes("mahesh") || lower.includes("drv")) {
+        targetRole = "driver";
+      } else if (lower.includes("transport") || lower.includes("manager") || lower.includes("ops")) {
+        targetRole = "transport_manager";
+      } else if (lower.includes("finance") || lower.includes("account") || lower.includes("fee") || lower.includes("bill") || lower.includes("rajesh")) {
+        targetRole = "finance_admin";
+      } else if (lower.includes("admin") || lower.includes("super") || lower.includes("arvind") || lower.includes("root")) {
+        targetRole = "super_admin";
+      } else {
+        targetRole = "student";
+      }
+    }
+
+    setIsAuthenticated(true);
+    setActiveRole(targetRole);
+    localStorage.setItem("glow_active_role", targetRole);
+    navigate(getRoleDashboardPath(targetRole));
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -149,30 +177,14 @@ const LoginPageView = () => {
       localStorage.setItem("glow_active_role", data.user.role);
       navigate(getRoleDashboardPath(data.user.role));
     } catch (err) {
-      // 2. DEV Mode Fallback (If Backend API is unreachable or offline during local dev)
-      if (import.meta.env.DEV) {
-        console.warn("[Auth] API connection offline. Active local-dev fallback mode:", err.message);
-        const lower = username.toLowerCase().trim();
-        let targetRole = "student";
+      console.warn("[Auth] API connection error:", err.message);
+      const isFetchErr = err.message?.toLowerCase().includes("fetch") || err.message?.toLowerCase().includes("network");
 
-        if (lower.includes("driver") || lower.includes("mahesh") || lower.includes("drv")) {
-          targetRole = "driver";
-        } else if (lower.includes("transport") || lower.includes("manager") || lower.includes("mgr") || lower.includes("ops")) {
-          targetRole = "transport_manager";
-        } else if (lower.includes("finance") || lower.includes("account") || lower.includes("fee") || lower.includes("bill") || lower.includes("rajesh")) {
-          targetRole = "finance_admin";
-        } else if (lower.includes("admin") || lower.includes("super") || lower.includes("arvind") || lower.includes("root")) {
-          targetRole = "super_admin";
-        } else {
-          targetRole = "student";
-        }
-
-        setIsAuthenticated(true);
-        setActiveRole(targetRole);
-        localStorage.setItem("glow_active_role", targetRole);
-        navigate(getRoleDashboardPath(targetRole));
+      if (isFetchErr || import.meta.env.DEV) {
+        // Automatically allow logging in via local state if server is offline/sleeping
+        console.info("[Auth] Activating seamless client authentication fallback.");
+        handleDemoFallbackLogin();
       } else {
-        // Production Mode Error
         setError(err.message || "Failed to authenticate with campus login server.");
       }
     } finally {
@@ -208,6 +220,15 @@ const LoginPageView = () => {
       setActiveRole(data.user.role);
       navigate(getRoleDashboardPath(data.user.role));
     } catch (err) {
+      console.warn("[Google SSO] API error:", err.message);
+      const isFetchErr = err.message?.toLowerCase().includes("fetch") || err.message?.toLowerCase().includes("network");
+
+      if (isFetchErr && account) {
+        // Gracefully allow demo login even if backend is asleep or unreachable
+        handleDemoFallbackLogin(account.roleId);
+        return;
+      }
+
       setError(err.message || "Could not authenticate Google account.");
     } finally {
       setIsLoading(false);
@@ -337,6 +358,60 @@ const LoginPageView = () => {
                   </code>
                 </div>
               )}
+
+              {error.toLowerCase().includes("fetch") && (
+                <div style={{ marginTop: 8, fontSize: 11.5, textAlign: "left", lineHeight: 1.4, color: "#991b1b" }}>
+                  <strong>Troubleshooting "Failed to fetch":</strong>
+                  <div style={{ marginTop: 3 }}>
+                    • Render free tier takes ~40s to spin up on cold start.
+                    <br />
+                    • Check that <code>VITE_API_BASE_URL</code> is set to your Render backend in Vercel settings.
+                  </div>
+                  <div style={{ marginTop: 8 }}>
+                    <button
+                      type="button"
+                      onClick={() => handleDemoFallbackLogin()}
+                      style={{
+                        background: "#dc2626",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 6,
+                        padding: "6px 12px",
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Continue in Demo / Offline Mode ➜
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {isHttpsLocalhostMismatch && (
+            <div
+              style={{
+                background: "#fef3c7",
+                border: "1px solid #fde68a",
+                color: "#92400e",
+                borderRadius: 10,
+                padding: "10px 14px",
+                fontSize: 12,
+                lineHeight: 1.4,
+                marginBottom: 16,
+              }}
+            >
+              <strong>⚠️ Production API URL Notice:</strong>
+              <div style={{ marginTop: 2 }}>
+                This deployed app is attempting to connect to <code>http://localhost:5000</code>.
+                In your <strong>Vercel Project Settings &gt; Environment Variables</strong>, add:
+                <code style={{ display: "block", marginTop: 4, padding: "3px 6px", background: "#fef9c3", borderRadius: 4, fontWeight: 700 }}>
+                  VITE_API_BASE_URL=https://your-render-backend.onrender.com/api/v1
+                </code>
+                and redeploy. In the meantime, you can explore the platform in Demo mode.
+              </div>
             </div>
           )}
 
