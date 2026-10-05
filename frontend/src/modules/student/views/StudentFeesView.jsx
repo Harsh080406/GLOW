@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTransit } from "../../../shared/context/TransitContext";
+import { downloadFeeReceiptPdf } from "../../../shared/utils/feeReceiptPdf";
 import "../../admin/layout/AdminLayout.css";
 
 const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidth = 1.8 }) => (
@@ -109,9 +110,28 @@ const StudentFees = () => {
             <h3 className="ad-card-title">Payment History & Receipts</h3>
             <p style={{ fontSize: 12.5, color: "#7c8494", marginTop: 2 }}>Official tax invoices and digital payment receipts</p>
           </div>
-          <button className="ad-btn-secondary" onClick={() => window.print()}>
-            <Icon d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" size={15} />
-            Print Statement
+          <button
+            className="ad-btn-secondary"
+            onClick={() => {
+              const latest = studentTxns[0] || {
+                receiptId: "REC-2026-8910",
+                amount: paidFee || totalFee,
+                date: new Date().toLocaleDateString("en-IN"),
+                method: "Online Banking / UPI",
+                refNo: "UTR-GSFC-ONLINE",
+              };
+              downloadFeeReceiptPdf({
+                ...latest,
+                studentName: student.name,
+                studentId: student.id,
+                dept: student.dept,
+                route: student.routeName,
+                zone: student.zone,
+              });
+            }}
+          >
+            <Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" size={15} />
+            Download Fee Slip (PDF)
           </button>
         </div>
 
@@ -125,7 +145,7 @@ const StudentFees = () => {
                 <th className="ad-th">Payment Method</th>
                 <th className="ad-th">Reference / UTR</th>
                 <th className="ad-th">Status</th>
-                <th className="ad-th">Receipt</th>
+                <th className="ad-th">Receipt Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -145,14 +165,34 @@ const StudentFees = () => {
                       <span className="ad-badge ad-badge--green">● {t.status}</span>
                     </td>
                     <td className="ad-td">
-                      <button
-                        className="ad-action-btn"
-                        style={{ color: "#2563eb", borderColor: "#bfdbfe", background: "#eff6ff" }}
-                        onClick={() => setSelectedReceipt(t)}
-                      >
-                        <Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" size={13} stroke="#2563eb" />
-                        Receipt
-                      </button>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button
+                          className="ad-action-btn"
+                          style={{ color: "#2563eb", borderColor: "#bfdbfe", background: "#eff6ff" }}
+                          onClick={() => setSelectedReceipt(t)}
+                          title="Preview receipt details"
+                        >
+                          View
+                        </button>
+                        <button
+                          className="ad-action-btn"
+                          style={{ color: "#16a34a", borderColor: "#bbf7d0", background: "#f0fdf4" }}
+                          onClick={() =>
+                            downloadFeeReceiptPdf({
+                              ...t,
+                              studentName: student.name,
+                              studentId: student.id,
+                              dept: student.dept,
+                              route: student.routeName,
+                              zone: student.zone,
+                            })
+                          }
+                          title="Directly download official fee slip PDF"
+                        >
+                          <Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" size={13} stroke="#16a34a" />
+                          Download PDF
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -280,16 +320,32 @@ const StudentFees = () => {
                 <div style={{ display: "flex", gap: 10 }}>
                   <button
                     onClick={() => {
+                      downloadFeeReceiptPdf({
+                        ...successTxn,
+                        studentName: currentStudent.name,
+                        studentId: currentStudent.id,
+                        dept: currentStudent.dept,
+                        route: currentStudent.routeName,
+                        zone: currentStudent.zone,
+                      });
+                    }}
+                    style={{ flex: 1.2, padding: "12px", background: "#16a34a", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                  >
+                    <Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" size={15} stroke="#fff" />
+                    Download PDF Slip
+                  </button>
+                  <button
+                    onClick={() => {
                       setSelectedReceipt(successTxn);
                       setShowPayModal(false);
                     }}
                     style={{ flex: 1, padding: "12px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}
                   >
-                    View Receipt
+                    View Details
                   </button>
                   <button
                     onClick={() => setShowPayModal(false)}
-                    style={{ flex: 1, padding: "12px", background: "#e2e8f0", color: "#334155", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}
+                    style={{ padding: "12px 16px", background: "#e2e8f0", color: "#334155", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}
                   >
                     Done
                   </button>
@@ -356,11 +412,20 @@ const StudentFees = () => {
 
             <div style={{ display: "flex", gap: 10 }}>
               <button
-                onClick={() => window.print()}
+                onClick={() => {
+                  downloadFeeReceiptPdf({
+                    ...selectedReceipt,
+                    studentName: selectedReceipt.studentName || student.name,
+                    studentId: selectedReceipt.studentId || student.id,
+                    dept: student.dept,
+                    route: selectedReceipt.route || student.routeName,
+                    zone: student.zone,
+                  });
+                }}
                 style={{ flex: 1, padding: "12px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
               >
-                <Icon d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" size={16} stroke="#fff" />
-                Print / Download PDF
+                <Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" size={16} stroke="#fff" />
+                Download PDF Fee Slip
               </button>
               <button
                 onClick={() => setSelectedReceipt(null)}
