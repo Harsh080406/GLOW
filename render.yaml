@@ -1,0 +1,40 @@
+# ==============================================================================
+# Render Blueprint Specification for GLOW Backend & Telemetry Service
+# ==============================================================================
+services:
+  - type: web
+    name: glow-backend
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node src/server.js
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: PASS_HMAC_SECRET
+        generateValue: true
+      - key: RECEIPT_HMAC_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        value: 703668017757-grtcb9lsii76a85h9hde00sae9nsmkla.apps.googleusercontent.com
+      - key: GOOGLE_CLIENT_SECRET
+        value: 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
+      - key: GOOGLE_CALLBACK_URL
+        sync: false
+      - key: GPS_SIMULATOR_ENABLED
+        value: "true"
+      - key: GPS_POLL_INTERVAL_MS
+        value: "4000"
