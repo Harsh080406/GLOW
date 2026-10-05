@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useTransit } from "../../../shared/context/TransitContext";
 import GlowLogo from "../../../shared/assets/GlowLogo";
+import { downloadFeeReceiptPdf } from "../../../shared/utils/feeReceiptPdf";
 
 
 const Icon = ({ d, size = 18, stroke = "currentColor", fill = "none", strokeWidth = 1.8 }) => (
@@ -120,12 +121,19 @@ export const RecordOfflinePaymentModal = ({ isOpen, onClose, defaultStudentId = 
               <button
                 className="dd-modal-submit-btn"
                 style={{ flex: 1 }}
-                onClick={() => {
-                  window.print();
+                onClick={async () => {
+                  await downloadFeeReceiptPdf({
+                    ...successTxn,
+                    studentName: selectedStudent?.name,
+                    studentId: selectedStudent?.id,
+                    dept: selectedStudent?.dept,
+                    route: selectedStudent?.routeName || selectedStudent?.route,
+                    zone: selectedStudent?.zone,
+                  });
                   onClose();
                 }}
               >
-                🖨️ Print Tax Invoice
+                📥 Download Tax Invoice (PDF)
               </button>
               <button
                 className="ad-btn-secondary"
@@ -302,8 +310,8 @@ export const ViewReceiptModal = ({ isOpen, onClose, transaction }) => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.warn("PDF download failed, falling back to print:", err.message);
-      window.print();
+      console.warn("Server PDF fetch note, generating client-side certified PDF:", err.message);
+      await downloadFeeReceiptPdf(transaction);
     } finally {
       setIsDownloading(false);
     }

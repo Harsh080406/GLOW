@@ -3,6 +3,7 @@ import FinanceSidebar from "../layout/FinanceSidebar";
 import RoleSwitcherBar from "../../../shared/components/RoleSwitcherBar";
 import { useTransit } from "../../../shared/context/TransitContext";
 import { exportToExcel } from "../../../shared/utils/excelExport";
+import { downloadFeeReceiptPdf } from "../../../shared/utils/feeReceiptPdf";
 import { ViewReceiptModal, RecordOfflinePaymentModal } from "./FinanceModals";
 import "../../admin/layout/AdminLayout.css";
 
@@ -63,8 +64,8 @@ const ReceiptsInvoices = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.warn("Direct PDF download note:", err.message);
-      setActiveReceipt(item);
+      console.warn("Direct server PDF fetch fallback, generating client PDF:", err.message);
+      await downloadFeeReceiptPdf(item);
     } finally {
       setDownloadingId(null);
     }

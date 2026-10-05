@@ -23,6 +23,7 @@ import {
   updateStudentProfile,
   changePassword,
 } from "../controllers/studentController.js";
+import { downloadReceiptPdf } from "../controllers/financeController.js";
 import { authenticateJWT, optionalAuthenticateJWT } from "../middleware/auth.js";
 import { requireRole } from "../middleware/requireRole.js";
 import { uploadChallanMiddleware, scanUploadedFile } from "../middleware/uploadMiddleware.js";
@@ -45,6 +46,9 @@ router.get("/route/pdf", optionalAuthenticateJWT, downloadRoutePdf);
 router.get("/me/route/pdf", optionalAuthenticateJWT, downloadRoutePdf);
 router.get("/pass/pdf", optionalAuthenticateJWT, downloadPassPdf);
 router.get("/me/pass/pdf", optionalAuthenticateJWT, downloadPassPdf);
+router.get("/receipts/:id/pdf", optionalAuthenticateJWT, downloadReceiptPdf);
+router.get("/me/receipts/:id/pdf", optionalAuthenticateJWT, downloadReceiptPdf);
+router.get("/fees/receipt/:id/pdf", optionalAuthenticateJWT, downloadReceiptPdf);
 
 router.use(authenticateJWT);
 router.use(requireRole("student", "super_admin", "transport_manager"));
