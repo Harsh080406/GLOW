@@ -366,7 +366,8 @@ export const TransitProvider = ({ children }) => {
         return await response.json();
       } catch (err) {
         console.warn(`[TransitContext] AuthFetch failed for ${endpoint}:`, err.message);
-        throw err;
+        // Gracefully return null for network failure (cold starts, offline) to prevent component crashes
+        return null;
       }
     },
     [accessToken]
