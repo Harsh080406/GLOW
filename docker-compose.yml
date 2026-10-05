@@ -43,9 +43,13 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: glow-backend
-    restart: unless-stopped
     env_file:
-      - .env.production
+      - path: .env.production
+        required: false
+      - path: .env.production.example
+        required: false
+      - path: .env
+        required: false
     environment:
       - NODE_ENV=production
       - PORT=5000
@@ -98,10 +102,13 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: glow-db-seed
-    profiles:
-      - tools
     env_file:
-      - .env.production
+      - path: .env.production
+        required: false
+      - path: .env.production.example
+        required: false
+      - path: .env
+        required: false
     environment:
       - NODE_ENV=production
       - MONGODB_URI=mongodb://mongo:27017/glow_transit?replicaSet=rs0
