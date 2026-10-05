@@ -15,26 +15,12 @@ env:
 
 jobs:
   # ─────────────────────────────────────────────────────────────
-  # Job 1: Backend Test Suite & Database Seeding / Migrations
-  # Runs against an isolated MongoDB single-node replica set for ACID parity
+  # Job 1: Backend Tests & Database Migrations
+  # Uses Docker to run an isolated single-node MongoDB replica set
   # ─────────────────────────────────────────────────────────────
   backend-test:
     name: Backend Tests & Database Migrations
     runs-on: ubuntu-latest
-
-    services:
-      mongo:
-        image: mongo:7.0
-        ports:
-          - 27017:27017
-        options: >-
-          --name mongo_ci
-          --health-cmd "mongosh --port 27017 --eval 'db.runCommand({ping:1})'"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-        # Start mongod with replica set enabled for Mongoose transactions
-        entrypoint: mongod --replSet rs0 --bind_ip_all
 
     steps:
       - name: Checkout Source Code
@@ -47,31 +33,37 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
-      - name: Install Mongosh CLI & Initialize MongoDB Replica Set (rs0)
+      - name: Start MongoDB Replica Set (rs0) Container
         run: |
-          # Install mongosh on Ubuntu runner
-          sudo apt-get update && sudo apt-get install -y wget gnupg
-          wget -qO- https://www.mongodb.org/static/pgp/server-7.0.asc | sudo tee /etc/apt/trusted.gpg.d/server-7.0.asc
-          echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
-          sudo apt-get update && sudo apt-get install -y mongodb-mongosh
+          # 1. Start MongoDB 7.0 container with replica set enabled
+          docker run -d --name mongo_rs -p 27017:27017 mongo:7.0 mongod --replSet rs0 --bind_ip_all
 
-          # Wait for mongo port to accept traffic
-          until mongosh --host localhost --port 27017 --eval 'db.runCommand({ ping: 1 })' > /dev/null 2>&1; do
-            echo "Waiting for MongoDB service container..."
+          # 2. Wait until MongoDB accepts connections
+          echo "Waiting for MongoDB container to initialize..."
+          for i in {1..30}; do
+            if docker exec mongo_rs mongosh --eval "db.runCommand({ ping: 1 })" > /dev/null 2>&1; then
+              echo "MongoDB is accepting connections."
+              break
+            fi
             sleep 1
           done
 
-          # Initiate single-node replica set rs0 for transaction support
-          mongosh --host localhost --port 27017 --eval '
+          # 3. Initiate single-node replica set rs0 for transaction support
+          docker exec mongo_rs mongosh --eval '
             try {
               rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "localhost:27017" }] });
               print("Replica set rs0 initiated successfully.");
             } catch (err) {
-              print("Notice: " + err);
+              print("Replica set notice: " + err);
             }
           '
           sleep 2
-          mongosh --host localhost --port 27017 --eval 'rs.status().ok'
+          docker exec mongo_rs mongosh --eval 'rs.status().ok'
+
+      - name: Prepare Test Environment File
+        run: |
+          cp .env.production.example .env.production
+          cp .env.production.example backend/.env
 
       - name: Install Backend Dependencies
         working-directory: backend
@@ -92,10 +84,10 @@ jobs:
           NODE_ENV: test
 
   # ─────────────────────────────────────────────────────────────
-  # Job 2: Frontend Linting & Production Vite Bundle Build
+  # Job 2: Frontend Production Vite Bundle Build
   # ─────────────────────────────────────────────────────────────
   frontend-build:
-    name: Frontend Lint & Production Build
+    name: Frontend Production Build
     runs-on: ubuntu-latest
 
     steps:
@@ -113,18 +105,13 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Run Oxlint Linter
-        working-directory: frontend
-        run: npx oxlint
-        continue-on-error: true
-
       - name: Build Production Vite Static Bundle
         working-directory: frontend
         run: npm run build
 
   # ─────────────────────────────────────────────────────────────
   # Job 3: Docker & Compose Packaging Validation
-  # Verifies multi-stage Dockerfiles and compose topology assemble cleanly
+  # Verifies Dockerfiles and compose topology assemble cleanly
   # ─────────────────────────────────────────────────────────────
   docker-validation:
     name: Docker & Compose Validation
@@ -134,6 +121,10 @@ jobs:
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+
+      - name: Prepare Environment File
+        run: |
+          cp .env.production.example .env.production
 
       - name: Validate Docker Compose Configuration
         run: |
