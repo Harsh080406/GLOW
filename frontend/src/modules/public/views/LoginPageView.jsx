@@ -235,74 +235,6 @@ const LoginPageView = () => {
     }
   };
 
-  const handleGoogleCredentialResponse = async (response) => {
-    setIsLoading(true);
-    setError("");
-    try {
-      const res = await fetch(`${API_BASE_URL}/auth/google`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken: response.credential }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data?.error?.message || "Google authentication failed.");
-      }
-
-      localStorage.setItem("glow_access_token", data.accessToken);
-      localStorage.setItem("glow_token", data.accessToken);
-      localStorage.setItem("glow_active_role", data.user.role);
-
-      setIsAuthenticated(true);
-      setAccessToken(data.accessToken);
-      setActiveRole(data.user.role);
-      navigate(getRoleDashboardPath(data.user.role));
-    } catch (err) {
-      setError(err.message || "Google login failed.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const initGsi = () => {
-      if (window.google?.accounts?.id) {
-        try {
-          window.google.accounts.id.initialize({
-            client_id: "703668017757-grtcb9lsii76a85h9hde00sae9nsmkla.apps.googleusercontent.com",
-            callback: handleGoogleCredentialResponse,
-          });
-          const container = document.getElementById("gsi-button-container");
-          if (container) {
-            window.google.accounts.id.renderButton(container, {
-              theme: "outline",
-              size: "large",
-              width: 320,
-              text: "continue_with",
-              shape: "rectangular",
-            });
-          }
-        } catch (e) {
-          console.warn("GSI init warning:", e);
-        }
-      }
-    };
-
-    if (window.google?.accounts?.id) {
-      initGsi();
-    } else {
-      const timer = setInterval(() => {
-        if (window.google?.accounts?.id) {
-          clearInterval(timer);
-          initGsi();
-        }
-      }, 250);
-      return () => clearInterval(timer);
-    }
-  }, []);
-
   const handleDirectOAuth = () => {
     window.location.href = `${API_BASE_URL}/auth/google`;
   };
@@ -506,40 +438,15 @@ const LoginPageView = () => {
             <span className="login-divider-line" />
           </div>
 
-          {/* Google Identity Services (GSI) One-Tap / Popup Button */}
-          <div
-            id="gsi-button-container"
-            style={{ display: "flex", justifyContent: "center", marginBottom: 12, minHeight: 44 }}
-          />
-
           <button
             type="button"
             className="login-google-btn"
-            onClick={handleDirectOAuth}
+            onClick={() => setShowGoogleModal(true)}
             disabled={isLoading}
-            title="Start official Google OAuth 2.0 login"
           >
             <GoogleIcon />
-            <span>Sign in with Google (OAuth Redirect)</span>
+            <span>Sign in with Google</span>
           </button>
-
-          <div style={{ textAlign: "center", marginTop: 10 }}>
-            <button
-              type="button"
-              onClick={() => setShowGoogleModal(true)}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#64748b",
-                fontSize: "12px",
-                fontWeight: 600,
-                cursor: "pointer",
-                textDecoration: "underline",
-              }}
-            >
-              Or use 1-Click Demo SSO Chooser
-            </button>
-          </div>
         </div>
       </div>
 
