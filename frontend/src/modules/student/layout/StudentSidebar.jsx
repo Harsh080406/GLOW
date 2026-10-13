@@ -53,22 +53,31 @@ const StudentSidebar = ({ isOpen, onClose }) => {
 
   const studentName = currentStudent?.name || "Student";
   const studentId = currentStudent?.id || "UNI20260125";
-  const studentInitials = currentStudent?.avatar ||
-    studentName
-      .trim()
-      .split(" ")
-      .filter(Boolean)
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "ST";
+  const hasAvatarImage = Boolean(
+    currentStudent?.avatar &&
+    (currentStudent.avatar.startsWith("data:image") ||
+     currentStudent.avatar.startsWith("http") ||
+     currentStudent.avatar.startsWith("/"))
+  );
+  const studentInitials = (currentStudent?.avatar && currentStudent.avatar.length <= 3)
+    ? currentStudent.avatar.toUpperCase()
+    : (studentName || "Student")
+        .trim()
+        .split(" ")
+        .filter(Boolean)
+        .map((n) => n[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase() || "ST";
 
   const go = (path) => {
     navigate(path);
     if (onClose) onClose();
   };
 
-  const activeId = STUDENT_NAV.flatMap((s) => s.items).find((i) => i.path === pathname)?.id;
+  const activeId =
+    STUDENT_NAV.flatMap((s) => s.items).find((i) => i.path === pathname)?.id ||
+    (pathname.startsWith("/student/payment") || pathname.startsWith("/student/checkout") ? "fees" : undefined);
 
   return (
     <>
@@ -113,24 +122,40 @@ const StudentSidebar = ({ isOpen, onClose }) => {
           ))}
         </nav>
 
-        <div className="ss-user-card" title={isCollapsed ? `${studentName} (${studentId})` : undefined} onClick={() => go("/student/profile")} style={{ cursor: "pointer" }}>
-          <div className="ss-user-avatar">{studentInitials}</div>
-          {!isCollapsed && (
-            <div className="ss-user-info">
-              <p className="ss-user-name">{studentName}</p>
-              <p className="ss-user-id">{studentId}</p>
+        {/* Pinned Footer (Always Visible) */}
+        <div className="ss-sidebar-footer">
+          <div className="ss-user-card" title={isCollapsed ? `${studentName} (${studentId})` : undefined} onClick={() => go("/student/profile")} style={{ cursor: "pointer" }}>
+            <div className="ss-user-avatar" style={{ overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {hasAvatarImage ? (
+                <img
+                  src={currentStudent.avatar}
+                  alt={studentName}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                  }}
+                />
+              ) : (
+                <span>{studentInitials}</span>
+              )}
             </div>
-          )}
-        </div>
+            {!isCollapsed && (
+              <div className="ss-user-info">
+                <p className="ss-user-name">{studentName}</p>
+                <p className="ss-user-id">{studentId}</p>
+              </div>
+            )}
+          </div>
 
-        <button
-          className="ss-logout"
-          onClick={() => navigate("/")}
-          title={isCollapsed ? "Exit Portal" : undefined}
-        >
-          <Icon d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" size={18} />
-          {!isCollapsed && <span>Exit Portal</span>}
-        </button>
+          <button
+            className="ss-logout"
+            onClick={() => navigate("/logout")}
+            title={isCollapsed ? "Exit Portal & Return to Homepage" : undefined}
+          >
+            <Icon d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" size={18} />
+            {!isCollapsed && <span>Exit Portal</span>}
+          </button>
+        </div>
       </aside>
       {isOpen && <div className="ss-overlay" onClick={onClose} aria-hidden="true" />}
     </>

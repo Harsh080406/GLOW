@@ -347,20 +347,6 @@ const FinanceProfile = () => {
                     <div className="fp-hero-info">
                       <div className="fp-hero-title-row">
                         <h1 className="fp-hero-name">{admin.name}</h1>
-                        <span className="fp-badge-id">{admin.id}</span>
-                        <span className="fp-badge-status">● {admin.status}</span>
-                      </div>
-
-                      <p className="fp-hero-designation">
-                        {admin.role}
-                      </p>
-
-                      <div className="fp-hero-meta">
-                        <span>🏛️ {admin.department}</span>
-                        <span>·</span>
-                        <span>📍 {admin.officeLocation}</span>
-                        <span>·</span>
-                        <span>📅 Fiscal Year: <strong>{admin.assignedFiscalYear}</strong></span>
                       </div>
                     </div>
                   </div>
@@ -433,28 +419,12 @@ const FinanceProfile = () => {
                     <Icon d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" size={24} stroke="#ea580c" />
                   </div>
                 </div>
-
-                <div className="fp-stat-card">
-                  <div className="fp-stat-info">
-                    <span className="fp-stat-label">QR Signature SLA</span>
-                    <h3 className="fp-stat-value">&lt; 4 Hours</h3>
-                    <span className="fp-stat-meta fp-stat-meta--green">
-                      ⚡ 99.98% Cryptographic SLA Met
-                    </span>
-                    <div className="fp-stat-bar-bg">
-                      <div className="fp-stat-bar-fill" style={{ width: "99.98%", background: "#10b981" }} />
-                    </div>
-                  </div>
-                  <div className="fp-stat-icon-wrap" style={{ background: "#ecfdf5" }}>
-                    <Icon d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" size={24} stroke="#10b981" />
-                  </div>
-                </div>
               </div>
 
               {/* ── 3. NAVIGATION TABS ────────────────────────────────── */}
               <div className="fp-nav-tabs">
                 {[
-                  { id: "overview", label: "Overview & Authority", icon: "🏛️" },
+                  { id: "overview", label: "Overview", icon: "🏛️" },
                   { id: "signing", label: "Cryptographic HMAC Keys", icon: "🔐", badge: "Active" },
                   { id: "banking", label: "Banking & Settlement", icon: "🏦" },
                   { id: "security", label: "Security & 2FA", icon: "🛡️" },
@@ -495,7 +465,7 @@ const FinanceProfile = () => {
 
                       <div className="fp-field-item">
                         <span className="fp-field-label">Employee ID / Signatory Code</span>
-                        <p className="fp-field-value">{admin.id}</p>
+                        <p className="fp-field-value">{admin.id && admin.id.length === 24 ? "FIN-2026-001" : admin.id || "FIN-2026-001"}</p>
                       </div>
 
                       <div className="fp-field-item">
@@ -526,51 +496,6 @@ const FinanceProfile = () => {
                       <div className="fp-field-item">
                         <span className="fp-field-label">Assigned Fiscal Cycle</span>
                         <p className="fp-field-value">{admin.assignedFiscalYear}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Financial Authority Matrix */}
-                  <div className="fp-card">
-                    <div className="fp-card-header">
-                      <div>
-                        <h3 className="fp-card-title">⚖️ Financial Delegation of Powers & Authority Matrix</h3>
-                        <p className="fp-card-sub">Authorized clearance boundaries under University Statutes (Section 14-B)</p>
-                      </div>
-                      <span className="ad-badge ad-badge--blue">Level 4 Full Clearance</span>
-                    </div>
-
-                    <div className="fp-grid-2">
-                      <div className="fp-authority-box">
-                        <div className="fp-authority-icon">💳</div>
-                        <div>
-                          <strong style={{ fontSize: 14, color: "#0f172a", display: "block" }}>Direct Fee Refund Approval Limit</strong>
-                          <span style={{ fontSize: 12.5, color: "#166534" }}>Up to <strong>₹50,000 per commuter</strong> without Syndicate sanction</span>
-                        </div>
-                      </div>
-
-                      <div className="fp-authority-box">
-                        <div className="fp-authority-icon">🎓</div>
-                        <div>
-                          <strong style={{ fontSize: 14, color: "#0f172a", display: "block" }}>Scholarship & Concession Discretion</strong>
-                          <span style={{ fontSize: 12.5, color: "#166534" }}>Up to <strong>25% fee concession</strong> on verified hardship cases</span>
-                        </div>
-                      </div>
-
-                      <div className="fp-authority-box">
-                        <div className="fp-authority-icon">🏦</div>
-                        <div>
-                          <strong style={{ fontSize: 14, color: "#0f172a", display: "block" }}>Offline Cash/Challan Settlement</strong>
-                          <span style={{ fontSize: 12.5, color: "#166534" }}><strong>Unlimited</strong> official cashier batch clearance & receipt issue</span>
-                        </div>
-                      </div>
-
-                      <div className="fp-authority-box">
-                        <div className="fp-authority-icon">🚫</div>
-                        <div>
-                          <strong style={{ fontSize: 14, color: "#0f172a", display: "block" }}>Transport Pass Suspension Powers</strong>
-                          <span style={{ fontSize: 12.5, color: "#166534" }}>Immediate block authority on 30+ days overdue defaulters</span>
-                        </div>
                       </div>
                     </div>
                   </div>

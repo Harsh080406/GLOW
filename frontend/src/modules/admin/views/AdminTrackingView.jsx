@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useTransit } from "../../../shared/context/TransitContext";
+import { OFFICIAL_13_BUSES } from "../../../shared/data/officialRoutes2026";
 import RealMapView from "../../../shared/components/RealMapView";
 import "../layout/AdminLayout.css";
 
@@ -12,7 +13,7 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 
 const AdminTracking = () => {
   const { liveBusTelemetry, isWsConnected } = useTransit();
-  const [selected, setSelected] = useState("BUS-104");
+  const [selected, setSelected] = useState(OFFICIAL_13_BUSES[0]?.busNumber || "BUS-01");
   const [search, setSearch] = useState("");
 
   // Throttled / Batched Telemetry Frame Buffer via requestAnimationFrame
@@ -38,21 +39,28 @@ const AdminTracking = () => {
     };
   }, [liveBusTelemetry]);
 
-  // Merge live telemetry with seed list of active buses (covers fleet of up to 85 buses)
+  // Merge live telemetry with seed list of active buses (covers fleet of 13 official GSFC buses)
   const demoBusCoords = {
-    "BUS-104": { lat: 22.3485, lng: 73.1710 },
-    "BUS-108": { lat: 22.3150, lng: 73.1810 },
-    "BUS-101": { lat: 22.3080, lng: 73.1670 },
-    "BUS-115": { lat: 22.3290, lng: 73.1950 },
+    "BUS-01": { lat: 22.2825, lng: 73.2320 },
+    "BUS-02": { lat: 22.3015, lng: 73.2350 },
+    "BUS-03": { lat: 22.3275, lng: 73.2205 },
+    "BUS-04": { lat: 22.3375, lng: 73.1590 },
   };
 
   const rawList = Object.values(batchedTelemetry);
-  const displayList = (rawList.length > 0 ? rawList : [
-    { busId: "BUS-104", regNo: "GJ-06-AB-1004", routeName: "Route 4D (Fatehgunj)", driverName: "Mahesh Patel", speed: 42, nextStop: "Nizampura Char Rasta", etaMinutes: 6, status: "ON_ROUTE", progressPercent: 46, lat: 22.3485, lng: 73.1710 },
-    { busId: "BUS-108", regNo: "GJ-06-CD-1008", routeName: "Route 2A (Sayajigunj)", driverName: "Ramesh Shah", speed: 18, nextStop: "Station Circle", etaMinutes: 12, status: "DELAYED", progressPercent: 62, lat: 22.3150, lng: 73.1810 },
-    { busId: "BUS-101", regNo: "GJ-06-EF-1001", routeName: "Route 1C (Alkapuri)", driverName: "Suresh Joshi", speed: 36, nextStop: "RC Dutt Road", etaMinutes: 4, status: "ON_ROUTE", progressPercent: 28, lat: 22.3080, lng: 73.1670 },
-    { busId: "BUS-115", regNo: "GJ-06-GH-1015", routeName: "Route 5E (Karelibaug)", driverName: "Kailash Dave", speed: 48, nextStop: "Amit Nagar Circle", etaMinutes: 9, status: "ON_ROUTE", progressPercent: 78, lat: 22.3290, lng: 73.1950 },
-  ]).map((b, idx) => ({
+  const displayList = (rawList.length > 0 ? rawList : OFFICIAL_13_BUSES.map((b) => ({
+    busId: b.busNumber,
+    regNo: b.registrationNumber,
+    routeName: b.routeName,
+    driverName: b.driverName,
+    speed: 38,
+    nextStop: "Corridor Stop",
+    etaMinutes: 8,
+    status: b.status,
+    progressPercent: 50,
+    lat: 22.3485,
+    lng: 73.1710,
+  }))).map((b, idx) => ({
     ...b,
     lat: Number(b.lat) || demoBusCoords[b.busId]?.lat || (22.3100 + ((idx * 7) % 30) * 0.002),
     lng: Number(b.lng) || demoBusCoords[b.busId]?.lng || (73.1600 + ((idx * 11) % 30) * 0.002),
@@ -75,7 +83,7 @@ const AdminTracking = () => {
         <div>
           <h2 className="ad-page-title" style={{ fontSize: 20, fontWeight: 800 }}>Live Fleet GPS Telemetry Console</h2>
           <p className="ad-page-sub" style={{ color: "#64748b", fontSize: 13 }}>
-            High-frequency 3-second GPS updates across 85 fleet channels · Real Vadodara Map view
+            High-frequency 3-second GPS updates across 13 fleet channels · Real Vadodara Map view
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTransit } from "../../../shared/context/TransitContext";
 import RealMapView from "../../../shared/components/RealMapView";
-import { OFFICIAL_GSFC_ROUTES_2026 } from "../../../shared/data/officialRoutes2026";
+import { OFFICIAL_GSFC_ROUTES_2026, getStudentAssignedRoute } from "../../../shared/data/officialRoutes2026";
 import "./LiveTracking.css";
 
 const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidth = 1.8 }) => (
@@ -28,15 +28,19 @@ const LiveTracking = () => {
   const location = useLocation();
   const { currentStudent, liveBusTelemetry } = useTransit();
 
-  // Determine student's assigned bus registration number and default route
-  const assignedBusNo = currentStudent?.assignedBusRegNo || currentStudent?.busId || "GJ-06-BV-2915";
+  // Resolve student's assigned route automatically
+  const assignedRoute = useMemo(() => {
+    return getStudentAssignedRoute(currentStudent);
+  }, [currentStudent]);
+
+  const assignedBusNo = assignedRoute?.busNo || "GJ-06-BV-2915";
 
   // Check URL query parameters (e.g. ?route=ROUTE-2 or ?bus=GJ-06-BX-3670)
   const queryParams = new URLSearchParams(location.search);
   const routeParam = queryParams.get("route");
   const busParam = queryParams.get("bus");
 
-  // Determine initial selected route
+  // Determine initial selected route (student's assigned route is selected first by default!)
   const defaultRoute = useMemo(() => {
     if (routeParam) {
       const match = OFFICIAL_GSFC_ROUTES_2026.find((r) => r.routeId === routeParam);
@@ -46,16 +50,16 @@ const LiveTracking = () => {
       const match = OFFICIAL_GSFC_ROUTES_2026.find((r) => r.busNo === busParam);
       if (match) return match;
     }
-    // Match assigned bus or fallback to Route 9 (Fatehgunj/Nizampura)
-    const assignedMatch = OFFICIAL_GSFC_ROUTES_2026.find((r) => r.busNo === assignedBusNo);
-    return assignedMatch || OFFICIAL_GSFC_ROUTES_2026[8]; // Route 9 default
-  }, [routeParam, busParam, assignedBusNo]);
+    return assignedRoute;
+  }, [routeParam, busParam, assignedRoute]);
 
   const [selectedRouteId, setSelectedRouteId] = useState(defaultRoute.routeId);
 
   // Sync when defaultRoute changes
   useEffect(() => {
     if (routeParam || busParam) {
+      setSelectedRouteId(defaultRoute.routeId);
+    } else {
       setSelectedRouteId(defaultRoute.routeId);
     }
   }, [routeParam, busParam, defaultRoute]);
@@ -66,13 +70,22 @@ const LiveTracking = () => {
 
   const isAlternativeBus = activeRoute.busNo !== assignedBusNo;
 
+  // Ordered list of routes: student's assigned route appears FIRST so they see their route immediately
+  const orderedRoutes = useMemo(() => {
+    const rest = OFFICIAL_GSFC_ROUTES_2026.filter((r) => r.routeId !== assignedRoute.routeId);
+    return [assignedRoute, ...rest];
+  }, [assignedRoute]);
+
   // Telemetry for the active selected bus
   const telemetry =
     (liveBusTelemetry && liveBusTelemetry[activeRoute.busNo]) ||
     (liveBusTelemetry && liveBusTelemetry[activeRoute.routeId]) ||
+    (activeRoute.busNo === assignedBusNo && liveBusTelemetry && liveBusTelemetry[currentStudent?.busId]) ||
+    (activeRoute.busNo === assignedBusNo && liveBusTelemetry && liveBusTelemetry["BUS-104"]) ||
     {};
 
   const speed = Number(telemetry.speed) || 42;
+  const isDeviceGps = Boolean(telemetry.isDeviceGps);
   const nextStopIndex =
     telemetry.nextStopIndex !== undefined
       ? telemetry.nextStopIndex
@@ -80,7 +93,7 @@ const LiveTracking = () => {
   const nextStopName = activeRoute.stops[nextStopIndex]?.name || "GSFC University";
   const etaMinutes = telemetry.etaMinutes || 6;
   const lat = Number(telemetry.lat) || activeRoute.stops[Math.max(0, nextStopIndex - 1)]?.lat || 22.3485;
-  const lng = Number(telemetry.lng) || activeRoute.stops[Math.max(0, nextStopIndex - 1)]?.lng || 73.1710;
+  const lng = Number(telemetry.lng) || activeRoute.stops[Math.max(0, nextStopIndex - 1)]?.lng || 73.1795;
   const driverName = telemetry.driverName || activeRoute.driverName || "Mahesh Patel";
   const driverPhone = telemetry.driverPhone || activeRoute.driverPhone || "+91 98765 11111";
 
@@ -109,35 +122,37 @@ const LiveTracking = () => {
     <div className="student-view-wrap">
       <div className="lt-root-container">
 
-        {/* ── MISSED BUS / ALTERNATIVE BUS SELECTOR CAROUSEL ────────── */}
+        {/* ── ASSIGNED ROUTE & FLEET ROUTE SELECTOR CAROUSEL ────────── */}
         <div className="lt-alt-bus-bar">
           <div className="lt-alt-bus-header">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 22 }}>🚨</span>
+              <span style={{ fontSize: 22 }}>{isAlternativeBus ? "🔀" : "★"}</span>
               <div>
                 <strong style={{ color: "#0f172a", fontSize: 14 }}>
-                  {isAlternativeBus ? "Alternative Route Live Tracking Active" : "Missed Your Bus? Find Another Route"}
+                  {isAlternativeBus
+                    ? `Viewing Alternative Bus ${activeRoute.busNo} (Route ${activeRoute.routeNumber})`
+                    : `★ Your Assigned Route ${activeRoute.routeNumber} (${activeRoute.busNo}) · Auto-Selected`}
                 </strong>
                 <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>
                   {isAlternativeBus
-                    ? `You are viewing alternative Bus ${activeRoute.busNo} (Route ${activeRoute.routeNumber}) to board towards GSFC University.`
-                    : "If you missed your regular bus, tap any of the 13 official buses below to track its live location & board it:"}
+                    ? `You clicked to track alternative Bus ${activeRoute.busNo}. Your regular allocated bus is ${assignedBusNo}.`
+                    : `Your assigned route is shown first automatically without clicking. Click any other route below to check its live location:`}
                 </p>
               </div>
             </div>
             {isAlternativeBus && (
               <button
                 className="lt-reset-bus-btn"
-                onClick={() => setSelectedRouteId(defaultRoute.routeId)}
+                onClick={() => setSelectedRouteId(assignedRoute.routeId)}
               >
-                ↺ Switch Back to My Assigned Bus ({assignedBusNo})
+                ↺ Return to My Assigned Bus ({assignedBusNo})
               </button>
             )}
           </div>
 
-          {/* 13 Official Routes Horizontal Selector */}
+          {/* 13 Official Routes Horizontal Selector with Assigned Route First */}
           <div className="lt-route-chips-scroll">
-            {OFFICIAL_GSFC_ROUTES_2026.map((rt) => {
+            {orderedRoutes.map((rt) => {
               const isSelected = rt.routeId === activeRoute.routeId;
               const isMyBus = rt.busNo === assignedBusNo;
               const firstStopShort = rt.stops[0].name.split("(")[0].trim();
@@ -146,10 +161,15 @@ const LiveTracking = () => {
                   key={rt.routeId}
                   className={`lt-route-chip ${isSelected ? "is-active" : ""}`}
                   onClick={() => setSelectedRouteId(rt.routeId)}
+                  style={isMyBus ? { borderColor: isSelected ? "#0066ff" : "#86efac", background: isSelected ? undefined : "#f0fdf4" } : undefined}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
                     <span className="lt-chip-number">Route {rt.routeNumber}</span>
-                    {isMyBus && <span className="lt-chip-badge">My Bus</span>}
+                    {isMyBus && (
+                      <span className="lt-chip-badge" style={{ background: "#16a34a", color: "#ffffff", fontWeight: 800 }}>
+                        ★ My Route
+                      </span>
+                    )}
                   </div>
                   <strong className="lt-chip-busno">{rt.busNo}</strong>
                   <span className="lt-chip-origin">{firstStopShort} ➔ GSFC</span>
@@ -166,8 +186,15 @@ const LiveTracking = () => {
               <BusIcon size={28} color="#ffffff" />
             </div>
             <div>
-              <div className="lt-hero-badge">
-                {isAlternativeBus ? "🔀 Alternative Bus · Real-Time GPS" : "📡 Real-Time Live Feed Active"}
+              <div className="lt-hero-badge" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                {isAlternativeBus
+                  ? "🔀 Alternative Bus · Live Location"
+                  : "★ My Assigned Bus · Auto-Connected"}
+                {isDeviceGps && (
+                  <span style={{ background: "#22c55e", color: "#fff", padding: "1px 6px", borderRadius: 10, fontSize: 10, marginLeft: 6 }}>
+                    🛰 GPS Live
+                  </span>
+                )}
               </div>
               <h2 className="lt-hero-title">{activeRoute.busNo} • {activeRoute.displayName}</h2>
               <p className="lt-hero-sub">Pilot: <strong>{driverName}</strong> (Ph: {driverPhone})</p>

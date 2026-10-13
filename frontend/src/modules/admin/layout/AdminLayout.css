@@ -64,16 +64,20 @@ body {
   border-right: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  padding: 0 0 16px;
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow-y: auto;
+  overflow: hidden;
   z-index: 80;
-  scrollbar-width: none;
   transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.ad-sidebar::-webkit-scrollbar { display: none; }
+
+.ad-sidebar-footer {
+  flex-shrink: 0;
+  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+  padding: 6px 0 14px;
+}
 
 /* Brand */
 .ad-brand {
@@ -129,6 +133,8 @@ body {
   flex-direction: column;
   gap: 4px;
   padding: 12px 10px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .ad-nav-section-wrap {
@@ -278,7 +284,7 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  overflow-x: hidden;
+  overflow-x: auto;
   background: #f4f6f9;
 }
 
@@ -390,13 +396,14 @@ body {
 /* ── SHARED CONTENT AREA ─────────────────────────────────── */
 .ad-content {
   flex: 1;
-  padding: 28px 32px;
+  padding: clamp(16px, 2.2vw, 28px);
   display: flex;
   flex-direction: column;
   gap: 24px;
-  max-width: 1600px;
+  max-width: 100%;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 /* ── SHARED PAGE HEADER ──────────────────────────────────── */

@@ -26,7 +26,7 @@ const dailyRollupSchema = new mongoose.Schema(
     },
     activeBuses: {
       type: Number,
-      default: 85,
+      default: 13,
     },
     fuelConsumptionLitres: {
       type: Number,

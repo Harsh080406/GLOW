@@ -8,8 +8,10 @@ const ForbiddenView = () => {
   return (
     <div className="forbidden-page-root">
       <div className="forbidden-card">
-        <GlowLogo width={120} />
-        <div className="forbidden-badge">403 ACCESS DENIED</div>
+        <div className="forbidden-top-row">
+          <GlowLogo width={120} darkMode={true} />
+          <div className="forbidden-badge">403 ACCESS DENIED</div>
+        </div>
         <h1 className="forbidden-title">Unauthorized Portal Access</h1>
         <p className="forbidden-desc">
           Your active system role does not have administrative permissions to view this section.

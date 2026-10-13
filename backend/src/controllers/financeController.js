@@ -358,9 +358,7 @@ export const getFeeStructures = async (req, res, next) => {
     let slabs = await FeeSlab.find().sort({ zone: 1 });
     if (slabs.length === 0) {
       slabs = await FeeSlab.insertMany([
-        { name: "Annual Campus Transit — Zone A (Local Intra-City)", zone: "Zone A", amount: 6000, semester: "Fall 2026", dueDate: "15 Sep 2026", status: "Active" },
-        { name: "Annual Campus Transit — Zone B (Suburban Corridor)", zone: "Zone B", amount: 9500, semester: "Fall 2026", dueDate: "15 Sep 2026", status: "Active" },
-        { name: "Annual Campus Transit — Zone C (Extended Industrial Ring)", zone: "Zone C", amount: 14000, semester: "Fall 2026", dueDate: "15 Sep 2026", status: "Active" },
+        { name: "Annual Campus Transit — All Routes & Any Distance", zone: "All Zones (Any Kilometer)", amount: 15000, semester: "Annual AY 2026-27", dueDate: "15 Sep 2026", status: "Active" },
       ]);
     }
 

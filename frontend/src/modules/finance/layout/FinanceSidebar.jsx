@@ -102,31 +102,33 @@ const FinanceSidebar = ({ activeId, isOpen, onClose }) => {
           ))}
         </nav>
 
-        {/* Admin Info */}
-        <div
-          className="ad-admin-info"
-          title={isCollapsed ? `${adminName} (Accounts & Billing)` : undefined}
-          onClick={() => handleNav("/finance/profile")}
-          style={{ cursor: "pointer" }}
-        >
-          <div className="ad-admin-avatar" style={{ background: "#0066ff" }}>{avatarInitials}</div>
-          {!isCollapsed && (
-            <div className="ad-admin-text">
-              <div className="ad-admin-name">{adminName}</div>
-              <div className="ad-admin-role">Accounts & Billing · Profile →</div>
-            </div>
-          )}
-        </div>
+        {/* Pinned Footer (Always Visible) */}
+        <div className="ad-sidebar-footer">
+          {/* Admin Info */}
+          <div
+            className="ad-admin-info"
+            title={isCollapsed ? adminName : undefined}
+            onClick={() => handleNav("/finance/profile")}
+            style={{ cursor: "pointer" }}
+          >
+            <div className="ad-admin-avatar" style={{ background: "#0066ff" }}>{avatarInitials}</div>
+            {!isCollapsed && (
+              <div className="ad-admin-text">
+                <div className="ad-admin-name">{adminName}</div>
+              </div>
+            )}
+          </div>
 
-        {/* Logout */}
-        <button
-          className="ad-logout"
-          onClick={() => navigate("/")}
-          title={isCollapsed ? "Exit Portal" : undefined}
-        >
-          <Icon d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" size={18} />
-          {!isCollapsed && <span>Exit Portal</span>}
-        </button>
+          {/* Logout */}
+          <button
+            className="ad-logout"
+            onClick={() => navigate("/logout")}
+            title={isCollapsed ? "Exit Portal & Return to Homepage" : undefined}
+          >
+            <Icon d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" size={18} />
+            {!isCollapsed && <span>Exit Portal</span>}
+          </button>
+        </div>
       </aside>
 
       {isOpen && <div className="ad-overlay" onClick={onClose} aria-hidden="true" />}

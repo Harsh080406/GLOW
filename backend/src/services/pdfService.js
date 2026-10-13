@@ -161,7 +161,7 @@ export const pdfService = {
     });
 
     page.drawText(sanitize(`Student Name: ${studentData?.name || "Rahul Sharma"}`), { x: 48, y: y - 8, size: 10, font: fontBold, color: rgb(0.1, 0.2, 0.15) });
-    page.drawText(sanitize(`Enrollment ID: ${studentData?.id || studentData?.enrollmentId || "GSFC20260125"}`), { x: 230, y: y - 8, size: 10, font, color: rgb(0.2, 0.3, 0.25) });
+    page.drawText(sanitize(`Enrollment ID: ${studentData?.id || studentData?.enrollmentId || "UNI20260125"}`), { x: 230, y: y - 8, size: 10, font, color: rgb(0.2, 0.3, 0.25) });
     page.drawText(sanitize(`Assigned Bus: ${studentData?.assignedBus || "BUS-104 (Volvo 9600)"}`), { x: 400, y: y - 8, size: 10, font: fontBold, color: rgb(0.08, 0.38, 0.32) });
 
     page.drawText(sanitize(`Route Corridor: ${studentData?.routeName || "R-04 (Fatehgunj <-> GSFC University)"}`), { x: 48, y: y - 26, size: 10, font, color: rgb(0.2, 0.3, 0.25) });

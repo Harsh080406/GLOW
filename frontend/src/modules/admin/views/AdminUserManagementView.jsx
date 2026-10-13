@@ -203,7 +203,7 @@ const AdminUserManagement = () => {
                   <th className="ad-th">Role</th>
                   <th className="ad-th">Department</th>
                   <th className="ad-th">Status</th>
-                  <th className="ad-th">2FA</th>
+                  <th className="ad-th">Phone Number</th>
                   <th className="ad-th">Actions</th>
                 </tr>
               </thead>
@@ -239,11 +239,9 @@ const AdminUserManagement = () => {
                           </span>
                         </td>
                         <td className="ad-td">
-                          {u.twoFactorEnabled ? (
-                            <span style={{ color: "#16a34a", fontSize: 12, fontWeight: 700 }}>✓ Enabled</span>
-                          ) : (
-                            <span style={{ color: "#94a3b8", fontSize: 12 }}>Disabled</span>
-                          )}
+                          <span style={{ fontSize: 12.5, color: "#475569", fontWeight: 600 }}>
+                            {u.phone || "—"}
+                          </span>
                         </td>
                         <td className="ad-td">
                           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

@@ -26,7 +26,7 @@ const ROUTE_TITLES = {
   "/admin/emergencies": { title: "Emergencies & SOS Control Room", subtitle: "High-Priority Driver & Student SOS Broadcasts & Incident Logs" },
   "/admin/reports": { title: "Reports & Fleet Analytics", subtitle: "Data Export Center, Mileage Analysis, Fuel Efficiency & Audits" },
   "/admin/settings": { title: "System Settings & Configuration", subtitle: "GPS Intervals, Alert Webhooks, Geofence Radius & Backup Config" },
-  "/admin/profile": { title: "Super Administrator Profile", subtitle: "Executive Account Credentials, 2FA Security & System Clearance" },
+  "/admin/profile": { title: "Super Administrator Profile", subtitle: "Executive Account Credentials, System Clearance & Administrative Control" },
 };
 
 const AdminLayout = ({ children, title: overrideTitle, subtitle: overrideSubtitle }) => {
@@ -46,8 +46,12 @@ const AdminLayout = ({ children, title: overrideTitle, subtitle: overrideSubtitl
 
   const adminName = currentAdmin?.name || "Dr. Arvind Patel";
   const adminRole = currentAdmin?.role || "Super Admin";
-  const adminInitials = currentAdmin?.avatar ||
-    adminName
+  const hasAdminPhoto = Boolean(
+    currentAdmin?.avatar && (currentAdmin.avatar.startsWith("data:image") || currentAdmin.avatar.startsWith("http"))
+  );
+  const adminInitials = (!hasAdminPhoto && currentAdmin?.avatar && currentAdmin.avatar.length <= 4)
+    ? currentAdmin.avatar
+    : adminName
       .trim()
       .split(" ")
       .filter(Boolean)
@@ -118,12 +122,29 @@ const AdminLayout = ({ children, title: overrideTitle, subtitle: overrideSubtitl
                 style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
                 title={`${adminName} (${adminRole}) — Click to view Profile`}
               >
-                <div className="ad-avatar">{adminInitials}</div>
+                <div className="ad-avatar" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {hasAdminPhoto ? (
+                    <img src={currentAdmin.avatar} alt={adminName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    adminInitials
+                  )}
+                </div>
                 <div className="ad-avatar-info">
                   <span className="ad-avatar-name">{adminName}</span>
                   <span className="ad-avatar-role">{adminRole}</span>
                 </div>
               </div>
+
+              {/* Quick Exit / Logout Button */}
+              <button
+                className="ad-notif-btn"
+                onClick={() => navigate("/logout")}
+                title="Exit Portal & Return to Homepage"
+                style={{ color: "#ef4444", background: "#fef2f2", border: "1px solid #fee2e2" }}
+                aria-label="Logout"
+              >
+                <Icon d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" size={18} stroke="#ef4444" />
+              </button>
             </div>
           </header>
 

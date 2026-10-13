@@ -12,7 +12,7 @@ class TelemetrySimulator {
 
   async init(broadcastCallback) {
     this.broadcastCallback = broadcastCallback;
-    console.log("⚡ Initializing 85-Bus Real-Time Telemetry Simulator Engine...");
+    console.log("⚡ Initializing 13-Bus Real-Time Telemetry Simulator Engine...");
 
     try {
       // Read initial GPS polling frequency from SystemConfig singleton
@@ -37,18 +37,18 @@ class TelemetrySimulator {
         // Fallback route selection if not linked directly
         const assignedRoute = routes[index % routes.length] || routes[0];
         const stops = assignedRoute?.stops?.length > 0 ? assignedRoute.stops : [
-          { name: "Terminal A", lat: 23.0225, lng: 72.5714 },
-          { name: "Stop B", lat: 23.0450, lng: 72.5830 },
-          { name: "Main Campus", lat: 23.0780, lng: 72.5920 },
+          { name: "Terminal Origin", lat: 22.3100, lng: 73.1700 },
+          { name: "Corridor Hub", lat: 22.3480, lng: 73.1680 },
+          { name: "GSFC University Main Campus", lat: 22.3615, lng: 73.1550 },
         ];
 
         this.busSimStates.set(bus.registrationNumber, {
           busId: bus.registrationNumber,
           regNo: bus.registrationNumber,
-          routeId: assignedRoute ? `R-${(index % 34 + 1).toString().padStart(2, '0')}` : "R-04",
-          routeName: assignedRoute ? assignedRoute.name : "University Corridor",
+          routeId: assignedRoute ? (assignedRoute.routeNo ? `ROUTE-${assignedRoute.routeNo}` : `R-${(index % 13 + 1).toString().padStart(2, '0')}`) : "ROUTE-1",
+          routeName: assignedRoute ? assignedRoute.name : "GSFC University Corridor",
           driverName: bus.currentDriverId ? bus.currentDriverId.name : `Driver ${index + 1}`,
-          driverPhone: "+91 98765 11111",
+          driverPhone: bus.currentDriverId?.phone || "+91 98765 11111",
           stops,
           currentStopIndex: 0,
           progressStep: Math.random(), // 0.0 to 1.0 progress between current stop & next stop

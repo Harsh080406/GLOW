@@ -15,6 +15,8 @@ const userSchema = new mongoose.Schema(
     avatar: { type: String },
     phone: { type: String },
     department: { type: String },
+    officeLocation: { type: String },
+    designation: { type: String },
     status: {
       type: String,
       enum: ["ACTIVE", "SUSPENDED"],

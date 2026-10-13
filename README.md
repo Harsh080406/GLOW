@@ -4,17 +4,21 @@ GLOW is an enterprise-grade university transit and smart fleet mobility platform
 
 ---
 
-# Default Login Credentials
+# Strict Campus Login Credentials & Access Policy
 
-You can log in to any of the role dashboards directly from the `/login` portal using the default email addresses below (any password e.g., `glow2026` or `admin123` is accepted):
+Log in to any of the role dashboards directly from the `/login` portal using the strictly enforced credentials below:
 
-| Role | Portal / Dashboard | Default Email ID | Default Password | Features & Scope |
+> **Important**: The university authentication gateway enforces **strict credential validation** for all users (demo accounts, staff, and new students):
+> - **Student ID / Email Format**: Strictly `UNI2026XXX` (where `X` is any university-provided number, e.g. `UNI20260125`, `UNI20260142`, `UNI20269999`).
+> - **Password**: Strictly `password@1234` for **all** accounts. Any non-matching password will be rejected.
+
+| Role | Portal / Dashboard | Authorized Email / ID | Strict Password | Features & Scope |
 |---|---|---|---|---|
-|*Super Admin* | `/admin/dashboard` | `admin@glowbus.edu` | `glow2026` | Fleet-wide analytics, 8 core KPI cards, user access control, vehicle rosters & master audits. |
-| *Finance Admin* | `/finance/dashboard` | `finance@glowbus.edu` | `glow2026` | Fee collections, offline bank challan verification, certified tax receipts, and Excel exports. |
-| *Bus Driver*| `/driver/dashboard` | `driver@glowbus.edu` | `glow2026` | Mobile cockpit tablet, route sequencer, passenger check-in scanner, and live GPS broadcast. |
-| *Transport Manager* | `/transport/dashboard` | `transport@glowbus.edu` | `glow2026` | Route allocation, student transfers, daily timetable dispatch, and vehicle maintenance logs. |
-| *Student* | `/student/dashboard` | `student@glowbus.edu` | `glow2026` | Live 3-sec GPS tracker, encrypted digital QR transport pass, timetable, and 24/7 SOS alert. |
+| *Student Commuter* | `/student/dashboard` | `UNI20260125` (or any `UNI2026XXX`) | `password@1234` | Live 3-sec GPS tracker, encrypted digital QR transport pass, timetable, and 24/7 SOS alert. |
+| *Bus Driver* | `/driver/dashboard` | `driver@glowbus.edu` | `password@1234` | Simplified cockpit: auto-stop crossing GPS, instant SOS broadcast, passenger scanner. |
+| *Super Admin* | `/admin/dashboard` | `admin@glowbus.edu` | `password@1234` | Fleet-wide analytics, 8 core KPI cards, user access control, vehicle rosters & master audits. |
+| *Finance Admin* | `/finance/dashboard` | `finance@glowbus.edu` | `password@1234` | Fee collections, offline bank challan verification, certified tax receipts, and Excel exports. |
+| *Transport Manager* | `/transport/dashboard` | `transport@glowbus.edu` | `password@1234` | Route allocation, student transfers, daily timetable dispatch, and vehicle maintenance logs. |
 
 
 # Core System Portals

@@ -247,6 +247,61 @@ export function findAlternativeRoutes(currentRouteId, stopNameOrCoord) {
 }
 
 /**
+ * Resolves a student's assigned official route accurately from student profile details
+ */
+export function getStudentAssignedRoute(student) {
+  if (!student) return OFFICIAL_GSFC_ROUTES_2026[8]; // Route 9 default
+
+  // 1. Direct routeId (e.g. "ROUTE-9", "ROUTE-4")
+  const routeId = student.routeId || student.assignedRouteId || student.assignedRoute;
+  if (routeId) {
+    const cleanId = String(routeId).trim().toUpperCase();
+    const match = OFFICIAL_GSFC_ROUTES_2026.find(
+      (r) => r.routeId.toUpperCase() === cleanId || cleanId.includes(r.routeId.toUpperCase())
+    );
+    if (match) return match;
+  }
+
+  // 2. Route Number match (e.g. 4, 9, "R-04", "Route 4", "Route 9")
+  const rawRoute = String(student.route || student.routeName || "");
+  const numMatch = rawRoute.match(/(?:ROUTE|R|R-)?\s*(\d+)/i);
+  if (numMatch) {
+    const num = parseInt(numMatch[1], 10);
+    const match = OFFICIAL_GSFC_ROUTES_2026.find((r) => r.routeNumber === num);
+    if (match) return match;
+  }
+
+  // 3. Bus registration or Bus ID match (e.g. "GJ-06-BV-2915", "BUS-104", "BUS-09")
+  const busId = String(student.assignedBusRegNo || student.assignedBus || student.busId || "").trim();
+  if (busId) {
+    const match = OFFICIAL_GSFC_ROUTES_2026.find(
+      (r) => r.busNo.toLowerCase() === busId.toLowerCase() || busId.toLowerCase().includes(r.busNo.toLowerCase())
+    );
+    if (match) return match;
+
+    const busIdxMatch = busId.match(/BUS-(\d+)/i);
+    if (busIdxMatch) {
+      const idx = parseInt(busIdxMatch[1], 10);
+      if (idx >= 1 && idx <= 13) {
+        return OFFICIAL_GSFC_ROUTES_2026[idx - 1];
+      }
+    }
+  }
+
+  // 4. Pickup stop name match (e.g. "Fatehgunj", "Chhani", "Amit Nagar", etc.)
+  const stopName = String(student.pickupStop || student.stopName || student.boarding || "").trim().toLowerCase();
+  if (stopName) {
+    const match = OFFICIAL_GSFC_ROUTES_2026.find((r) =>
+      r.stops.some((s) => s.name.toLowerCase().includes(stopName) || stopName.includes(s.name.toLowerCase()))
+    );
+    if (match) return match;
+  }
+
+  // Fallback default: Route 9 (Fatehgunj / Nizampura / GSFC)
+  return OFFICIAL_GSFC_ROUTES_2026[8];
+}
+
+/**
  * The official 13 buses allocated for GSFC University transport
  */
 export const OFFICIAL_13_BUSES = OFFICIAL_GSFC_ROUTES_2026.map((r, idx) => ({

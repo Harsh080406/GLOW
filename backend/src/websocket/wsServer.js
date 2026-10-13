@@ -94,7 +94,7 @@ export function setupWebSocketServer(server) {
 
   activeBroadcast = broadcastToChannel;
 
-  // Initialize the 85-bus real-time telemetry simulator
+  // Initialize the 13-bus real-time telemetry simulator
   telemetrySimulator.init((channel, frame) => {
     broadcastToChannel(channel, frame);
   });

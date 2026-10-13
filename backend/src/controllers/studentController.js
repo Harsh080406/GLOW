@@ -456,7 +456,7 @@ export const getComplaints = async (req, res, next) => {
 
 export const createComplaint = async (req, res, next) => {
   try {
-    const { category, subject, description, priority } = req.body;
+    const { category, subject, description, priority, attachment, proofName } = req.body;
 
     const complaint = await Complaint.create({
       submittedBy: req.user.id || req.user._id,
@@ -464,6 +464,8 @@ export const createComplaint = async (req, res, next) => {
       description: description || subject || "Service delay reported",
       priority: priority || "MEDIUM",
       status: "PENDING",
+      attachment: attachment || null,
+      proofName: proofName || null,
     });
 
     return res.status(201).json({ success: true, complaint });
@@ -534,6 +536,7 @@ export const getStudentProfile = async (req, res, next) => {
         name: user?.name || req.user.name || "Rahul Sharma",
         email: user?.email || req.user.email || "student@glowbus.edu",
         phone: user?.phone || "+91 98765 43210",
+        avatar: user?.avatar || "",
         branch: student?.branch || "Computer Science",
         semester: student?.semester || "5th Sem",
         guardianContact: student?.guardianContact || "+91 98765 43210",
@@ -547,19 +550,32 @@ export const getStudentProfile = async (req, res, next) => {
 
 export const updateStudentProfile = async (req, res, next) => {
   try {
-    const { phone, guardianContact, assignedStopId } = req.body;
+    const { name, phone, guardianContact, assignedStopId, avatar } = req.body;
     const student = await getStudentByUser(req.user);
 
-    if (phone) {
-      await User.findByIdAndUpdate(req.user.id || req.user._id, { phone });
+    const userUpdates = {};
+    if (name) userUpdates.name = name;
+    if (phone) userUpdates.phone = phone;
+    if (avatar !== undefined) userUpdates.avatar = avatar;
+
+    if (Object.keys(userUpdates).length > 0) {
+      await User.findByIdAndUpdate(req.user.id || req.user._id, userUpdates);
     }
+
     if (student) {
       if (guardianContact) student.guardianContact = guardianContact;
       if (assignedStopId) student.assignedStopId = assignedStopId;
       await student.save();
     }
 
-    return res.json({ success: true, message: "Profile details updated successfully." });
+    return res.json({
+      success: true,
+      message: "Profile details updated successfully.",
+      profile: {
+        avatar,
+        phone,
+      },
+    });
   } catch (error) {
     next(error);
   }

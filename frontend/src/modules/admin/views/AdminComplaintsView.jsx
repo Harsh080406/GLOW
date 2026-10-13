@@ -18,9 +18,8 @@ const DEPARTMENTS = [
 ];
 
 const AdminComplaints = () => {
-  const { authFetch } = useTransit();
-  const [complaints, setComplaints] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { authFetch, complaints, resolveStudentComplaint } = useTransit();
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [toastMsg, setToastMsg] = useState(null);
@@ -30,34 +29,16 @@ const AdminComplaints = () => {
   const [responseText, setResponseText] = useState("");
   const [assignedDept, setAssignedDept] = useState("Transportation");
   const [resolutionStatus, setResolutionStatus] = useState("RESOLVED");
+  const [viewingProofModal, setViewingProofModal] = useState(null);
 
   const showNotification = (msg) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 3500);
   };
 
-  const fetchComplaints = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await authFetch("/admin/complaints");
-      if (res && res.complaints) {
-        setComplaints(res.complaints);
-      }
-    } catch (err) {
-      setError(err.message || "Failed to load complaints");
-    } finally {
-      setLoading(false);
-    }
-  }, [authFetch]);
-
-  useEffect(() => {
-    fetchComplaints();
-  }, [fetchComplaints]);
-
   const handleOpenAction = (c) => {
     setSelectedComplaint(c);
-    setResponseText(c.response || "");
+    setResponseText(c.response || c.resolutionNotes || "");
     setAssignedDept(c.department || "Transportation");
     setResolutionStatus((c.status || "PENDING").toUpperCase() === "PENDING" ? "RESOLVED" : c.status);
   };
@@ -67,17 +48,14 @@ const AdminComplaints = () => {
     if (!selectedComplaint) return;
 
     try {
-      await authFetch(`/admin/complaints/${selectedComplaint._id || selectedComplaint.id}/resolve`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          response: responseText,
-          status: resolutionStatus,
-          department: assignedDept,
-        }),
+      await resolveStudentComplaint(selectedComplaint._id || selectedComplaint.id, {
+        response: responseText,
+        resolutionNotes: responseText,
+        status: resolutionStatus,
+        department: assignedDept,
       });
       showNotification(`✓ Grievance #${selectedComplaint.id || selectedComplaint._id} resolved & assigned to ${assignedDept}!`);
       setSelectedComplaint(null);
-      fetchComplaints();
     } catch (err) {
       alert("Error saving complaint resolution: " + err.message);
     }
@@ -169,11 +147,34 @@ const AdminComplaints = () => {
                       <tr key={c._id || c.id} className="ad-tr">
                         <td className="ad-td" style={{ fontWeight: 800 }}>{c.id || c._id}</td>
                         <td className="ad-td">
-                          <strong>{c.studentName || c.userId?.name || "Student Complainant"}</strong>
-                          <span style={{ fontSize: 11.5, color: "#64748b", display: "block" }}>{c.phone || c.userId?.phone}</span>
+                          <strong>{c.studentName || c.userId?.name || c.submittedBy?.name || "Student Complainant"}</strong>
+                          <span style={{ fontSize: 11.5, color: "#64748b", display: "block" }}>{c.phone || c.userId?.phone || c.submittedBy?.phone}</span>
                         </td>
                         <td className="ad-td">
-                          <strong>{c.category || "Route Delay"}</strong>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                            <strong>{c.category || "Route Delay"}</strong>
+                            {c.attachment && (
+                              <button
+                                type="button"
+                                onClick={() => setViewingProofModal({ url: c.attachment, name: c.proofName || "Student Attached Proof" })}
+                                style={{
+                                  fontSize: 11,
+                                  padding: "2px 8px",
+                                  background: "#eff6ff",
+                                  color: "#2563eb",
+                                  borderRadius: 4,
+                                  fontWeight: 700,
+                                  border: "1px solid #bfdbfe",
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 4
+                                }}
+                              >
+                                📎 View Proof
+                              </button>
+                            )}
+                          </div>
                           <p style={{ fontSize: 12, color: "#475569", margin: "2px 0 0" }}>{c.description || c.subject}</p>
                         </td>
                         <td className="ad-td">
@@ -207,13 +208,51 @@ const AdminComplaints = () => {
       {/* Resolve / Assign Department Modal */}
       {selectedComplaint && (
         <div className="ad-overlay" style={{ display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.45)" }}>
-          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 480, padding: "24px" }}>
+          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 520, padding: "24px", maxHeight: "90vh", overflowY: "auto" }}>
             <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>
               Resolve Grievance #{selectedComplaint.id || selectedComplaint._id}
             </h3>
             <p style={{ fontSize: 12.5, color: "#64748b", marginBottom: 14 }}>
               Assign to responsible university department and draft an official commuter response.
             </p>
+
+            {/* Attached Proof View in Admin Modal */}
+            {selectedComplaint.attachment && (
+              <div style={{ marginBottom: 16, padding: 12, background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 10 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#334155" }}>
+                    📎 Attached Proof: {selectedComplaint.proofName || "Evidence File"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setViewingProofModal({ url: selectedComplaint.attachment, name: selectedComplaint.proofName || "Student Attached Proof" })}
+                    style={{ fontSize: 11, color: "#2563eb", background: "none", border: "none", fontWeight: 700, cursor: "pointer" }}
+                  >
+                    Enlarge ↗
+                  </button>
+                </div>
+                {selectedComplaint.attachment.startsWith("data:image/") ? (
+                  <div style={{ textAlign: "center" }}>
+                    <img
+                      src={selectedComplaint.attachment}
+                      alt="Student Proof"
+                      onClick={() => setViewingProofModal({ url: selectedComplaint.attachment, name: selectedComplaint.proofName || "Student Attached Proof" })}
+                      style={{ maxHeight: 180, maxWidth: "100%", borderRadius: 8, objectFit: "contain", border: "1px solid #cbd5e1", cursor: "pointer" }}
+                    />
+                  </div>
+                ) : (
+                  <a
+                    href={selectedComplaint.attachment}
+                    download={selectedComplaint.proofName || "complaint_proof"}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ display: "inline-block", padding: "6px 12px", background: "#2563eb", color: "#fff", borderRadius: 6, fontSize: 12, textDecoration: "none", fontWeight: 700 }}
+                  >
+                    Download / Open Attached File ↗
+                  </a>
+                )}
+              </div>
+            )}
 
             <form onSubmit={handleSaveResolution}>
               <div style={{ marginBottom: 12 }}>
@@ -266,8 +305,85 @@ const AdminComplaints = () => {
           </div>
         </div>
       )}
+
+      {/* FULL SCREEN PROOF PREVIEW MODAL FOR ADMIN */}
+      {viewingProofModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.7)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 99999,
+            padding: 20,
+          }}
+          onClick={() => setViewingProofModal(null)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 16,
+              maxWidth: 640,
+              width: "100%",
+              maxHeight: "85vh",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#1e293b" }}>
+                📎 Student Attached Proof: {viewingProofModal.name}
+              </h4>
+              <button
+                onClick={() => setViewingProofModal(null)}
+                style={{ background: "#f1f5f9", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontWeight: 800, fontSize: 14, color: "#64748b" }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ padding: 20, overflowY: "auto", display: "flex", justifyContent: "center", alignItems: "center", background: "#f8fafc" }}>
+              {viewingProofModal.url?.startsWith("data:image/") ? (
+                <img
+                  src={viewingProofModal.url}
+                  alt="Student full proof"
+                  style={{ maxWidth: "100%", maxHeight: "60vh", borderRadius: 8, objectFit: "contain", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+                />
+              ) : (
+                <div style={{ textAlign: "center", padding: 30 }}>
+                  <div style={{ fontSize: 48, marginBottom: 12 }}>📄</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", marginBottom: 8 }}>{viewingProofModal.name}</div>
+                  <a
+                    href={viewingProofModal.url}
+                    download={viewingProofModal.name || "proof_document"}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ display: "inline-block", padding: "10px 20px", background: "#2563eb", color: "#fff", borderRadius: 8, textDecoration: "none", fontWeight: 700, fontSize: 13 }}
+                  >
+                    Download / Open Document ↗
+                  </a>
+                </div>
+              )}
+            </div>
+            <div style={{ padding: "12px 20px", borderTop: "1px solid #e2e8f0", background: "#fff", textAlign: "right" }}>
+              <button
+                onClick={() => setViewingProofModal(null)}
+                style={{ padding: "8px 18px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default AdminComplaints;
+

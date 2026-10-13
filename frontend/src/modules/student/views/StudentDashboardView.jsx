@@ -1,5 +1,8 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTransit } from "../../../shared/context/TransitContext";
+import RealMapView from "../../../shared/components/RealMapView";
+import { getStudentAssignedRoute, OFFICIAL_GSFC_ROUTES_2026 } from "../../../shared/data/officialRoutes2026";
 import "./StudentDashboard.css";
 
 const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidth = 1.8 }) => (
@@ -24,34 +27,115 @@ const BusIcon = ({ size = 20, color = "currentColor" }) => (
 const StudentDashboardView = () => {
   const navigate = useNavigate();
   const { currentStudent, liveBusTelemetry } = useTransit();
-
   const student = currentStudent || {};
-  const busId = student.busId || "BUS-104";
-  const telemetry = (liveBusTelemetry && liveBusTelemetry[busId]) || (liveBusTelemetry && liveBusTelemetry["BUS-104"]) || {};
 
-  const routeName = student.routeName || student.route || "Route 4D (Fatehgunj - GSFC)";
-  const pickupStop = student.pickupStop || student.boarding || "Fatehgunj Stop";
-  const pickupTime = student.pickupTime || "07:45 AM";
-  const feeStatus = student.feeStatus || "PAID";
-  const pendingFee = student.pendingFee || 0;
-  const passStatus = student.passStatus || student.pass || "ACTIVE";
+  // Resolve assigned route automatically for this student
+  const assignedRoute = useMemo(() => {
+    return getStudentAssignedRoute(currentStudent);
+  }, [currentStudent]);
 
+  const busId = assignedRoute?.busNo || currentStudent?.assignedBusRegNo || currentStudent?.busId || "GJ-06-BV-2915";
+  const routeName = assignedRoute?.displayName || currentStudent?.routeName || "Route 9 (Tulsidham - Fatehgunj - Nizampura)";
+  const routeNumber = assignedRoute?.routeNumber || "9";
+  const pickupStop = currentStudent?.pickupStop || currentStudent?.boarding || assignedRoute?.stops?.[2]?.name || "Fatehgunj Stop";
+  const pickupTime = currentStudent?.pickupTime || "07:48 AM";
+  const feeStatus = currentStudent?.feeStatus || "PAID";
+  const pendingFee = currentStudent?.pendingFee || 0;
+  const passStatus = currentStudent?.passStatus || currentStudent?.pass || "ACTIVE";
+
+  // Telemetry packet synchronized with driver GPS broadcast
+  const telemetry =
+    (liveBusTelemetry && liveBusTelemetry[busId]) ||
+    (liveBusTelemetry && liveBusTelemetry[assignedRoute?.routeId]) ||
+    (liveBusTelemetry && liveBusTelemetry[currentStudent?.busId]) ||
+    (liveBusTelemetry && liveBusTelemetry["BUS-104"]) ||
+    {};
+
+  const isDeviceGps = Boolean(telemetry.isDeviceGps);
+  const speed = Number(telemetry.speed) || 42;
+  const nextStopIndex =
+    telemetry.nextStopIndex !== undefined
+      ? telemetry.nextStopIndex
+      : Math.min(2, (assignedRoute?.stops?.length || 4) - 1);
+  const nextStop = telemetry.nextStop || assignedRoute?.stops?.[nextStopIndex]?.name || "Nizampura Char Rasta";
   const etaMinutes = telemetry.etaMinutes || 6;
-  const locationName = telemetry.currentLocationName || telemetry.nextStop || "Nizampura Char Rasta";
-  const speed = telemetry.speed || 42;
+  const lat = Number(telemetry.lat) || assignedRoute?.stops?.[Math.max(0, nextStopIndex - 1)]?.lat || 22.3365;
+  const lng = Number(telemetry.lng) || assignedRoute?.stops?.[Math.max(0, nextStopIndex - 1)]?.lng || 73.1795;
+  const driverName = telemetry.driverName || assignedRoute?.driverName || "Mahesh Patel";
+  const driverPhone = telemetry.driverPhone || assignedRoute?.driverPhone || "+91 98765 11111";
+
+  const activeDriverNotice =
+    telemetry.broadcastMessage ||
+    (typeof window !== "undefined" && localStorage.getItem("glow_driver_broadcast_notice")) ||
+    "";
 
   const notifications = [
-    { type: "info", icon: "🚌", text: `Your bus ${busId} is on route near ${locationName}. Estimated arrival in ${etaMinutes} min.`, time: "Just now" },
-    { type: "neutral", icon: "👤", text: `Pilot ${telemetry.driverName || "Mahesh Patel"} broadcasting live GPS telemetry (${speed} km/h).`, time: "2 min ago" },
-    { type: "success", icon: "💳", text: `Transport Pass ${student.passId || "PASS-STU-2026-0125"} verified & active.`, time: "1 day ago" },
+    ...(activeDriverNotice
+      ? [
+          {
+            type: "warning",
+            icon: "📢",
+            text: `Driver Alert (${driverName}): ${activeDriverNotice}`,
+            time: telemetry.broadcastTime || "Live",
+          },
+        ]
+      : []),
+    {
+      type: "info",
+      icon: "🚌",
+      text: `Your assigned bus ${busId} (Route ${routeNumber}) is on route near ${nextStop}. Estimated arrival in ${etaMinutes} min.`,
+      time: "Just now"
+    },
+    {
+      type: "neutral",
+      icon: "📡",
+      text: isDeviceGps
+        ? `Pilot ${driverName} broadcasting real device GPS live (${speed} km/h).`
+        : `Pilot ${driverName} broadcasting live telemetry (${speed} km/h).`,
+      time: "Live sync"
+    },
+    {
+      type: "success",
+      icon: "💳",
+      text: `Transport Pass ${currentStudent?.passId || "PASS-STU-2026-0125"} verified & active.`,
+      time: "1 day ago"
+    },
   ];
 
   return (
     <div className="sdb-view">
+      {/* ── DRIVER BROADCAST ISSUE ANNOUNCEMENT BANNER ─────────── */}
+      {activeDriverNotice && (
+        <div style={{
+          background: "#fffbeb",
+          border: "1.5px solid #f59e0b",
+          borderRadius: 14,
+          padding: "14px 18px",
+          marginBottom: 16,
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          boxShadow: "0 2px 10px rgba(245, 158, 11, 0.12)",
+        }}>
+          <span style={{ fontSize: 24 }}>📢</span>
+          <div style={{ flex: 1 }}>
+            <strong style={{ fontSize: 13.5, color: "#92400e" }}>
+              Live Driver Announcement ({driverName}):
+            </strong>
+            <div style={{ fontSize: 13.5, color: "#78350f", fontWeight: 700, marginTop: 2 }}>
+              {activeDriverNotice}
+            </div>
+          </div>
+          <span style={{ fontSize: 11, background: "#fef3c7", color: "#92400e", padding: "4px 8px", borderRadius: 6, fontWeight: 800 }}>
+            {telemetry.broadcastTime || "Live"}
+          </span>
+        </div>
+      )}
+
       {/* ── HERO BUS CARD ──────────────────────────────────────── */}
       <div className="sdb-hero-card">
         <div className="sdb-hero-left">
-          <div className="sdb-hero-badge">Today's Active Transportation</div>
+          <div className="sdb-hero-badge">Today's Assigned Transportation · Auto-Selected</div>
           <div className="sdb-hero-bus-row">
             <div className="sdb-hero-bus-icon">
               <BusIcon size={30} color="#fff" />
@@ -87,7 +171,7 @@ const StudentDashboardView = () => {
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
             <button className="sdb-track-btn" onClick={() => navigate("/student/tracking")}>
               <Icon d="M5 3l14 9-14 9V3z" size={16} stroke="#0066ff" />
-              Track Bus on Live Map
+              Explore All Fleet Routes
             </button>
             <button
               style={{
@@ -112,6 +196,207 @@ const StudentDashboardView = () => {
         </div>
       </div>
 
+      {/* ── AUTO-CONNECTED ASSIGNED ROUTE LIVE LOCATION CARD (NO CLICK REQUIRED) ── */}
+      <div
+        className="sdb-assigned-live-card"
+        style={{
+          background: "#ffffff",
+          borderRadius: 18,
+          border: "1.5px solid #bfdbfe",
+          overflow: "hidden",
+          boxShadow: "0 8px 30px rgba(0, 102, 255, 0.08)",
+          marginBottom: 20,
+        }}
+      >
+        {/* Card Header with Badges and Switch Button */}
+        <div
+          style={{
+            padding: "16px 22px",
+            borderBottom: "1px solid #e2e8f0",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 12,
+            background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
+          }}
+        >
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+              <span
+                style={{
+                  background: "#22c55e",
+                  color: "#ffffff",
+                  fontSize: 11,
+                  fontWeight: 800,
+                  padding: "3px 10px",
+                  borderRadius: 20,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  letterSpacing: "0.03em",
+                }}
+              >
+                <span
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    background: "#ffffff",
+                    display: "inline-block",
+                  }}
+                />
+                LIVE LOCATION ACTIVE
+              </span>
+              <span
+                style={{
+                  background: "#0066ff",
+                  color: "#ffffff",
+                  fontSize: 11,
+                  fontWeight: 800,
+                  padding: "3px 10px",
+                  borderRadius: 20,
+                }}
+              >
+                ★ Your Assigned Route (Auto-Selected · No Click Needed)
+              </span>
+              {isDeviceGps && (
+                <span
+                  style={{
+                    background: "#059669",
+                    color: "#ffffff",
+                    fontSize: 11,
+                    fontWeight: 800,
+                    padding: "3px 10px",
+                    borderRadius: 20,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
+                  }}
+                >
+                  🛰 Driver Device GPS Active
+                </span>
+              )}
+            </div>
+            <h3 style={{ margin: "2px 0 4px", fontSize: 17, fontWeight: 800, color: "#0f172a" }}>
+              Bus {busId} · {routeName}
+            </h3>
+            <p style={{ margin: 0, fontSize: 12.5, color: "#64748b" }}>
+              Your allocated route is loaded automatically. Approaching: <strong>{nextStop}</strong> · ETA: <strong>{etaMinutes} min</strong> ({speed} km/h) · Pilot: <strong>{driverName}</strong>
+            </p>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              onClick={() => navigate("/student/tracking")}
+              style={{
+                background: "#ffffff",
+                color: "#0066ff",
+                border: "1.5px solid #0066ff",
+                borderRadius: 10,
+                padding: "9px 16px",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                boxShadow: "0 2px 6px rgba(0, 102, 255, 0.12)",
+                transition: "all 0.15s ease",
+              }}
+              title="Click to track any of the other 12 university fleet buses live"
+            >
+              <span>🌐</span>
+              <span>Click to Track Other Routes Live ➔</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Live Map Display */}
+        <RealMapView
+          singleBus={{
+            busId,
+            regNo: busId,
+            routeName,
+            driverName,
+            driverPhone,
+            lat,
+            lng,
+            speed,
+            etaMinutes,
+          }}
+          routeStops={assignedRoute?.stops || []}
+          height="350px"
+          center={[lat, lng]}
+          zoom={13}
+          showControls={true}
+        />
+
+        {/* Live Telemetry Info Footer Bar */}
+        <div
+          style={{
+            padding: "12px 20px",
+            background: "#ffffff",
+            borderTop: "1px solid #e2e8f0",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 12,
+            fontSize: 12.5,
+            color: "#475569",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            <span>
+              📍 Approaching Stop: <strong>{nextStop}</strong>
+            </span>
+            <span>
+              ⏱ ETA at Stop: <strong>{etaMinutes} min</strong>
+            </span>
+            <span>
+              🚀 Speed: <strong>{speed} km/h</strong>
+            </span>
+            <span>
+              👤 Driver: <strong>{driverName}</strong> ({driverPhone})
+            </span>
+          </div>
+
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <button
+              onClick={() => window.open(`tel:${driverPhone.replace(/\s+/g, "")}`, "_self")}
+              style={{
+                background: "#f1f5f9",
+                color: "#0f172a",
+                border: "1px solid #cbd5e1",
+                borderRadius: 8,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              📞 Call Driver
+            </button>
+            <button
+              onClick={() => navigate("/student/tracking")}
+              style={{
+                background: "#eff6ff",
+                color: "#0066ff",
+                border: "none",
+                borderRadius: 8,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              Full Screen Tracking ➔
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* ── STATUS ROW ─────────────────────────────────────────── */}
       <div className="sdb-status-row">
         {[
@@ -121,6 +406,7 @@ const StudentDashboardView = () => {
             badgeText: feeStatus === "PAID" ? "Settled" : "Action Needed",
             icon: "M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM12 6v6l4 2",
             isBlue: feeStatus === "PAID",
+            path: pendingFee > 0 ? `/student/payment?amount=${pendingFee}` : "/student/fees",
           },
           {
             label: "Transport Pass",
@@ -128,6 +414,7 @@ const StudentDashboardView = () => {
             badgeText: "Active Valid",
             icon: "M20 12V22H4V12M22 7H2v5h20V7z",
             isBlue: true,
+            path: "/student/pass",
           },
           {
             label: "Next Scheduled Trip",
@@ -135,16 +422,24 @@ const StudentDashboardView = () => {
             badgeText: "On Schedule",
             icon: "M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10zM12 6v6l4 2",
             isBlue: true,
+            path: "/student/schedule",
           },
           {
             label: "Assigned Zone",
-            value: student.zone || "Zone B (East)",
-            badgeText: "Route R-04",
+            value: student?.zone || currentStudent?.zone || assignedRoute?.zone || "Zone B (East)",
+            badgeText: assignedRoute ? `Route ${assignedRoute.routeNumber || routeNumber}` : "Route 9",
             icon: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z",
             isBlue: true,
+            path: "/student/my-route",
           },
         ].map((s, idx) => (
-          <div key={idx} className="sdb-status-card">
+          <div
+            key={idx}
+            className="sdb-status-card"
+            style={{ cursor: "pointer", transition: "transform 0.15s ease, box-shadow 0.15s ease" }}
+            onClick={() => navigate(s.path)}
+            title={`Click to view ${s.label}`}
+          >
             <div className="sdb-status-card-top">
               <div className="sdb-status-icon">
                 <Icon d={s.icon} size={20} stroke="#0066ff" />
@@ -159,7 +454,53 @@ const StudentDashboardView = () => {
         ))}
       </div>
 
-      {/* ── MISSED BUS RESCUE BANNER ─────────────────────────── */}
+      {/* ── PENDING FEE INSTANT CHECKOUT BANNER ──────────────── */}
+      {pendingFee > 0 && (
+        <div style={{
+          background: "linear-gradient(135deg, #1e3a8a, #2563eb)",
+          borderRadius: 14,
+          padding: "14px 20px",
+          color: "#ffffff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 12,
+          marginBottom: 20,
+          boxShadow: "0 6px 20px rgba(37, 99, 235, 0.2)"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 24 }}>💳</span>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 14 }}>
+                Outstanding Bus Fee: ₹{pendingFee.toLocaleString()}
+              </div>
+              <div style={{ fontSize: 12, opacity: 0.9 }}>
+                Directly clear dues via Payment Gateway to prevent pass deactivation.
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate(`/student/payment?amount=${pendingFee}`)}
+            style={{
+              background: "#22c55e",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: 8,
+              padding: "10px 18px",
+              fontSize: 13,
+              fontWeight: 800,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              boxShadow: "0 2px 8px rgba(34, 197, 94, 0.4)"
+            }}
+          >
+            Pay Now via Gateway ➔
+          </button>
+        </div>
+      )}
       <div style={{
         background: "#eff6ff",
         border: "1.5px solid #bfdbfe",

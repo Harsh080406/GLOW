@@ -52,7 +52,7 @@ const runSeed = async () => {
       Complaint.deleteMany({}),
     ]);
 
-    const defaultPasswordHash = await bcrypt.hash("glow2026", 10);
+    const defaultPasswordHash = await bcrypt.hash("password@1234", 10);
 
     // 2. Seed Fee Slabs (Exact Pricing per PROJECT_OVERVIEW.md)
     console.log("💰 Seeding Fee Slabs (Zones A/B/C)...");
@@ -432,9 +432,9 @@ const runSeed = async () => {
     console.log("✅ GLOW MERN Database Seeding Pipeline Complete!");
     console.log(`- Users: ${await User.countDocuments()}`);
     console.log(`- Students: ${await Student.countDocuments()} (Matches UI 4,250)`);
-    console.log(`- Drivers: ${await Driver.countDocuments()} (Matches UI 92)`);
-    console.log(`- Buses: ${await Bus.countDocuments()} (Matches UI 85)`);
-    console.log(`- Routes: ${await Route.countDocuments()} (Matches UI 34)`);
+    console.log(`- Drivers: ${await Driver.countDocuments()} (Matches 13 Official Drivers)`);
+    console.log(`- Buses: ${await Bus.countDocuments()} (Matches 13 Official Buses)`);
+    console.log(`- Routes: ${await Route.countDocuments()} (Matches 13 Official Routes)`);
     console.log(`- Fee Slabs: ${await FeeSlab.countDocuments()} (Zones A/B/C)`);
     console.log("========================================================\n");
 

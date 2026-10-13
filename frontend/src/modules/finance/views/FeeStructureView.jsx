@@ -79,7 +79,7 @@ const FeeStructure = () => {
             </button>
             <div>
               <div className="ad-topbar-title">Fee Structure Management</div>
-              <div className="ad-topbar-subtitle">Define Zone-based, Distance-based, and Semester Transit Tariffs</div>
+              <div className="ad-topbar-subtitle">Fixed Annual Transit Tariff · ₹15,000 / Year (Any Kilometer · No Quarters or Semesters)</div>
             </div>
             <div className="ad-topbar-right">
               <button className="ad-btn-primary" onClick={() => setShowAddModal(true)}>
@@ -90,24 +90,39 @@ const FeeStructure = () => {
           </header>
 
           <main className="ad-content">
-            {/* ── ZONE-BASED & SEMESTER FEE SLABS ───────────────────────── */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, marginBottom: 24 }}>
-              {[
-                { zone: "Zone A", dist: "0 - 5 km from Campus", amount: "₹12,000 / year", type: "Annual Slab", color: "#3b82f6", bg: "#eff6ff" },
-                { zone: "Zone B", dist: "5 - 12 km from Campus", amount: "₹15,000 / year", type: "Annual Slab", color: "#059669", bg: "#ecfdf5" },
-                { zone: "Zone C", dist: "12 - 20 km from Campus", amount: "₹18,000 / year", type: "Annual Slab", color: "#8b5cf6", bg: "#f5f3ff" },
-                { zone: "Semester Plan", dist: "Flexible Half-Year", amount: "₹7,500 / sem", type: "Semester Slab", color: "#f59e0b", bg: "#fffbeb" },
-              ].map((slab) => (
-                <div key={slab.zone} style={{ background: slab.bg, border: `1px solid ${slab.color}33`, borderRadius: 14, padding: "20px" }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: slab.color, textTransform: "uppercase" }}>{slab.type}</span>
-                  <h3 style={{ fontSize: 22, fontWeight: 900, color: "#1e293b", marginTop: 4 }}>{slab.zone}</h3>
-                  <p style={{ fontSize: 12.5, color: "#64748b", marginTop: 2 }}>{slab.dist}</p>
-                  <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(0,0,0,0.06)", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                    <span style={{ fontSize: 18, fontWeight: 900, color: slab.color }}>{slab.amount}</span>
-                    <span style={{ fontSize: 11.5, color: "#64748b" }}>AY 2026-27</span>
-                  </div>
+            {/* ── UNIFORM ANNUAL FIXED FEE PLAN (₹15,000 FOR WHOLE YEAR) ──── */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 24 }}>
+              <div style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)", border: "1.5px solid #10b98144", borderRadius: 16, padding: "22px", boxShadow: "0 4px 16px rgba(16, 185, 129, 0.08)" }}>
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#059669", textTransform: "uppercase", letterSpacing: 0.5 }}>● Universal Fixed Annual Tariff</span>
+                <h3 style={{ fontSize: 24, fontWeight: 900, color: "#065f46", marginTop: 4 }}>Annual Transport Plan</h3>
+                <p style={{ fontSize: 13, color: "#047857", marginTop: 3 }}>Single flat tariff covering all 13 routes and any distance across Vadodara</p>
+                <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(16, 185, 129, 0.15)", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                  <span style={{ fontSize: 22, fontWeight: 900, color: "#059669" }}>₹15,000 / year</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#065f46" }}>AY 2026-27</span>
                 </div>
-              ))}
+              </div>
+
+              <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 16, padding: "22px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                <div>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5 }}>Kilometer / Distance Rule</span>
+                  <h4 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginTop: 4 }}>Any Distance Covered</h4>
+                  <p style={{ fontSize: 12.5, color: "#64748b", marginTop: 3 }}>No distance slabs (0 - 35+ km). Students from any pickup stop pay the exact same flat fee.</p>
+                </div>
+                <div style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 6, color: "#059669", fontWeight: 700, fontSize: 12.5 }}>
+                  ✓ Zero Distance Surcharges
+                </div>
+              </div>
+
+              <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 16, padding: "22px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                <div>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5 }}>Billing Period</span>
+                  <h4 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginTop: 4 }}>Full Academic Year</h4>
+                  <p style={{ fontSize: 12.5, color: "#64748b", marginTop: 3 }}>One fixed fee for 365 days. No quarterly plans, no half-year semester split.</p>
+                </div>
+                <div style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 6, color: "#0284c7", fontWeight: 700, fontSize: 12.5 }}>
+                  ✓ Valid Until 31 May 2027
+                </div>
+              </div>
             </div>
 
             {/* ── MASTER FEE SLABS TABLE ───────────────────────────────── */}
@@ -186,7 +201,7 @@ const FeeStructure = () => {
                 <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, marginBottom: 4 }}>Fee Plan Name</label>
                 <input
                   type="text"
-                  placeholder="e.g. Zone D (20 - 30 km Express)"
+                  placeholder="e.g. Annual Campus Transit (All Routes)"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   required
@@ -202,23 +217,17 @@ const FeeStructure = () => {
                     onChange={(e) => setNewType(e.target.value)}
                     style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1.5px solid #cbd5e1", fontSize: 13.5, background: "#fff" }}
                   >
-                    <option value="Annual">Annual</option>
-                    <option value="Semester">Semester</option>
-                    <option value="Monthly">Monthly</option>
+                    <option value="Annual">Annual (Full Year)</option>
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, marginBottom: 4 }}>Zone / Region</label>
+                  <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, marginBottom: 4 }}>Distance / Region</label>
                   <select
                     value={newZone}
                     onChange={(e) => setNewZone(e.target.value)}
                     style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1.5px solid #cbd5e1", fontSize: 13.5, background: "#fff" }}
                   >
-                    <option value="Zone A">Zone A (0 - 5 km)</option>
-                    <option value="Zone B">Zone B (5 - 12 km)</option>
-                    <option value="Zone C">Zone C (12 - 20 km)</option>
-                    <option value="Zone D">Zone D (20+ km)</option>
-                    <option value="All Zones">All Zones</option>
+                    <option value="All Zones">All Zones (Any Distance)</option>
                   </select>
                 </div>
               </div>

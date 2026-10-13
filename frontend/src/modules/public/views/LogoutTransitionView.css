@@ -1,0 +1,225 @@
+/* ── Logout Transition Screen ────────────────────────────────────────── */
+.logout-screen-root {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 30%, #f0f7ff 0%, #e0edff 50%, #dbeafe 100%);
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.logout-card-container {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border-radius: 28px;
+  box-shadow: 0 20px 45px -10px rgba(0, 50, 150, 0.12),
+              0 0 1px 1px rgba(0, 0, 0, 0.04);
+  padding: 44px 36px;
+  text-align: center;
+  box-sizing: border-box;
+  animation: logoutCardPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden;
+}
+
+.logout-card-glow-bg {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0) 70%);
+  pointer-events: none;
+}
+
+.logout-card-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Logo */
+.logout-logo-wrap {
+  margin-bottom: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 4px 12px rgba(0, 102, 255, 0.15));
+  animation: logoutLogoFloat 2.5s ease-in-out infinite alternate;
+}
+
+/* Title & Team Badge */
+.logout-message-section {
+  margin-bottom: 24px;
+}
+
+.logout-main-title {
+  margin: 0 0 10px 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.6px;
+  line-height: 1.2;
+}
+
+.logout-team-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 18px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 9999px;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.08);
+}
+
+.logout-sparkle {
+  color: #2563eb;
+  font-size: 11px;
+}
+
+/* Centered Ticking Number Section (No Progress Bar) */
+.logout-countdown-center-box {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 8px 0 28px;
+  padding: 18px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 20px;
+  box-sizing: border-box;
+}
+
+.logout-ticking-number-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.35),
+              0 0 0 4px rgba(219, 234, 254, 0.8);
+  margin-bottom: 12px;
+  animation: tickPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.logout-ticking-number {
+  color: #ffffff;
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -1px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.logout-countdown-label {
+  margin: 0;
+  font-size: 13.5px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.logout-countdown-label strong {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+/* Direct Action Button */
+.logout-direct-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 20px;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.logout-direct-btn:hover {
+  background: #1e293b;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2);
+}
+
+.logout-direct-btn:active {
+  transform: translateY(0);
+}
+
+/* Animations */
+@keyframes logoutCardPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes logoutLogoFloat {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes tickPop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 480px) {
+  .logout-card-container {
+    padding: 32px 20px;
+    border-radius: 20px;
+  }
+
+  .logout-main-title {
+    font-size: 24px;
+  }
+
+  .logout-ticking-number-circle {
+    width: 62px;
+    height: 62px;
+  }
+
+  .logout-ticking-number {
+    font-size: 28px;
+  }
+}

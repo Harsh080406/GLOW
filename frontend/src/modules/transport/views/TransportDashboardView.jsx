@@ -161,7 +161,7 @@ const TransportDashboard = () => {
     },
     {
       label: "Active Corridors",
-      value: `${kpis.totalCorridors || 34} Routes`,
+      value: `${kpis.totalCorridors || 13} Routes`,
       sub: "Vadodara ↔ GSFC",
       color: "#3b82f6",
       path: "/transport/routes",

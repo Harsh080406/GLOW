@@ -11,6 +11,7 @@ import {
   LandingPageView,
   LoginPageView,
   OAuthCallbackView,
+  LogoutTransitionView,
 } from "./modules/public";
 
 // ── 2. Student Mobility Module ─────────────────────────────
@@ -23,6 +24,7 @@ import {
   LiveTrackingView,
   StudentTransportPassView,
   StudentFeesView,
+  StudentPaymentGatewayView,
   NotificationsView,
   StudentComplaintsView,
   StudentEmergencyView,
@@ -112,6 +114,9 @@ function App() {
             <Route path="/login/admin" element={<LoginPageView />} />
             <Route path="/login/student" element={<LoginPageView />} />
             <Route path="/login/driver" element={<LoginPageView />} />
+            <Route path="/logout" element={<LogoutTransitionView />} />
+            <Route path="/exit" element={<LogoutTransitionView />} />
+            <Route path="/thank-you" element={<LogoutTransitionView />} />
             <Route path="/oauth/callback" element={<OAuthCallbackView />} />
             <Route path="/403" element={<ForbiddenView />} />
 
@@ -127,6 +132,8 @@ function App() {
                 <Route path="tracking" element={<LiveTrackingView />} />
                 <Route path="pass" element={<StudentTransportPassView />} />
                 <Route path="fees" element={<StudentFeesView />} />
+                <Route path="payment" element={<StudentPaymentGatewayView />} />
+                <Route path="checkout" element={<StudentPaymentGatewayView />} />
                 <Route path="notifications" element={<NotificationsView />} />
                 <Route path="complaints" element={<StudentComplaintsView />} />
                 <Route path="emergency" element={<StudentEmergencyView />} />

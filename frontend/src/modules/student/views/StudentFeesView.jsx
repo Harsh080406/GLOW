@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTransit } from "../../../shared/context/TransitContext";
 import { downloadFeeReceiptPdf } from "../../../shared/utils/feeReceiptPdf";
 import "../../admin/layout/AdminLayout.css";
@@ -11,36 +12,20 @@ const Icon = ({ d, size = 20, stroke = "currentColor", fill = "none", strokeWidt
 );
 
 const StudentFees = () => {
-  const { currentStudent, transactions, payStudentFee, feeStructures } = useTransit();
+  const navigate = useNavigate();
+  const { currentStudent, transactions, feeStructures } = useTransit();
   const student = currentStudent || {};
   const zone = student.zone || "Zone B";
   const zoneKey = zone.replace("Zone ", "").trim();
   const matchingSlab = (feeStructures || []).find(
     (f) => (f.zone || "").includes(zoneKey) || (f.zone || "").includes(zone)
   );
-  const totalFee = matchingSlab ? matchingSlab.amount : student.totalFee || 9500;
+  const totalFee = matchingSlab ? matchingSlab.amount : student.totalFee || 15000;
   const paidFee = student.paidFee || 0;
   const pendingFee = student.pendingFee !== undefined ? student.pendingFee : Math.max(0, totalFee - paidFee);
   const dueDate = matchingSlab?.dueDate || student.dueDate || "15 Sep 2026";
 
-  const [showPayModal, setShowPayModal] = useState(false);
-  const [payAmount, setPayAmount] = useState(pendingFee || 5000);
-  const [selectedMethod, setSelectedMethod] = useState("UPI (Google Pay)");
   const [selectedReceipt, setSelectedReceipt] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [successTxn, setSuccessTxn] = useState(null);
-
-  const handlePayment = (e) => {
-    e.preventDefault();
-    if (payAmount <= 0) return;
-    setIsProcessing(true);
-
-    setTimeout(() => {
-      const txn = payStudentFee(Number(payAmount), selectedMethod);
-      setIsProcessing(false);
-      setSuccessTxn(txn);
-    }, 1200);
-  };
 
   const studentTxns = (transactions || []).filter((t) => t.studentId === student.id);
 
@@ -60,11 +45,32 @@ const StudentFees = () => {
           <span style={{ fontSize: 12, color: "#166534" }}>✓ Verified & Receipts Issued</span>
         </div>
 
-        <div style={{ background: pendingFee > 0 ? "#fff7ed" : "#f0fdf4", border: `1px solid ${pendingFee > 0 ? "#fed7aa" : "#bbf7d0"}`, borderRadius: 14, padding: "20px" }}>
-          <p style={{ fontSize: 12, color: pendingFee > 0 ? "#9a3412" : "#166534", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Amount Pending</p>
+        <div
+          onClick={() => {
+            if (pendingFee > 0) {
+              navigate(`/student/payment?amount=${pendingFee}`);
+            }
+          }}
+          style={{
+            background: pendingFee > 0 ? "#fff7ed" : "#f0fdf4",
+            border: `1.5px solid ${pendingFee > 0 ? "#fed7aa" : "#bbf7d0"}`,
+            borderRadius: 14,
+            padding: "20px",
+            cursor: pendingFee > 0 ? "pointer" : "default",
+            transition: "all 0.2s ease",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <p style={{ fontSize: 12, color: pendingFee > 0 ? "#9a3412" : "#166534", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Amount Pending</p>
+            {pendingFee > 0 && (
+              <span style={{ fontSize: 11, background: "#ea580c", color: "#fff", padding: "2px 8px", borderRadius: 12, fontWeight: 700 }}>
+                Pay Now ➔
+              </span>
+            )}
+          </div>
           <h2 style={{ fontSize: 26, fontWeight: 900, color: pendingFee > 0 ? "#ea580c" : "#16a34a", marginTop: 4 }}>₹{pendingFee.toLocaleString()}</h2>
           <span style={{ fontSize: 12, color: pendingFee > 0 ? "#c2410c" : "#166534" }}>
-            {pendingFee > 0 ? `Due Date: ${dueDate}` : "All dues cleared!"}
+            {pendingFee > 0 ? `Due Date: ${dueDate} · Click to Pay` : "All dues cleared!"}
           </span>
         </div>
       </div>
@@ -77,29 +83,33 @@ const StudentFees = () => {
               ⚡ Payment Due Soon
             </div>
             <h3 style={{ fontSize: 22, fontWeight: 800 }}>Clear Pending Dues of ₹{pendingFee.toLocaleString()}</h3>
-            <p style={{ fontSize: 13.5, opacity: 0.9, marginTop: 2 }}>Pay via Instant UPI, Credit/Debit Card, or NetBanking to keep your Transport Pass active.</p>
+            <p style={{ fontSize: 13.5, opacity: 0.9, marginTop: 2 }}>Pay via Instant UPI, Credit/Debit Card, or NetBanking on the secure Payment Gateway.</p>
           </div>
           <button
-            onClick={() => {
-              setPayAmount(pendingFee);
-              setSuccessTxn(null);
-              setShowPayModal(true);
-            }}
+            onClick={() => navigate(`/student/payment?amount=${pendingFee}`)}
             style={{ background: "#22c55e", color: "#fff", border: "none", borderRadius: 10, padding: "14px 28px", fontSize: 15, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 4px 14px rgba(34,197,94,0.4)", minHeight: 48, flex: "1 1 200px" }}
           >
             <Icon d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM12 6v6l4 2" size={18} stroke="#fff" />
-            PAY ₹{pendingFee.toLocaleString()} NOW
+            PAY ₹{pendingFee.toLocaleString()} NOW ➔
           </button>
         </div>
       ) : (
-        <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 14, padding: "18px 24px", display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
-          <div style={{ width: 40, height: 40, background: "#22c55e", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 20 }}>
-            ✓
+        <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 14, padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ width: 40, height: 40, background: "#22c55e", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 20 }}>
+              ✓
+            </div>
+            <div>
+              <h4 style={{ fontSize: 16, fontWeight: 700, color: "#166534" }}>Fee Payment Completed for AY 2026-27</h4>
+              <p style={{ fontSize: 13, color: "#15803d" }}>Your transport pass is valid until 31 May 2027. You have zero outstanding dues.</p>
+            </div>
           </div>
-          <div>
-            <h4 style={{ fontSize: 16, fontWeight: 700, color: "#166534" }}>Fee Payment Completed for AY 2026-27</h4>
-            <p style={{ fontSize: 13, color: "#15803d" }}>Your transport pass is valid until 31 May 2027. You have zero outstanding dues.</p>
-          </div>
+          <button
+            onClick={() => navigate("/student/payment?amount=5000")}
+            style={{ background: "#059669", color: "#fff", border: "none", borderRadius: 10, padding: "10px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+          >
+            <span>💳</span> Open Payment Gateway ➔
+          </button>
         </div>
       )}
 
@@ -110,29 +120,38 @@ const StudentFees = () => {
             <h3 className="ad-card-title">Payment History & Receipts</h3>
             <p style={{ fontSize: 12.5, color: "#7c8494", marginTop: 2 }}>Official tax invoices and digital payment receipts</p>
           </div>
-          <button
-            className="ad-btn-secondary"
-            onClick={() => {
-              const latest = studentTxns[0] || {
-                receiptId: "REC-2026-8910",
-                amount: paidFee || totalFee,
-                date: new Date().toLocaleDateString("en-IN"),
-                method: "Online Banking / UPI",
-                refNo: "UTR-GSFC-ONLINE",
-              };
-              downloadFeeReceiptPdf({
-                ...latest,
-                studentName: student.name,
-                studentId: student.id,
-                dept: student.dept,
-                route: student.routeName,
-                zone: student.zone,
-              });
-            }}
-          >
-            <Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" size={15} />
-            Download Fee Slip (PDF)
-          </button>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button
+              className="ad-btn-secondary"
+              onClick={() => navigate(`/student/payment?amount=${pendingFee > 0 ? pendingFee : 5000}`)}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 700 }}
+            >
+              <span>💳</span> Payment Gateway
+            </button>
+            <button
+              className="ad-btn-secondary"
+              onClick={() => {
+                const latest = studentTxns[0] || {
+                  receiptId: "REC-2026-8910",
+                  amount: paidFee || totalFee,
+                  date: new Date().toLocaleDateString("en-IN"),
+                  method: "Online Banking / UPI",
+                  refNo: "UTR-GSFC-ONLINE",
+                };
+                downloadFeeReceiptPdf({
+                  ...latest,
+                  studentName: student.name,
+                  studentId: student.id,
+                  dept: student.dept,
+                  route: student.routeName,
+                  zone: student.zone,
+                });
+              }}
+            >
+              <Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" size={15} />
+              Download Fee Slip (PDF)
+            </button>
+          </div>
         </div>
 
         <div className="ad-table-wrap">
@@ -201,160 +220,6 @@ const StudentFees = () => {
           </table>
         </div>
       </div>
-
-      {/* ── PAYMENT MODAL ──────────────────────────────────────── */}
-      {showPayModal && (
-        <div className="ad-overlay" style={{ display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 12 }}>
-          <div style={{ background: "#fff", borderRadius: 18, width: "100%", maxWidth: 480, maxHeight: "calc(100vh - 24px)", overflowY: "auto", padding: "clamp(18px, 4vw, 28px)", boxShadow: "0 20px 50px rgba(0,0,0,0.3)", position: "relative" }}>
-            <button
-              onClick={() => setShowPayModal(false)}
-              style={{ position: "absolute", top: 18, right: 18, background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#64748b" }}
-            >
-              ✕
-            </button>
-
-            {!successTxn ? (
-              <form onSubmit={handlePayment}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-                  <div style={{ width: 44, height: 44, background: "#eff6ff", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Icon d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zM12 6v6l4 2" size={24} stroke="#2563eb" />
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1a1d23" }}>University Transport Fee Portal</h3>
-                    <p style={{ fontSize: 12, color: "#64748b" }}>Secure Payment Gateway · 256-Bit SSL Encrypted</p>
-                  </div>
-                </div>
-
-                <div style={{ background: "#f8fafc", borderRadius: 12, padding: "14px", marginBottom: 18 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
-                    <span style={{ color: "#64748b" }}>Student ID:</span>
-                    <span style={{ fontWeight: 600 }}>{currentStudent.id}</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
-                    <span style={{ color: "#64748b" }}>Student Name:</span>
-                    <span style={{ fontWeight: 600 }}>{currentStudent.name}</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                    <span style={{ color: "#64748b" }}>Assigned Route:</span>
-                    <span style={{ fontWeight: 600 }}>{currentStudent.routeName}</span>
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: "#334155", marginBottom: 6 }}>Payment Amount (₹)</label>
-                  <input
-                    type="number"
-                    value={payAmount}
-                    onChange={(e) => setPayAmount(e.target.value)}
-                    max={currentStudent.pendingFee}
-                    min={100}
-                    required
-                    style={{ width: "100%", padding: "12px", borderRadius: 8, border: "1.5px solid #cbd5e1", fontSize: 16, fontWeight: 700 }}
-                  />
-                  <span style={{ fontSize: 11, color: "#64748b", marginTop: 4, display: "block" }}>Maximum payable pending: ₹{currentStudent.pendingFee.toLocaleString()}</span>
-                </div>
-
-                <div style={{ marginBottom: 20 }}>
-                  <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Select Payment Mode</label>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                    {[
-                      { id: "UPI (Google Pay)", label: "Google Pay UPI", icon: "📱" },
-                      { id: "UPI (PhonePe)", label: "PhonePe UPI", icon: "🟣" },
-                      { id: "HDFC NetBanking", label: "NetBanking", icon: "🏦" },
-                      { id: "Credit/Debit Card", label: "Card (Visa/Master)", icon: "💳" },
-                    ].map((m) => (
-                      <button
-                        type="button"
-                        key={m.id}
-                        onClick={() => setSelectedMethod(m.id)}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          padding: "10px 12px",
-                          borderRadius: 8,
-                          border: `1.5px solid ${selectedMethod === m.id ? "#2563eb" : "#e2e8f0"}`,
-                          background: selectedMethod === m.id ? "#eff6ff" : "#fff",
-                          color: selectedMethod === m.id ? "#1d4ed8" : "#334155",
-                          fontWeight: 600,
-                          fontSize: 12.5,
-                          cursor: "pointer",
-                        }}
-                      >
-                        <span>{m.icon}</span>
-                        <span>{m.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isProcessing}
-                  style={{ width: "100%", padding: "14px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 800, cursor: isProcessing ? "not-allowed" : "pointer" }}
-                >
-                  {isProcessing ? "Processing Payment..." : `Proceed to Pay ₹${Number(payAmount).toLocaleString()}`}
-                </button>
-              </form>
-            ) : (
-              <div style={{ textAlign: "center", padding: "20px 0" }}>
-                <div style={{ width: 64, height: 64, background: "#dcfce7", color: "#16a34a", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 32 }}>
-                  ✓
-                </div>
-                <h3 style={{ fontSize: 20, fontWeight: 900, color: "#166534" }}>Payment Successful!</h3>
-                <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>Transaction ID: {successTxn.id}</p>
-                <div style={{ background: "#f8fafc", borderRadius: 12, padding: "16px", margin: "20px 0", textAlign: "left" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 13 }}>
-                    <span style={{ color: "#64748b" }}>Amount Paid:</span>
-                    <span style={{ fontWeight: 800, color: "#16a34a" }}>₹{successTxn.amount.toLocaleString()}</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 13 }}>
-                    <span style={{ color: "#64748b" }}>Reference No:</span>
-                    <span style={{ fontWeight: 600 }}>{successTxn.refNo}</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                    <span style={{ color: "#64748b" }}>Payment Mode:</span>
-                    <span style={{ fontWeight: 600 }}>{successTxn.method}</span>
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 10 }}>
-                  <button
-                    onClick={() => {
-                      downloadFeeReceiptPdf({
-                        ...successTxn,
-                        studentName: currentStudent.name,
-                        studentId: currentStudent.id,
-                        dept: currentStudent.dept,
-                        route: currentStudent.routeName,
-                        zone: currentStudent.zone,
-                      });
-                    }}
-                    style={{ flex: 1.2, padding: "12px", background: "#16a34a", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-                  >
-                    <Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" size={15} stroke="#fff" />
-                    Download PDF Slip
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedReceipt(successTxn);
-                      setShowPayModal(false);
-                    }}
-                    style={{ flex: 1, padding: "12px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}
-                  >
-                    View Details
-                  </button>
-                  <button
-                    onClick={() => setShowPayModal(false)}
-                    style={{ padding: "12px 16px", background: "#e2e8f0", color: "#334155", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}
-                  >
-                    Done
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* ── RECEIPT PREVIEW MODAL ──────────────────────────────── */}
       {selectedReceipt && (

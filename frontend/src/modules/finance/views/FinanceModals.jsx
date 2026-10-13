@@ -363,7 +363,7 @@ export const ViewReceiptModal = ({ isOpen, onClose, transaction }) => {
             <div>
               <span style={{ color: "#64748b", display: "block", fontSize: 11 }}>COMMUTER NAME:</span>
               <strong style={{ color: "#0f172a" }}>{transaction.studentName || "Rahul Sharma"}</strong>
-              <span style={{ color: "#475569", display: "block" }}>ID: {transaction.studentId || "GSFC20260125"}</span>
+              <span style={{ color: "#475569", display: "block" }}>ID: {transaction.studentId || "UNI20260125"}</span>
             </div>
             <div>
               <span style={{ color: "#64748b", display: "block", fontSize: 11 }}>TRANSACTION DETAILS:</span>

@@ -20,6 +20,8 @@ const STUDENT_ROUTE_TITLES = {
   "/student/tracking": { title: "Live Bus GPS Tracking", subtitle: "Real-time location, speed telemetry & live ETAs" },
   "/student/pass": { title: "My Transport Pass", subtitle: "Encrypted QR code for contactless bus boarding" },
   "/student/fees": { title: "Fees & Payment Invoices", subtitle: "Fee breakdown, online payment gateway & tax invoices" },
+  "/student/payment": { title: "Secure Payment Gateway", subtitle: "256-Bit SSL Encrypted Campus Fee Checkout Portal" },
+  "/student/checkout": { title: "Secure Payment Gateway", subtitle: "256-Bit SSL Encrypted Campus Fee Checkout Portal" },
   "/student/notifications": { title: "Transit Notifications", subtitle: "Real-time schedule alerts, trip updates & broadcasts" },
   "/student/complaints": { title: "Complaints & Support Tickets", subtitle: "Submit feedback, report lost items or route issues" },
   "/student/emergency": { title: "Emergency & Safety Command", subtitle: "SOS alert trigger, 24/7 security contacts & SOS guidelines" },
@@ -42,8 +44,12 @@ const StudentLayout = ({ children, title: overrideTitle, subtitle: overrideSubti
   const subtitle = overrideSubtitle || currentRouteMeta.subtitle;
 
   const studentName = currentStudent?.name || "Rahul Sharma";
-  const studentInitials = currentStudent?.avatar ||
-    studentName
+  const hasStudentPhoto = Boolean(
+    currentStudent?.avatar && (currentStudent.avatar.startsWith("data:image") || currentStudent.avatar.startsWith("http"))
+  );
+  const studentInitials = (!hasStudentPhoto && currentStudent?.avatar && currentStudent.avatar.length <= 4)
+    ? currentStudent.avatar
+    : studentName
       .trim()
       .split(" ")
       .filter(Boolean)
@@ -88,11 +94,16 @@ const StudentLayout = ({ children, title: overrideTitle, subtitle: overrideSubti
               </button>
               <div
                 className="sl-avatar"
+                style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}
                 title={`${studentName} (${currentStudent?.id || "UNI20260125"}) — Click to view Profile`}
                 aria-label="Student profile"
                 onClick={() => navigate("/student/profile")}
               >
-                {studentInitials}
+                {hasStudentPhoto ? (
+                  <img src={currentStudent.avatar} alt={studentName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  studentInitials
+                )}
               </div>
             </div>
           </header>

@@ -170,7 +170,7 @@ export const createUser = async (req, res, next) => {
       return res.status(400).json({ error: { code: "ALREADY_EXISTS", message: "User email already registered." } });
     }
 
-    const passwordHash = await bcrypt.hash(password || "glow2026", 10);
+    const passwordHash = await bcrypt.hash(password || "password@1234", 10);
     const user = await User.create({
       name,
       email: email.toLowerCase(),
@@ -353,7 +353,7 @@ export const exportStudentsExcel = async (req, res, next) => {
 export const createStudent = async (req, res, next) => {
   try {
     const { name, email, branch, semester, routeId, busId, pickupStop, feeStatus, guardianContact } = req.body;
-    const passwordHash = await bcrypt.hash("glow2026", 10);
+    const passwordHash = await bcrypt.hash("password@1234", 10);
 
     const user = await User.create({
       name,
@@ -529,7 +529,7 @@ export const getDrivers = async (req, res, next) => {
 export const createDriver = async (req, res, next) => {
   try {
     const { name, email, phone, licenseNumber, shiftTiming, assignedBusId } = req.body;
-    const passwordHash = await bcrypt.hash("glow2026", 10);
+    const passwordHash = await bcrypt.hash("password@1234", 10);
 
     const user = await User.create({
       name,
@@ -967,7 +967,9 @@ export const markVehicleFit = async (req, res, next) => {
 
 export const getComplaints = async (req, res, next) => {
   try {
-    const complaints = await Complaint.find().sort({ createdAt: -1 });
+    const complaints = await Complaint.find()
+      .populate("submittedBy", "name email phone")
+      .sort({ createdAt: -1 });
     return res.json({ success: true, complaints });
   } catch (error) {
     next(error);
@@ -1216,7 +1218,21 @@ export const updateSettings = async (req, res, next) => {
 
 export const getAdminProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).select("-passwordHash");
+    let user = null;
+    if (req.user?.id && mongoose.Types.ObjectId.isValid(req.user.id)) {
+      user = await User.findById(req.user.id).select("-passwordHash");
+    }
+    if (!user && req.user?.email) {
+      user = await User.findOne({ email: req.user.email.toLowerCase() }).select("-passwordHash");
+    }
+    if (!user) {
+      user = {
+        name: req.user?.name || "Dr. Arvind Patel",
+        email: req.user?.email || "admin@glowbus.edu",
+        role: req.user?.role || "super_admin",
+        avatar: "",
+      };
+    }
     return res.json({ success: true, profile: user });
   } catch (error) {
     next(error);
@@ -1225,12 +1241,50 @@ export const getAdminProfile = async (req, res, next) => {
 
 export const updateAdminProfile = async (req, res, next) => {
   try {
-    const { name, phone, department } = req.body;
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { ...(name && { name }), ...(phone && { phone }), ...(department && { department }) },
-      { new: true }
-    ).select("-passwordHash");
+    const { name, phone, department, officeLocation, designation, avatar } = req.body;
+    let user = null;
+
+    if (req.user?.id && mongoose.Types.ObjectId.isValid(req.user.id)) {
+      user = await User.findByIdAndUpdate(
+        req.user.id,
+        {
+          ...(name && { name }),
+          ...(phone && { phone }),
+          ...(department && { department }),
+          ...(officeLocation && { officeLocation }),
+          ...(designation && { designation }),
+          ...(avatar !== undefined && { avatar }),
+        },
+        { new: true }
+      ).select("-passwordHash");
+    }
+
+    if (!user && req.user?.email) {
+      user = await User.findOneAndUpdate(
+        { email: req.user.email.toLowerCase() },
+        {
+          ...(name && { name }),
+          ...(phone && { phone }),
+          ...(department && { department }),
+          ...(officeLocation && { officeLocation }),
+          ...(designation && { designation }),
+          ...(avatar !== undefined && { avatar }),
+        },
+        { new: true }
+      ).select("-passwordHash");
+    }
+
+    if (!user) {
+      user = {
+        name: name || req.user?.name || "Dr. Arvind Patel",
+        email: req.user?.email || "admin@glowbus.edu",
+        role: req.user?.role || "super_admin",
+        department: department || "GSFC University Transportation Cell, Vigyan Bhavan",
+        officeLocation: officeLocation || "Administrative Block, 3rd Floor, Suite 302",
+        avatar: avatar || "",
+      };
+    }
+
     return res.json({ success: true, message: "Profile updated.", profile: user });
   } catch (error) {
     next(error);

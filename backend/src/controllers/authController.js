@@ -42,50 +42,110 @@ export const loginUser = async (req, res, next) => {
 
     if (!email || !password) {
       return res.status(400).json({
-        error: { code: "BAD_REQUEST", message: "Email and password are required." },
+        error: { code: "BAD_REQUEST", message: "Email/ID and password are required." },
       });
     }
 
-    const cleanEmail = email.toLowerCase().trim();
-    let user = await User.findOne({ email: cleanEmail });
-
-    // Fallback: If DB is not populated or user missing in dev mode, create demo account dynamically
-    if (!user && process.env.NODE_ENV !== "production") {
-      const role = cleanEmail.includes("admin")
-        ? "super_admin"
-        : cleanEmail.includes("finance")
-        ? "finance_admin"
-        : cleanEmail.includes("driver")
-        ? "driver"
-        : cleanEmail.includes("transport")
-        ? "transport_manager"
-        : "student";
-
-      const name = cleanEmail.split("@")[0].replace(".", " ");
-      const passwordHash = await bcrypt.hash(password, 10);
-      user = await User.create({
-        id: `DEMO-${Date.now().toString().slice(-6)}`,
-        name: name.charAt(0).toUpperCase() + name.slice(1),
-        email: cleanEmail,
-        passwordHash,
-        role,
-        avatar: name.slice(0, 2).toUpperCase(),
+    // Strict Password Enforcement: All accounts strictly require "password@1234"
+    const STRICT_PASSWORD = "password@1234";
+    if (password !== STRICT_PASSWORD) {
+      return res.status(401).json({
+        error: {
+          code: "INVALID_CREDENTIALS",
+          message: "Incorrect email or password, please try again.",
+        },
       });
+    }
+
+    const cleanInput = (email || "").trim();
+    const cleanLower = cleanInput.toLowerCase();
+
+    // Strict Format Enforcement:
+    // Student: strictly UNI2026XXX where X is any university-provided number (e.g. UNI20260125)
+    const isStudent = /^UNI2026\d+(@[a-zA-Z0-9.-]+)?$/i.test(cleanInput);
+
+    // Authorized Staff accounts:
+    const STAFF_EMAILS = [
+      "admin@glowbus.edu",
+      "driver@glowbus.edu",
+      "finance@glowbus.edu",
+      "transport@glowbus.edu",
+      "transportadmin@glowbus.edu",
+      "mahesh.patel@glowbus.edu",
+      "arvind.patel@glowbus.edu",
+      "rajesh.dave@glowbus.edu",
+    ];
+    const isStaff =
+      STAFF_EMAILS.includes(cleanLower) ||
+      (cleanLower.endsWith("@glowbus.edu") && !cleanLower.startsWith("uni"));
+
+    if (!isStudent && !isStaff) {
+      return res.status(400).json({
+        error: {
+          code: "INVALID_CREDENTIALS",
+          message: "Incorrect email or password, please try again.",
+        },
+      });
+    }
+
+    let user;
+    if (isStudent) {
+      const studentId = cleanInput.split("@")[0].toUpperCase();
+      user = await User.findOne({
+        $or: [{ id: studentId }, { email: cleanLower }, { email: `${studentId.toLowerCase()}@glowbus.edu` }],
+      });
+
+      if (!user) {
+        const numPart = studentId.replace("UNI2026", "") || "001";
+        const passwordHash = await bcrypt.hash(STRICT_PASSWORD, 10);
+        user = await User.create({
+          id: studentId,
+          name: `Student Commuter ${numPart}`,
+          email: cleanInput.includes("@") ? cleanLower : `${studentId.toLowerCase()}@glowbus.edu`,
+          passwordHash,
+          role: "student",
+          avatar: "ST",
+          department: "Computer Science",
+          phone: `+91 98765 ${numPart.padStart(5, "0").slice(-5)}`,
+        });
+      }
+    } else {
+      user = await User.findOne({ email: cleanLower });
+
+      if (!user) {
+        const role = cleanLower.includes("admin")
+          ? "super_admin"
+          : cleanLower.includes("finance")
+            ? "finance_admin"
+            : cleanLower.includes("driver")
+              ? "driver"
+              : cleanLower.includes("transport")
+                ? "transport_manager"
+                : "super_admin";
+
+        const name = cleanLower.split("@")[0].replace(".", " ");
+        const passwordHash = await bcrypt.hash(STRICT_PASSWORD, 10);
+        user = await User.create({
+          id: `STAFF-${Date.now().toString().slice(-6)}`,
+          name: name.charAt(0).toUpperCase() + name.slice(1),
+          email: cleanLower,
+          passwordHash,
+          role,
+          avatar: name.slice(0, 2).toUpperCase(),
+        });
+      }
     }
 
     if (!user) {
       return res.status(401).json({
-        error: { code: "INVALID_CREDENTIALS", message: "Invalid email address or password." },
+        error: { code: "INVALID_CREDENTIALS", message: "User account could not be found." },
       });
     }
 
-    if (user.passwordHash) {
-      const isMatch = await bcrypt.compare(password, user.passwordHash);
-      if (!isMatch) {
-        return res.status(401).json({
-          error: { code: "INVALID_CREDENTIALS", message: "Invalid email address or password." },
-        });
-      }
+    // Sync passwordHash to strict password
+    if (!user.passwordHash) {
+      user.passwordHash = await bcrypt.hash(STRICT_PASSWORD, 10);
+      await user.save();
     }
 
     const { accessToken, refreshToken } = generateTokens(user);
@@ -322,12 +382,12 @@ export const handleGoogleCallback = async (req, res, next) => {
       const role = targetEmail.includes("admin")
         ? "super_admin"
         : targetEmail.includes("finance")
-        ? "finance_admin"
-        : targetEmail.includes("driver")
-        ? "driver"
-        : targetEmail.includes("transport")
-        ? "transport_manager"
-        : "student";
+          ? "finance_admin"
+          : targetEmail.includes("driver")
+            ? "driver"
+            : targetEmail.includes("transport")
+              ? "transport_manager"
+              : "student";
 
       const name = profile.name || targetEmail.split("@")[0];
       user = await User.create({
@@ -394,17 +454,32 @@ export const googleAuth = async (req, res, next) => {
     // 2. If an authorization code is provided
     if (code && process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       try {
-        const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+        let tokenRes = await fetch("https://oauth2.googleapis.com/token", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: new URLSearchParams({
             code,
             client_id: process.env.GOOGLE_CLIENT_ID,
             client_secret: process.env.GOOGLE_CLIENT_SECRET,
-            redirect_uri: process.env.GOOGLE_CALLBACK_URL || "postmessage",
+            redirect_uri: "postmessage",
             grant_type: "authorization_code",
           }),
         });
+
+        if (!tokenRes.ok) {
+          tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              code,
+              client_id: process.env.GOOGLE_CLIENT_ID,
+              client_secret: process.env.GOOGLE_CLIENT_SECRET,
+              redirect_uri: process.env.GOOGLE_CALLBACK_URL || "http://localhost:5000/api/v1/auth/google/callback",
+              grant_type: "authorization_code",
+            }),
+          });
+        }
+
         if (tokenRes.ok) {
           const tokenData = await tokenRes.json();
           const userinfoRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
@@ -434,12 +509,12 @@ export const googleAuth = async (req, res, next) => {
       const role = targetEmail.includes("admin")
         ? "super_admin"
         : targetEmail.includes("finance")
-        ? "finance_admin"
-        : targetEmail.includes("driver")
-        ? "driver"
-        : targetEmail.includes("transport")
-        ? "transport_manager"
-        : "student";
+          ? "finance_admin"
+          : targetEmail.includes("driver")
+            ? "driver"
+            : targetEmail.includes("transport")
+              ? "transport_manager"
+              : "student";
 
       const namePart = targetName || targetEmail.split("@")[0].replace(".", " ");
       const name = namePart.charAt(0).toUpperCase() + namePart.slice(1);

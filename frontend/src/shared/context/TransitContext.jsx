@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import { INITIAL_MASTER_STUDENTS } from "../data/studentsData";
-import { OFFICIAL_13_BUSES, OFFICIAL_13_DRIVERS, OFFICIAL_GSFC_ROUTES_2026 } from "../data/officialRoutes2026";
+import { OFFICIAL_13_BUSES, OFFICIAL_13_DRIVERS, OFFICIAL_GSFC_ROUTES_2026, getStudentAssignedRoute } from "../data/officialRoutes2026";
+import { TelemetryService } from "../services/telemetryService";
 
 const TransitContext = createContext(null);
 
@@ -45,21 +46,42 @@ export const TransitProvider = ({ children }) => {
   const [isWsConnected, setIsWsConnected] = useState(false);
 
   // User Profile States
-  const [currentStudent, setCurrentStudent] = useState({
-    id: "GSFC20260125",
-    name: "Rahul Sharma",
-    avatar: "RS",
-    department: "Computer Science",
-    email: "student@glowbus.edu",
-    phone: "+91 98765 43210",
-    busId: "BUS-104",
-    routeName: "GSFC University ↔ Fatehgunj",
-    pickupStop: "Fatehgunj Bus Stop",
-    pickupTime: "07:45 AM",
-    passStatus: "ACTIVE",
-    feeStatus: "PARTIAL",
-    pendingFee: 5000,
+  const [currentStudent, setCurrentStudent] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("glow_current_student");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.id) return parsed;
+        }
+      } catch (e) {}
+    }
+    return {
+      id: "UNI20260125",
+      name: "Rahul Sharma",
+      avatar: (typeof window !== "undefined" && localStorage.getItem("glow_student_avatar")) || "RS",
+      department: "Computer Science",
+      email: "rahul.sharma@glowbus.edu",
+      phone: "+91 98765 43210",
+      busId: "GJ-06-BV-2915",
+      assignedBusRegNo: "GJ-06-BV-2915",
+      routeId: "ROUTE-9",
+      routeName: "Route 9 (Tulsidham - Fatehgunj - Nizampura)",
+      pickupStop: "FATEHGUNG- BOB",
+      pickupTime: "07:48 AM",
+      passStatus: "ACTIVE",
+      feeStatus: "PARTIAL",
+      pendingFee: 5000,
+    };
   });
+
+  useEffect(() => {
+    if (currentStudent && typeof window !== "undefined") {
+      try {
+        localStorage.setItem("glow_current_student", JSON.stringify(currentStudent));
+      } catch (e) {}
+    }
+  }, [currentStudent]);
 
   const [currentDriver, setCurrentDriver] = useState({
     id: "DRV-2026-09",
@@ -74,13 +96,13 @@ export const TransitProvider = ({ children }) => {
     rating: 4.9,
   });
 
-  const [currentAdmin, setCurrentAdmin] = useState({
+  const [currentAdmin, setCurrentAdmin] = useState(() => ({
     id: "ADM-2026-001",
     name: "Dr. Arvind Patel",
-    avatar: "AP",
+    avatar: (typeof window !== "undefined" && localStorage.getItem("glow_admin_avatar")) || "AP",
     role: "Super Admin",
     email: "admin@glowbus.edu",
-  });
+  }));
 
   const [currentFinanceAdmin, setCurrentFinanceAdmin] = useState({
     id: "FIN-2026-001",
@@ -104,13 +126,96 @@ export const TransitProvider = ({ children }) => {
     progressPercent: 68,
   });
 
-  const [liveBusTelemetry, setLiveBusTelemetry] = useState({});
+  const [liveBusTelemetry, setLiveBusTelemetry] = useState(() => {
+    try {
+      const stored = localStorage.getItem("glow_live_bus_telemetry");
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return {
+      "GJ-06-BV-2915": {
+        busId: "GJ-06-BV-2915",
+        routeId: "ROUTE-9",
+        routeName: "Route 9 (Tulsidham - Fatehgunj - Nizampura)",
+        driverName: "Mahesh Patel",
+        driverPhone: "+91 98765 11111",
+        lat: 22.3365,
+        lng: 73.1795,
+        speed: 42,
+        status: "ON_ROUTE",
+        etaMinutes: 6,
+        nextStop: "FATEHGUNG- BOB",
+        nextStopIndex: 3,
+        isDeviceGps: false,
+        lastUpdated: new Date().toISOString(),
+      },
+      "ROUTE-9": {
+        busId: "GJ-06-BV-2915",
+        routeId: "ROUTE-9",
+        routeName: "Route 9 (Tulsidham - Fatehgunj - Nizampura)",
+        driverName: "Mahesh Patel",
+        driverPhone: "+91 98765 11111",
+        lat: 22.3365,
+        lng: 73.1795,
+        speed: 42,
+        status: "ON_ROUTE",
+        etaMinutes: 6,
+        nextStop: "FATEHGUNG- BOB",
+        nextStopIndex: 3,
+        isDeviceGps: false,
+        lastUpdated: new Date().toISOString(),
+      },
+      "BUS-104": {
+        busId: "BUS-104",
+        routeId: "ROUTE-9",
+        routeName: "Route 9 (Tulsidham - Fatehgunj - Nizampura)",
+        driverName: "Mahesh Patel",
+        driverPhone: "+91 98765 11111",
+        lat: 22.3365,
+        lng: 73.1795,
+        speed: 42,
+        status: "ON_ROUTE",
+        etaMinutes: 6,
+        nextStop: "FATEHGUNG- BOB",
+        nextStopIndex: 3,
+        isDeviceGps: false,
+        lastUpdated: new Date().toISOString(),
+      },
+    };
+  });
   const [buses, setBuses] = useState(() => (Array.isArray(OFFICIAL_13_BUSES) ? OFFICIAL_13_BUSES : []));
   const [routes, setRoutes] = useState(() => (Array.isArray(OFFICIAL_GSFC_ROUTES_2026) ? OFFICIAL_GSFC_ROUTES_2026 : []));
   const [drivers, setDrivers] = useState(() => (Array.isArray(OFFICIAL_13_DRIVERS) ? OFFICIAL_13_DRIVERS : []));
   const [students, setStudents] = useState(() => (Array.isArray(INITIAL_MASTER_STUDENTS) && INITIAL_MASTER_STUDENTS.length > 0 ? INITIAL_MASTER_STUDENTS : []));
   const [notifications, setNotifications] = useState([]);
   const [sosAlerts, setSosAlerts] = useState([]);
+  const [complaints, setComplaints] = useState([
+    {
+      _id: "CMP-2026-001",
+      id: "CMP-2026-001",
+      studentName: "Rahul Sharma",
+      phone: "+91 98765 43210",
+      category: "Overcrowding",
+      description: "Bus #BUS-104 on Route 4 had passengers standing near the front door during morning 8:15 AM rush.",
+      priority: "HIGH",
+      status: "IN_REVIEW",
+      department: "Transportation",
+      proofName: "overcrowding_bus104.jpg",
+      attachment: "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=800&auto=format&fit=crop&q=80",
+      createdAt: "2026-10-08T08:30:00.000Z",
+    },
+    {
+      _id: "CMP-2026-002",
+      id: "CMP-2026-002",
+      studentName: "Priya Patel",
+      phone: "+91 98765 43211",
+      category: "Bus delay",
+      description: "Route R-03 arrived 22 minutes late at Manjalpur stop without prior SMS or app notification.",
+      priority: "MEDIUM",
+      status: "PENDING",
+      department: "Transportation",
+      createdAt: "2026-10-08T09:15:00.000Z",
+    },
+  ]);
 
   // Finance & Accounts Master States
   const [searchQuery, setSearchQuery] = useState("");
@@ -252,37 +357,10 @@ export const TransitProvider = ({ children }) => {
   const [feeStructures, setFeeStructures] = useState([
     {
       id: "FEE-2026-001",
-      name: "Annual Campus Transit — Zone A (Local Intra-City)",
+      name: "Annual Campus Transit — Universal (All Routes & Any Distance)",
       type: "Annual",
-      zone: "Zone A",
-      amount: 6000,
-      dueDate: "15 Sep 2026",
-      status: "Active",
-    },
-    {
-      id: "FEE-2026-002",
-      name: "Annual Campus Transit — Zone B (Suburban Corridor)",
-      type: "Annual",
-      zone: "Zone B",
-      amount: 9500,
-      dueDate: "15 Sep 2026",
-      status: "Active",
-    },
-    {
-      id: "FEE-2026-003",
-      name: "Annual Campus Transit — Zone C (Express Outskirts)",
-      type: "Annual",
-      zone: "Zone C",
-      amount: 14000,
-      dueDate: "15 Sep 2026",
-      status: "Active",
-    },
-    {
-      id: "FEE-2026-004",
-      name: "Semester-1 Transit Installment (Zone B)",
-      type: "Semester",
-      zone: "Zone B",
-      amount: 5000,
+      zone: "All Zones (Any Kilometer)",
+      amount: 15000,
       dueDate: "15 Sep 2026",
       status: "Active",
     },
@@ -421,9 +499,11 @@ export const TransitProvider = ({ children }) => {
           setStudents(stuRes.value.students);
         }
         if (profRes.status === "fulfilled" && profRes.value?.profile) {
+          const apiAvatar = profRes.value.profile.avatar;
           setCurrentAdmin((prev) => ({
             ...prev,
             ...profRes.value.profile,
+            avatar: apiAvatar || prev.avatar || (typeof window !== "undefined" && localStorage.getItem("glow_admin_avatar")) || "AP",
           }));
         }
       } else if (activeRole === "finance_admin") {
@@ -683,10 +763,110 @@ export const TransitProvider = ({ children }) => {
     );
   };
 
+  // Broadcast Driver Live Location across all panels and storage
+  const broadcastDriverLocation = useCallback(async (payload = {}) => {
+    const busId = payload.busId || currentDriver?.assignedBus || activeTrip?.busId || "GJ-06-BV-2915";
+    const routeId = payload.routeId || currentDriver?.assignedRoute || activeTrip?.routeId || "ROUTE-9";
+
+    const packet = {
+      busId,
+      routeId,
+      lat: payload.lat !== undefined ? Number(payload.lat) : (activeTrip?.coordinates?.lat || 22.3365),
+      lng: payload.lng !== undefined ? Number(payload.lng) : (activeTrip?.coordinates?.lng || 73.1795),
+      speed: payload.speed !== undefined ? Number(payload.speed) : (activeTrip?.currentSpeed || 42),
+      status: payload.status || activeTrip?.status || "ON_ROUTE",
+      etaMinutes: payload.etaMinutes !== undefined ? Number(payload.etaMinutes) : (activeTrip?.etaMinutes || 6),
+      isDeviceGps: payload.isDeviceGps !== undefined ? !!payload.isDeviceGps : false,
+      accuracy: payload.accuracy || (payload.isDeviceGps ? 3 : 10),
+      driverName: payload.driverName || currentDriver?.name || "Mahesh Patel",
+      driverPhone: payload.driverPhone || currentDriver?.phone || "+91 98765 11111",
+      lastUpdated: payload.lastUpdated || new Date().toISOString(),
+      timestamp: Date.now(),
+    };
+
+    // 1. Immediately update React state for instant component re-render
+    setLiveBusTelemetry((prev) => ({
+      ...prev,
+      [busId]: { ...(prev[busId] || {}), ...packet },
+      [routeId]: { ...(prev[routeId] || {}), ...packet },
+      "BUS-104": { ...(prev["BUS-104"] || {}), ...packet },
+    }));
+
+    // 2. Also sync activeTrip state
+    setActiveTrip((prev) => ({
+      ...prev,
+      status: packet.status,
+      currentSpeed: packet.speed,
+      coordinates: { lat: packet.lat, lng: packet.lng },
+      etaMinutes: packet.etaMinutes,
+    }));
+
+    // 3. Persist to localStorage for inter-tab & cross-panel instant sync
+    try {
+      const stored = JSON.parse(localStorage.getItem("glow_live_bus_telemetry") || "{}");
+      stored[busId] = packet;
+      stored[routeId] = packet;
+      stored["BUS-104"] = packet;
+      localStorage.setItem("glow_live_bus_telemetry", JSON.stringify(stored));
+      window.dispatchEvent(new CustomEvent("glow:telemetry_update", { detail: packet }));
+    } catch (e) {
+      console.warn("Telemetry storage sync warning:", e);
+    }
+
+    // 4. Send via WebSocket if connected
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      try {
+        wsRef.current.send(JSON.stringify({
+          action: "BROADCAST_TELEMETRY",
+          channel: `bus:${busId}:telemetry`,
+          data: packet,
+        }));
+      } catch (err) {}
+    }
+
+    // 5. Send to TelemetryService API if enabled
+    try {
+      await TelemetryService.broadcastDriverLocation(packet);
+    } catch (err) {}
+
+    return packet;
+  }, [currentDriver, activeTrip]);
+
+  // Sync telemetry updates across browser tabs & custom events
+  useEffect(() => {
+    const handleCustomTelemetry = (e) => {
+      if (e.detail && (e.detail.busId || e.detail.routeId)) {
+        const p = e.detail;
+        setLiveBusTelemetry((prev) => ({
+          ...prev,
+          ...(p.busId ? { [p.busId]: p } : {}),
+          ...(p.routeId ? { [p.routeId]: p } : {}),
+        }));
+      }
+    };
+
+    const handleStorageChange = (e) => {
+      if (e.key === "glow_live_bus_telemetry" && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setLiveBusTelemetry((prev) => ({ ...prev, ...parsed }));
+        } catch (err) {}
+      }
+    };
+
+    window.addEventListener("glow:telemetry_update", handleCustomTelemetry);
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("glow:telemetry_update", handleCustomTelemetry);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
   // Finance Action Methods
   const payStudentFee = async (amount, method = "UPI", refNo = null, targetStudent = null, bankName = null, cashierRemarks = null) => {
     const stu = targetStudent || currentStudent;
-    const studentId = stu?.id || stu?.enrollmentId || "GSFC20260125";
+    const studentId = stu?.id || stu?.enrollmentId || "UNI20260125";
     const reference = refNo || `UPI-${Date.now().toString().slice(-8)}`;
 
     try {
@@ -836,6 +1016,72 @@ export const TransitProvider = ({ children }) => {
     return fallback;
   };
 
+  const submitStudentComplaint = async (complaintData) => {
+    let createdComplaint = null;
+    try {
+      const res = await authFetch("/student/me/complaints", {
+        method: "POST",
+        body: JSON.stringify({
+          category: complaintData.category || "General Transit",
+          subject: complaintData.category || "General Transit",
+          description: complaintData.description,
+          priority: complaintData.priority || "MEDIUM",
+          attachment: complaintData.attachment || undefined,
+          proofName: complaintData.proofName || undefined,
+        }),
+      });
+      if (res?.complaint) {
+        createdComplaint = res.complaint;
+      }
+    } catch (err) {
+      console.warn("submitStudentComplaint API error:", err.message);
+    }
+
+    if (!createdComplaint) {
+      createdComplaint = {
+        _id: "CMP-" + Date.now().toString().slice(-6),
+        id: "CMP-" + Date.now().toString().slice(-6),
+        studentName: currentStudent?.name || "Rahul Sharma",
+        phone: currentStudent?.phone || "+91 98765 43210",
+        category: complaintData.category,
+        description: complaintData.description,
+        priority: complaintData.priority || "MEDIUM",
+        status: "PENDING",
+        department: "Transportation",
+        attachment: complaintData.attachment,
+        proofName: complaintData.proofName,
+        createdAt: new Date().toISOString(),
+      };
+    }
+
+    setComplaints((prev) => [createdComplaint, ...prev]);
+    return createdComplaint;
+  };
+
+  const resolveStudentComplaint = async (id, resolveData) => {
+    try {
+      await authFetch(`/admin/complaints/${id}/resolve`, {
+        method: "PATCH",
+        body: JSON.stringify(resolveData),
+      });
+    } catch (err) {
+      console.warn("resolveStudentComplaint API error:", err.message);
+    }
+
+    setComplaints((prev) =>
+      prev.map((c) =>
+        (c._id === id || c.id === id)
+          ? {
+              ...c,
+              status: resolveData.status || "RESOLVED",
+              department: resolveData.department || c.department,
+              resolutionNotes: resolveData.response || resolveData.resolutionNotes,
+            }
+          : c
+      )
+    );
+  };
+
   const contextValue = {
     isAuthenticated,
     setIsAuthenticated,
@@ -869,6 +1115,10 @@ export const TransitProvider = ({ children }) => {
     setStudents,
     notifications,
     sosAlerts,
+    complaints,
+    setComplaints,
+    submitStudentComplaint,
+    resolveStudentComplaint,
     startTrip,
     pauseTrip,
     completeTrip,
@@ -877,6 +1127,8 @@ export const TransitProvider = ({ children }) => {
     triggerDriverSos,
     validatePass,
     boardStudent,
+    broadcastDriverLocation,
+    getStudentAssignedRoute,
     // Finance Suite Exports
     searchQuery,
     setSearchQuery,
@@ -899,3 +1151,4 @@ export const TransitProvider = ({ children }) => {
 
   return <TransitContext.Provider value={contextValue}>{children}</TransitContext.Provider>;
 };
+

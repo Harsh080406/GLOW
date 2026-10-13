@@ -29,16 +29,20 @@
   border-right: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  padding: 0 0 16px;
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow-y: auto;
+  overflow: hidden;
   z-index: 80;
-  scrollbar-width: none;
   transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.dd-sidebar::-webkit-scrollbar { display: none; }
+
+.dd-sidebar-footer {
+  flex-shrink: 0;
+  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+  padding: 6px 0 14px;
+}
 
 .dd-brand {
   display: flex;
@@ -92,6 +96,8 @@
   flex-direction: column;
   gap: 4px;
   padding: 12px 10px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .dd-nav-item {
@@ -270,6 +276,14 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
+.dd-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
 .dd-hamburger {
   display: none;
   background: none;
@@ -309,6 +323,36 @@
   align-items: center;
   gap: 12px;
   margin-left: auto;
+  flex-shrink: 0;
+}
+
+.dd-driver-switch-select-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 4px 10px;
+  transition: all 0.15s ease;
+}
+
+.dd-driver-switch-select {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-weight: 700;
+  font-size: 12.5px;
+  color: #0f172a;
+  cursor: pointer;
+  max-width: 220px;
+  font-family: inherit;
+}
+
+.dd-topbar-status-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex-shrink: 0;
 }
 
@@ -1767,38 +1811,522 @@
   border: 1px solid #fecaca;
 }
 
-/* ── RESPONSIVE CONTRACT (<768px single-column stack, ≥768px two-column) ── */
-@media (max-width: 767px) {
+/* ════════════════════════════════════════════════════════════
+   COMPREHENSIVE RESPONSIVE STYLING (MOBILE & TABLET VIEWPORT CONTRACT)
+   - Zero overlapping text, buttons, HUD items, or timeline labels
+   - Mobile touch targets, clean wrapping, and zero horizontal overflow
+   ════════════════════════════════════════════════════════════ */
+
+/* Tablet & Smaller (<992px) */
+@media (max-width: 992px) {
+  .dd-sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    height: 100%;
+    transition: left 0.25s ease;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+    z-index: 10001;
+  }
+  .dd-sidebar--open {
+    left: 0;
+  }
+  .dd-hamburger {
+    display: flex;
+  }
+  .dd-content {
+    padding: 16px;
+  }
+  .dd-topbar-subtitle {
+    display: none;
+  }
+  .dd-avatar-info {
+    display: none;
+  }
+}
+
+/* Mobile Screens (≤768px) */
+@media (max-width: 768px) {
+  /* 1. Topbar Responsive Header Stack */
+  .dd-topbar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 10px 14px;
+  }
+
+  .dd-topbar-left {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .dd-hamburger {
+    display: flex;
+    padding: 4px;
+    flex-shrink: 0;
+  }
+
+  .dd-topbar-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .dd-topbar-title {
+    font-size: 15px;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dd-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+  }
+
+  .dd-driver-switch-select-wrapper {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    padding: 4px 8px;
+    border-radius: 8px;
+  }
+
+  .dd-driver-switch-select {
+    max-width: 100%;
+    width: 100%;
+    font-size: 11.5px;
+  }
+
+  .dd-topbar-status-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .dd-trip-status {
+    font-size: 11px;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+
+  .dd-sos-btn {
+    padding: 4px 10px;
+    font-size: 11.5px;
+    white-space: nowrap;
+  }
+
+  .dd-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
+  }
+
+  /* 2. Main Content & Card Layout */
+  .dd-content {
+    padding: 12px 14px;
+    gap: 14px;
+  }
+
+  .dd-card {
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+
+  .dd-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  /* 3. Unified Mission Command Card */
+  .dd-mission-card {
+    padding: 16px 14px;
+    border-radius: 14px;
+    gap: 12px;
+  }
+
+  .dd-mission-top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding-bottom: 10px;
+  }
+
+  .dd-mission-badges {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .dd-mission-badges .ad-badge {
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+  }
+
+  .dd-sensor-btn {
+    align-self: flex-start;
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+
+  .dd-mission-body {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .dd-mission-title {
+    font-size: 16.5px;
+    line-height: 1.25;
+    word-break: break-word;
+  }
+
+  .dd-mission-desc {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .dd-mission-hud {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  .dd-hud-divider {
+    display: none;
+  }
+
+  .dd-hud-speed {
+    font-size: 20px;
+  }
+
+  .dd-hud-stop {
+    font-size: 13px;
+    word-break: break-word;
+    line-height: 1.2;
+  }
+
+  .dd-hud-sub {
+    font-size: 10.5px;
+    white-space: normal;
+  }
+
+  .dd-mission-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    width: 100%;
+    gap: 6px;
+    justify-content: stretch;
+  }
+
+  .dd-action-btn {
+    padding: 9px 4px;
+    font-size: 11px;
+    min-width: 0;
+    width: 100%;
+    letter-spacing: 0;
+  }
+
+  /* 4. KPI Metrics Cards Grid */
+  .dd-kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .dd-kpi-card {
+    padding: 12px 12px;
+    border-radius: 14px;
+  }
+
+  .dd-kpi-label {
+    font-size: 10px;
+  }
+
+  .dd-kpi-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .dd-kpi-val {
+    font-size: 17px;
+  }
+
+  .dd-kpi-sub {
+    font-size: 10.5px;
+  }
+
+  /* 5. Quick Actions Grid */
+  .dd-quick-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .dd-quick-item {
+    padding: 12px 14px;
+    border-radius: 14px;
+    gap: 12px;
+  }
+
+  .dd-quick-icon-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+
+  .dd-quick-title {
+    font-size: 13.5px;
+  }
+
+  .dd-quick-sub {
+    font-size: 11px;
+  }
+
+  /* 6. Operational Split & Stops Progression */
+  .dd-operational-split {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .dd-timeline-card {
+    padding: 16px 14px;
+  }
+
+  .dd-timeline-item {
+    gap: 10px;
+    padding-bottom: 14px;
+  }
+
+  .dd-timeline-indicator {
+    width: 24px;
+  }
+
+  .dd-timeline-dot {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+
+  .dd-timeline-main-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .dd-timeline-title-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .dd-timeline-stop-name {
+    font-size: 13.5px;
+  }
+
+  .dd-timeline-time {
+    font-size: 11.5px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .dd-timeline-sub-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    margin-top: 4px;
+  }
+
+  .dd-timeline-detail {
+    font-size: 11px;
+  }
+
+  .dd-timeline-students {
+    font-size: 10.5px;
+    color: #475569;
+  }
+
+  .dd-timeline-arrival-box {
+    padding: 10px 12px;
+    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dd-confirm-arrival-btn {
+    width: 100%;
+    text-align: center;
+    padding: 9px 12px;
+    font-size: 11.5px;
+  }
+
+  /* 7. Commuter Roster & Vehicle Diagnostics */
+  .dd-commuter-row {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .dd-commuter-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
+  }
+
+  .dd-commuter-name {
+    font-size: 12.5px;
+  }
+
+  .dd-commuter-id {
+    font-size: 10.5px;
+  }
+
+  .dd-board-btn {
+    padding: 5px 8px;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .dd-diagnostics-grid {
+    gap: 8px;
+  }
+
+  .dd-diagnostic-item {
+    padding: 8px 10px;
+  }
+
+  /* 8. Checkpoints List (Trip Management) */
+  .dd-checkpoint-row {
+    gap: 10px;
+  }
+
+  .dd-checkpoint-row--current {
+    padding: 8px 10px;
+    margin: 0 -8px;
+    border-radius: 10px;
+  }
+
+  .dd-checkpoint-title-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: flex-start;
+  }
+
+  .dd-checkpoint-name {
+    font-size: 13px;
+  }
+
+  .dd-checkpoint-meta {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  /* 9. Cockpit Layout Stacking */
   .dd-cockpit-layout {
     display: flex;
     flex-direction: column;
     gap: 16px;
   }
+
   .dd-cockpit-speed-col {
-    order: 1; /* speed gauge first */
+    order: 1;
   }
+
   .dd-cockpit-trip-col {
-    order: 2; /* trip card second */
+    order: 2;
   }
+
   .dd-cockpit-actions {
-    order: 3; /* action buttons third */
+    order: 3;
     grid-template-columns: 1fr;
+  }
+
+  /* 10. Modals & Data Tables */
+  .dd-modal-card {
+    padding: 18px 16px;
+    border-radius: 16px;
+    max-width: 100%;
+  }
+
+  .dd-modal-header {
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+  }
+
+  .dd-modal-title {
+    font-size: 16px;
+  }
+
+  .ad-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
   }
 }
 
-@media (min-width: 768px) {
+/* Extra-Narrow Mobile Devices (≤480px) */
+@media (max-width: 480px) {
+  .dd-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dd-topbar-right {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .dd-driver-switch-select-wrapper {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .dd-topbar-status-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .dd-mission-hud {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .dd-hud-item {
+    padding: 2px 0;
+  }
+}
+
+/* Desktop Cockpit Grid (≥769px) */
+@media (min-width: 769px) {
   .dd-cockpit-layout {
     display: grid;
     grid-template-columns: 1fr 1.35fr;
     gap: 20px;
     align-items: stretch;
   }
+
   .dd-cockpit-speed-col {
     grid-column: 1 / 2;
   }
+
   .dd-cockpit-trip-col {
     grid-column: 2 / 3;
   }
+
   .dd-cockpit-actions {
     grid-column: 1 / -1;
     display: grid;
@@ -1807,21 +2335,527 @@
   }
 }
 
+
+
+/* ============================================================
+   MOBILE-FIRST BOTTOM NAVIGATION & ZERO-HORIZONTAL-SLIDE CONTRACT
+   ============================================================ */
 @media (max-width: 992px) {
-  .dd-sidebar {
-    position: fixed;
-    left: -260px;
-    top: 0;
-    height: 100%;
-    transition: left 0.25s ease;
-    box-shadow: 4px 0 24px rgba(0,0,0,0.25);
-    z-index: 10001;
+  html, body, .dd-wrapper, .dd-root, .dd-main {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
-  .dd-sidebar--open { left: 0; }
-  .dd-hamburger { display: flex; }
-  .dd-content { padding: 16px; }
-  .dd-topbar { padding: 12px 16px; }
-  .dd-avatar-info { display: none; }
-  .dd-topbar-subtitle { display: none; }
+
+  .dd-content {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    padding-bottom: 88px !important; /* Generous clearance for fixed bottom nav */
+    box-sizing: border-box !important;
+  }
+
+  /* Fixed Bottom Navigation Bar */
+  .dd-bottom-nav {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 64px !important;
+    background: #ffffff !important;
+    border-top: 1px solid #e2e8f0 !important;
+    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08) !important;
+    z-index: 9999 !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+  }
+
+  .dd-bottom-nav-item {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 100% !important;
+    background: none !important;
+    border: none !important;
+    cursor: pointer !important;
+    color: #64748b !important;
+    transition: all 0.15s ease !important;
+    padding: 6px 0 !important;
+    user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  .dd-bottom-nav-item:active {
+    transform: scale(0.95);
+  }
+
+  .dd-bottom-nav-item--active {
+    color: #0066ff !important;
+    font-weight: 700 !important;
+  }
+
+  .dd-bottom-nav-icon-wrap {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 34px !important;
+    height: 26px !important;
+    border-radius: 12px !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .dd-bottom-nav-item--active .dd-bottom-nav-icon-wrap {
+    background: #eff6ff !important;
+  }
+
+  .dd-bottom-nav-label {
+    font-size: 11px !important;
+    letter-spacing: -0.1px !important;
+    margin-top: 2px !important;
+    line-height: 1 !important;
+  }
+
+  .dd-bottom-nav-badge {
+    position: absolute !important;
+    top: -3px !important;
+    right: -6px !important;
+    background: #dc2626 !important;
+    color: #ffffff !important;
+    font-size: 9px !important;
+    font-weight: 800 !important;
+    padding: 1px 4px !important;
+    border-radius: 999px !important;
+    border: 1.5px solid #ffffff !important;
+  }
 }
+
+@media (min-width: 993px) {
+  .dd-bottom-nav {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Prevent horizontal stretch on all direct card containers */
+  .dd-content > * {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Internal touch scrolling for roster tables without body sliding */
+  .dd-table-container, .ad-table-wrap, .dd-roster-table-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Ensure modal cards fit mobile screens */
+  .dd-modal-card {
+    width: 92% !important;
+    max-width: 480px !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    margin: auto !important;
+  }
+
+  /* Quick sensor button wrapping */
+  .dd-sensor-btn-group {
+    flex-wrap: wrap !important;
+    width: 100% !important;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE DRIVER COCKPIT & MOBILE-PERFECT COMPONENTS
+   ============================================================ */
+
+.dd-cockpit-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dd-card-simplified {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1.5px solid #cbd5e1;
+  padding: 22px 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+  width: 100%;
+  overflow: hidden;
+}
+
+.dd-header-banner {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1.5px solid #e2e8f0;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.dd-gps-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.dd-gps-toggle-btn {
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.dd-telemetry-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dd-telemetry-meta-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.dd-trip-actions-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+}
+
+.dd-scanner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+  width: 100%;
+}
+
+.dd-boarded-count-pill {
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 14px;
+  padding: 8px 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dd-scanner-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dd-camera-scan-btn {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25);
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 48px;
+}
+
+.dd-manual-scan-form {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dd-manual-scan-input {
+  flex: 1;
+  min-width: 0 !important; /* CRITICAL: Allows input to shrink within flex container */
+  padding: 13px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #cbd5e1;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.dd-manual-scan-btn {
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 13px 18px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.dd-test-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.dd-emergency-bar {
+  background: #fff5f5;
+  border: 1.5px solid #fecaca;
+  border-radius: 16px;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* ── STRICT MOBILE RULES (≤ 768px) ───────────────────────── */
+@media (max-width: 768px) {
+  .dd-content {
+    padding: 12px 10px 84px !important;
+  }
+
+  .dd-topbar {
+    padding: 10px 12px !important;
+    gap: 8px !important;
+  }
+
+  .dd-topbar-subtitle {
+    display: none !important;
+  }
+
+  .dd-topbar-title {
+    font-size: 15px !important;
+  }
+
+  .dd-hamburger {
+    display: flex !important;
+  }
+
+  .dd-avatar-info {
+    display: none !important;
+  }
+
+  .dd-card-simplified {
+    padding: 16px 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .dd-header-banner {
+    padding: 12px 14px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .dd-header-banner h2 {
+    font-size: 16px !important;
+  }
+
+  .dd-gps-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .dd-gps-toggle-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .dd-telemetry-box {
+    padding: 12px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .dd-telemetry-meta-row {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .dd-trip-actions-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .dd-trip-actions-row button {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 14px 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  .dd-scanner-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .dd-boarded-count-pill {
+    width: 100% !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+  }
+
+  /* CRITICAL: Force Scanner to 1 Column on Mobile */
+  .dd-scanner-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .dd-camera-scan-btn {
+    width: 100% !important;
+    min-height: 48px !important;
+  }
+
+  .dd-manual-scan-form {
+    width: 100% !important;
+  }
+
+  .dd-manual-scan-input {
+    min-width: 0 !important;
+  }
+
+  .dd-emergency-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding: 14px 12px !important;
+  }
+
+  .dd-emergency-bar button {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 12px !important;
+  }
+}
+
+/* Driver Issue Broadcast & Auto-Advance Components */
+.dd-broadcast-btn {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1.5px solid #fde68a;
+  border-radius: 14px;
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.dd-broadcast-btn:hover {
+  background: #fef3c7;
+  border-color: #f59e0b;
+}
+
+.dd-active-notice-banner {
+  background: #fffbeb;
+  border: 1.5px solid #f59e0b;
+  border-radius: 14px;
+  padding: 12px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.12);
+}
+
+.dd-preset-chip {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dd-preset-chip:hover {
+  background: #eff6ff;
+  border-color: #0066ff;
+  color: #0066ff;
+}
+
+.dd-preset-chip--active {
+  background: #eff6ff;
+  border-color: #0066ff;
+  color: #0066ff;
+  font-weight: 800;
+}
+
 

@@ -197,7 +197,7 @@ const enrichSeed = async () => {
           onTimeTrips: 44 + Math.floor(Math.random() * 4),
           onTimeRate: Number((97.5 + Math.random() * 2.2).toFixed(1)),
           totalPassengersCarried: 1800 + Math.floor(Math.random() * 250),
-          activeBuses: 57,
+          activeBuses: 11 + Math.floor(Math.random() * 2),
           fuelConsumptionLitres: 480 + Math.floor(Math.random() * 60),
           incidentsCount: Math.floor(Math.random() * 2),
           delaysCount: Math.floor(Math.random() * 3),

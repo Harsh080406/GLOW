@@ -188,6 +188,9 @@ export const adminProfileSchema = z.object({
   name: z.string().trim().min(2).optional(),
   phone: z.string().optional(),
   department: z.string().optional(),
+  officeLocation: z.string().optional(),
+  designation: z.string().optional(),
+  avatar: z.string().optional(),
 });
 
 export const verify2FASchema = z.object({
@@ -313,7 +316,10 @@ export const payStudentFeeSchema = z.object({
 export const createComplaintSchema = z.object({
   category: z.string().min(1, "Category is required"),
   description: z.string().min(3, "Description must be at least 3 characters"),
+  subject: z.string().optional(),
   priority: z.enum(["HIGH", "MEDIUM", "LOW"]).optional(),
+  attachment: z.string().optional(),
+  proofName: z.string().optional(),
 });
 
 export const triggerSosSchema = z.object({
@@ -326,6 +332,8 @@ export const updateStudentProfileSchema = z.object({
   phone: z.string().optional(),
   department: z.string().optional(),
   pickupStop: z.string().optional(),
+  guardianContact: z.string().optional(),
+  avatar: z.string().optional(),
 });
 
 export const changePasswordSchema = z.object({

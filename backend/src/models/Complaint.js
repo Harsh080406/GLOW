@@ -17,8 +17,11 @@ const complaintSchema = new mongoose.Schema(
     },
     department: { type: String },
     resolutionNotes: { type: String },
+    attachment: { type: String },
+    proofName: { type: String },
   },
   { timestamps: true }
 );
 
 export default mongoose.model("Complaint", complaintSchema);
+

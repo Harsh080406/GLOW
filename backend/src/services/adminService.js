@@ -114,7 +114,7 @@ export const computeDailyRollup = async (targetDate = new Date()) => {
       onTimeTrips: completedTrips,
       onTimeRate,
       totalPassengersCarried,
-      activeBuses: activeBuses || 85,
+      activeBuses: activeBuses || 13,
       fuelConsumptionLitres: Math.round(totalTrips * 7.5),
       incidentsCount,
       delaysCount: Math.max(0, totalTrips - completedTrips),

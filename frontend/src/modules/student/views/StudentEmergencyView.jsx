@@ -206,7 +206,7 @@ const StudentEmergency = () => {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[
               { role: "GSFC University Security & Vigilance", phone: "+91 265 3093753", desc: "Fertilizernagar Main Campus Security", icon: "🛡️" },
-              { role: "GSFC University Transport Fleet Desk", phone: "+91 265 3093750", desc: "Vigyan Bhavan Transit Dispatch Cell", icon: "🚌" },
+              { role: "GSFC University Transport Fleet Desk", phone: "+91 265 3093750", desc: "Vigyan Bhavan Transit Desk (glowtransportservices@gmail.com)", icon: "🚌" },
               { role: "GSFC Hospital Emergency Care", phone: "+91 265 3092400", desc: "Fertilizernagar Medical Centre", icon: "🚑" },
               { role: "Chhani / Vadodara Police Hotline", phone: "112", desc: "Vadodara City Police Control", icon: "👮" },
             ].map((contact, i) => (

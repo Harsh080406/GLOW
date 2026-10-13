@@ -18,15 +18,22 @@ const StudentTransportPass = () => {
 
   const studentName = currentStudent?.name || "Rahul Sharma";
   const studentId = currentStudent?.id || "UNI20260125";
-  const studentInitials = currentStudent?.avatar ||
-    studentName
-      .trim()
-      .split(" ")
-      .filter(Boolean)
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "ST";
+  const hasAvatarImage = Boolean(
+    currentStudent?.avatar &&
+    (currentStudent.avatar.startsWith("data:image") ||
+     currentStudent.avatar.startsWith("http") ||
+     currentStudent.avatar.startsWith("/"))
+  );
+  const studentInitials = (currentStudent?.avatar && currentStudent.avatar.length <= 3)
+    ? currentStudent.avatar.toUpperCase()
+    : (studentName || "Student")
+        .trim()
+        .split(" ")
+        .filter(Boolean)
+        .map((n) => n[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase() || "ST";
 
   useEffect(() => {
     if (authFetch) {
@@ -382,8 +389,33 @@ const StudentTransportPass = () => {
             </div>
 
             <div style={{ display: "flex", gap: 14, marginBottom: 22, alignItems: "center" }}>
-              <div style={{ width: 52, height: 52, background: "rgba(255,255,255,0.2)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 18 }}>
-                {studentInitials}
+              <div
+                style={{
+                  width: 52,
+                  height: 52,
+                  background: "rgba(255,255,255,0.2)",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: 800,
+                  fontSize: 18,
+                  overflow: "hidden",
+                  flexShrink: 0,
+                }}
+              >
+                {hasAvatarImage ? (
+                  <img
+                    src={currentStudent.avatar}
+                    alt={studentName}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <span>{studentInitials}</span>
+                )}
               </div>
               <div>
                 <p style={{ fontWeight: 700, fontSize: 17 }}>{studentName}</p>

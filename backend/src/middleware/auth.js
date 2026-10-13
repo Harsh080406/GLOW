@@ -57,10 +57,10 @@ export const optionalAuthenticateJWT = (req, res, next) => {
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     req.user = {
-      id: "GSFC20260125",
+      id: "UNI20260125",
       name: "Rahul Sharma",
       role: "student",
-      email: "student@glowbus.edu",
+      email: "rahul.sharma@glowbus.edu",
       routeName: "Route R-04 (Fatehgunj - GSFC)",
     };
     return next();
@@ -80,10 +80,10 @@ export const optionalAuthenticateJWT = (req, res, next) => {
     next();
   } catch (err) {
     req.user = {
-      id: "GSFC20260125",
+      id: "UNI20260125",
       name: "Rahul Sharma",
       role: "student",
-      email: "student@glowbus.edu",
+      email: "rahul.sharma@glowbus.edu",
       routeName: "Route R-04 (Fatehgunj - GSFC)",
     };
     next();
