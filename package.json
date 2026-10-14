@@ -2,7 +2,10 @@
   "name": "glow-monorepo",
   "private": true,
   "version": "1.0.0",
-  "type": "module",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
     "start": "node start.js",
     "dev": "node start.js",
@@ -12,7 +15,8 @@
     "server": "npm --prefix backend run dev",
     "client": "npm --prefix frontend run dev",
     "db:seed": "npm --prefix backend run db:seed",
-    "build": "npm --prefix frontend run build",
+    "postinstall": "npm --prefix frontend install",
+    "build": "npm --prefix frontend install && npm --prefix frontend run build",
     "lint": "npm --prefix frontend run lint"
   },
   "dependencies": {
