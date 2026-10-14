@@ -111,8 +111,8 @@ Render runs Node.js applications with free HTTPS and native WebSocket support.
 | `PASS_HMAC_SECRET` | `glow_pass_hmac_sign_key_2026` | HMAC Pass secret |
 | `RECEIPT_HMAC_SECRET`| `glow_receipt_hmac_sign_key_2026` | HMAC Receipt secret |
 | `FRONTEND_ORIGIN` | `https://your-app.vercel.app` | Will update after Vercel deploy |
-| `GOOGLE_CLIENT_ID` | `your_google_client_id.apps.googleusercontent.com` | Official Google OAuth ID |
-| `GOOGLE_CLIENT_SECRET` | `your_google_client_secret` | Official Google Secret |
+| `GOOGLE_CLIENT_ID` | `your_google_client_id.apps.googleusercontent.com` | Google OAuth Client ID |
+| `GOOGLE_CLIENT_SECRET` | `your_google_client_secret` | Google OAuth Client Secret |
 | `GOOGLE_CALLBACK_URL` | `https://glow-backend.onrender.com/api/v1/auth/google/callback` | Render OAuth callback |
 | `GPS_SIMULATOR_ENABLED` | `true` | Bus GPS telematics |
 

@@ -6,8 +6,8 @@
  * or set ENABLE_BACKEND_API to true.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
-const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || "ws://localhost:8000/ws/telemetry";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
+const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || "ws://localhost:5000";
 const ENABLE_BACKEND_API = import.meta.env.VITE_ENABLE_BACKEND_API === "true";
 
 export const TelemetryService = {

@@ -26,10 +26,7 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
-const GOOGLE_CLIENT_ID =
-  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-  "your_google_client_id.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
 // Strict University Authentication Constants
 const STRICT_PASSWORD = "password@1234";
