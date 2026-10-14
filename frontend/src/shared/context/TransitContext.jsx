@@ -432,6 +432,15 @@ export const TransitProvider = ({ children }) => {
         ...options.headers,
       };
 
+      // Skip attempting insecure http://localhost fetches when deployed on HTTPS
+      if (
+        typeof window !== "undefined" &&
+        window.location.protocol === "https:" &&
+        API_BASE_URL.startsWith("http://localhost")
+      ) {
+        return null;
+      }
+
       try {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
         if (!response.ok) {
@@ -583,15 +592,21 @@ export const TransitProvider = ({ children }) => {
       return;
     }
 
-    const wsUrl = `${WS_BASE_URL}?token=${accessToken || ""}`;
-    console.log(`📡 Connecting WebSocket to ${WS_BASE_URL}...`);
-    const socket = new WebSocket(wsUrl);
-    wsRef.current = socket;
+    // Skip attempting insecure ws:// connection if deployed on HTTPS to prevent browser SecurityError crashes
+    if (typeof window !== "undefined" && window.location.protocol === "https:" && WS_BASE_URL.startsWith("ws://")) {
+      return;
+    }
 
-    socket.onopen = () => {
-      console.log("🟢 WebSocket Connected to GLOW Live Telemetry Engine.");
-      setIsWsConnected(true);
-      reconnectAttemptRef.current = 0;
+    try {
+      const wsUrl = `${WS_BASE_URL}?token=${accessToken || ""}`;
+      console.log(`📡 Connecting WebSocket to ${WS_BASE_URL}...`);
+      const socket = new WebSocket(wsUrl);
+      wsRef.current = socket;
+
+      socket.onopen = () => {
+        console.log("🟢 WebSocket Connected to GLOW Live Telemetry Engine.");
+        setIsWsConnected(true);
+        reconnectAttemptRef.current = 0;
 
       // Subscribe to telemetry and alert channels
       socket.send(JSON.stringify({ action: "SUBSCRIBE", channel: "bus:*:telemetry" }));
@@ -650,6 +665,10 @@ export const TransitProvider = ({ children }) => {
         connectWebSocket();
       }, delay);
     };
+    } catch (wsErr) {
+      console.warn("[TransitContext] WebSocket connection initialization skipped/failed:", wsErr.message);
+      setIsWsConnected(false);
+    }
   }, [accessToken, currentStudent.busId]);
 
   useEffect(() => {

@@ -266,6 +266,19 @@ const LoginPageView = () => {
 
     setIsLoading(true);
 
+    // If deployed on HTTPS and API_BASE_URL points to insecure http://localhost, bypass blocked fetch
+    const isHttpsLocalhostMismatch =
+      typeof window !== "undefined" &&
+      window.location.protocol === "https:" &&
+      API_BASE_URL.startsWith("http://localhost");
+
+    if (isHttpsLocalhostMismatch) {
+      console.info("[Auth] HTTPS detected with localhost API. Activating client authentication fallback.");
+      handleDemoFallbackLogin();
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // 1. Send Login Request to Real Backend API
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
