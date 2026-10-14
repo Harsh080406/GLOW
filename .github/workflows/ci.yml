@@ -51,19 +51,28 @@ jobs:
           # 3. Initiate single-node replica set rs0 for transaction support
           docker exec mongo_rs mongosh --eval '
             try {
-              rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "localhost:27017" }] });
-              print("Replica set rs0 initiated successfully.");
+              rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "127.0.0.1:27017" }] });
+              print("Replica set rs0 initiation requested.");
             } catch (err) {
               print("Replica set notice: " + err);
             }
           '
-          sleep 2
-          docker exec mongo_rs mongosh --eval 'rs.status().ok'
+
+          # 4. Wait until primary is elected and writable
+          echo "Waiting for replica set primary election..."
+          for i in {1..30}; do
+            IS_PRIMARY=$(docker exec mongo_rs mongosh --quiet --eval "Boolean((db.hello && db.hello().isWritablePrimary) || (db.isMaster && db.isMaster().ismaster))" 2>/dev/null || echo "false")
+            if [ "$IS_PRIMARY" = "true" ]; then
+              echo "MongoDB replica set primary is elected and writable."
+              break
+            fi
+            sleep 1
+          done
 
       - name: Prepare Test Environment File
         run: |
-          cp .env.production.example .env.production
-          cp .env.production.example backend/.env
+          cp .env.example .env
+          cp backend/.env.example backend/.env
 
       - name: Install Backend Dependencies
         working-directory: backend
