@@ -133,11 +133,6 @@ const LoginPageView = () => {
     }
   };
 
-  const isHttpsLocalhostMismatch =
-    typeof window !== "undefined" &&
-    window.location.protocol === "https:" &&
-    API_BASE_URL.includes("localhost");
-
   // Dynamically resolve and set student profile for any valid UNI2026XXX ID
   const applyStudentProfile = (studentId, rawInput) => {
     const cleanId = studentId.toUpperCase();
@@ -507,30 +502,7 @@ const LoginPageView = () => {
               </div>
             )}
 
-            {isHttpsLocalhostMismatch && (
-              <div
-                style={{
-                  background: "#fef3c7",
-                  border: "1px solid #fde68a",
-                  color: "#92400e",
-                  borderRadius: 10,
-                  padding: "10px 14px",
-                  fontSize: 12,
-                  lineHeight: 1.4,
-                  marginBottom: 16,
-                }}
-              >
-                <strong>⚠️ Production API URL Notice:</strong>
-                <div style={{ marginTop: 2 }}>
-                  This deployed app is attempting to connect to <code>http://localhost:5000</code>.
-                  In your <strong>Vercel Project Settings &gt; Environment Variables</strong>, add:
-                  <code style={{ display: "block", marginTop: 4, padding: "3px 6px", background: "#fef9c3", borderRadius: 4, fontWeight: 700 }}>
-                    VITE_API_BASE_URL=https://your-render-backend.onrender.com/api/v1
-                  </code>
-                  and redeploy. In the meantime, you can explore the platform in Demo mode.
-                </div>
-              </div>
-            )}
+
 
             {oauthNotice && (
               <div
